@@ -139,10 +139,28 @@ class App_Database
                   'HOUR' => 'hours', 'DAY' => 'days', 'WEEK' => 'weeks', 'MONTH' => 'months', 'YEAR' => 'years'];
         $u = implode('|', array_keys($units));
         $map = array_change_key_case($units, CASE_LOWER);
+        // INTERVAL <n> UNIT / INTERVAL <'%s'> UNIT (после подстановки %s числом или в кавычках)
         $query = preg_replace_callback(
-            "/\bDATE_SUB\s*\(\s*(?:CURDATE\s*\(\s*\)|NOW\s*\(\s*\)|datetime\('now','localtime'\)|date\('now','localtime'\))\s*,\s*INTERVAL\s+(-?\d+|%\w)\s+(?:$u)\s*\)/i",
+            "/\bDATE_SUB\s*\(\s*(?:CURDATE\s*\(\s*\)|NOW\s*\(\s*\)|datetime\('now','localtime'\)|date\('now','localtime'\))\s*,\s*INTERVAL\s+(['\"]?)(-?[\d%a-z_]+)\1\s+(?:$u)\s*\)/i",
             function ($mm) use ($map) {
-                return "datetime('now','localtime','-{$mm[2]} " . $map[strtoupper($mm[3])] . "')";
+                $n = $mm[2];
+                if (is_numeric($n)) {
+                    return "datetime('now','localtime','-$n " . $map[strtoupper($mm[3])] . "')";
+                }
+                // параметр вида %d/%s — подставляем как выражение: '-' || param || ' unit'
+                return "datetime('now','localtime','-'||" . $n . "||' " . $map[strtoupper($mm[3])] . "')";
+            },
+            $query
+        );
+        // DATE_ADD симметрично (со знаком +)
+        $query = preg_replace_callback(
+            "/\bDATE_ADD\s*\(\s*(?:CURDATE\s*\(\s*\)|NOW\s*\(\s*\)|datetime\('now','localtime'\)|date\('now','localtime'\))\s*,\s*INTERVAL\s+(['\"]?)(-?[\d%a-z_]+)\1\s+(?:$u)\s*\)/i",
+            function ($mm) use ($map) {
+                $n = $mm[2];
+                if (is_numeric($n)) {
+                    return "datetime('now','localtime','+$n " . $map[strtoupper($mm[3])] . "')";
+                }
+                return "datetime('now','localtime','+'||" . $n . "||' " . $map[strtoupper($mm[3])] . "')";
             },
             $query
         );

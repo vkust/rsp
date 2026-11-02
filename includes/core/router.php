@@ -70,6 +70,29 @@ class App_Router
             return;
         }
 
+        // Вход (обработка POST /login и GET /login)
+        if ($uri === '/login') {
+            $GLOBALS['wp_app']['is_admin'] = true;
+            app_session_start();
+            self::handle_login();
+            return;
+        }
+
+        // Выход
+        if ($uri === '/logout') {
+            app_session_start();
+            unset($_SESSION['schedule_admin']);
+            wp_redirect(App_Config::site_url('admin'));
+            exit;
+        }
+
+        // Аналог options.php — сохранение зарегистрированных настроек (register_setting)
+        if ($uri === '/options' || $uri === '/options.php') {
+            app_session_start();
+            self::handle_options_post();
+            return;
+        }
+
         // Админка
         if ($uri === '/admin' || strpos($uri, '/admin') === 0) {
             $GLOBALS['wp_app']['is_admin'] = true;
@@ -260,6 +283,45 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;b
     <button type="submit">Войти</button>
 </form>
 </body></html><?php
+    }
+
+    /* ------------------------------------------------------------------ */
+
+    /**
+     * Аналог wp-admin/options.php: сохраняет POST-поля, соответствующие
+     * настройкам, зарегистрированным через register_setting($group, $name).
+     */
+    private static function handle_options_post()
+    {
+        if (!current_user_can('manage_options')) {
+            self::render_login_form('Требуется вход в административную панель.');
+            return;
+        }
+        $group = sanitize_text_field($_POST['option_page'] ?? $_POST['option_group'] ?? '');
+        if ($group !== '' && isset($_POST['_wpnonce'])) {
+            check_admin_referer($group); // аналог поведения options.php
+        }
+
+        $registry = $GLOBALS['wp_app']['registered_settings'] ?? [];
+        $saved = 0;
+        foreach ($registry as $name => $args) {
+            if (!array_key_exists($name, $_POST)) {
+                continue;
+            }
+            $value = wp_unslash($_POST[$name]);
+            $sanitize = $args['sanitize_callback'] ?? null;
+            if (is_callable($sanitize)) {
+                $value = call_user_func($sanitize, $value, $name);
+            }
+            update_option($name, $value);
+            $saved++;
+        }
+
+        // Redirect back: referrer или страница настроек бота по умолчанию
+        $back = esc_url_raw(wp_get_referer() ?: App_Config::site_url('admin?page=schedule-telegram-settings'));
+        $back = add_query_arg('settings-updated', 'true', $back);
+        wp_redirect($back);
+        exit;
     }
 
     /* ------------------------------------------------------------------ */

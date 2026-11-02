@@ -1155,6 +1155,28 @@ function settings_fields($option_group)
     wp_nonce_field($option_group);
 }
 }
+if (!function_exists('do_settings_sections')) {
+// В этом коде секции/поля настроек через add_settings_section/add_settings_field
+// не регистрируются (шаблоны рендерят markup напрямую) — функция-заглушка.
+function do_settings_sections($page)
+{
+}
+}
+if (!function_exists('do_settings_fields')) {
+function do_settings_fields($page, $section)
+{
+}
+}
+if (!function_exists('add_settings_section')) {
+function add_settings_section($id, $title, $callback, $page, $args = [])
+{
+}
+}
+if (!function_exists('add_settings_field')) {
+function add_settings_field($id, $title, $callback, $page, $section = 'default', $args = [])
+{
+}
+}
 if (!function_exists('add_settings_error')) {
 function add_settings_error($setting, $code, $message, $type = 'error')
 {
