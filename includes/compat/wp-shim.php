@@ -212,7 +212,7 @@ function do_shortcode($content)
 function app_options_table()
 {
     $db = App_Database::instance();
-    return $db->prefix . '_schedule_options';
+    return $db->prefix . 'schedule_options';
 }
 
 function app_load_options()
@@ -353,7 +353,7 @@ function delete_transient($name)
 function app_cron_table()
 {
     $db = App_Database::instance();
-    return $db->prefix . '_schedule_cron';
+    return $db->prefix . 'schedule_cron';
 }
 
 if (!function_exists('wp_get_schedules')) {
@@ -1528,5 +1528,34 @@ function size_format($bytes, $decimal_precision = 1)
     $pow = min($pow, count($units) - 1);
     $bytes /= pow(1024, $pow);
     return round($bytes, $decimal_precision) . ' ' . $units[$pow];
+}
+}
+
+/* dbDelta (аналог wp-admin/includes/upgrade.php) ------------------------------ */
+if (!function_exists('dbDelta')) {
+/**
+ * Выполняет набор CREATE TABLE-запросов, адаптируя их под текущую СУБД
+ * (SQLite/MySQL). Возвращает массив выполненных запросов.
+ */
+function dbDelta($queries = '', $execute = true)
+{
+    if (is_string($queries)) {
+        // Разбиваем на отдельные statements по ';' в конце строк
+        $parts = preg_split('/;\s*[\r\n]+/', $queries);
+        $queries = array_filter(array_map('trim', $parts));
+    }
+    $done = [];
+    $db = App_Database::instance();
+    foreach ((array) $queries as $sql) {
+        $sql = trim($sql);
+        if ($sql === '') {
+            continue;
+        }
+        if ($execute) {
+            $db->query($sql);
+        }
+        $done[] = $sql;
+    }
+    return $done;
 }
 }

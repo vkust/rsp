@@ -90,6 +90,70 @@ class App_Database
     }
 
     /**
+     * Транслятор MySQL DML → SQLite. Заменяет SHOW COLUMNS / SHOW TABLES на
+     * аналоги через sqlite_master, а MySQL-специфичные date-функции
+     * (CURDATE(), NOW(), DATE_SUB(NOW(), INTERVAL n UNIT), DATE(col)) —
+     * на эквиваленты SQLite. На MySQL запросы проходят без изменений.
+     */
+    private function translate_sql($query)
+    {
+        if (!$this->is_sqlite()) {
+            return $query;
+        }
+
+        // SHOW TABLES LIKE 'name'
+        if (preg_match("/^\\s*SHOW\\s+TABLES\\s+LIKE\\s+'([^']+)'/i", $query, $m)) {
+            $t = str_replace("'", "''", $m[1]);
+            return "SELECT name FROM sqlite_master WHERE type='table' AND name='$t'";
+        }
+
+        // SHOW COLUMNS FROM `tbl` [WHERE Field = 'x'] [LIKE 'y']
+        if (preg_match('/^\\s*SHOW\\s+COLUMNS\\s+FROM\\s+[`\"]?([A-Za-z0-9_]+)[`\"]?/i', $query, $m)) {
+            $table = $m[1];
+            $where = '';
+            if (preg_match("/\\bLIKE\\s+'([^']+)'/i", $query, $lm)) {
+                $where = " WHERE name='" . str_replace("'", "''", $lm[1]) . "'";
+            } elseif (preg_match("/Field\\s*=\\s*'([^']+)'/i", $query, $wm)) {
+                $where = " WHERE name='" . str_replace("'", "''", $wm[1]) . "'";
+            }
+            $rows = $this->get_columns($table);
+            if ($where !== '') {
+                $col = preg_replace('/[^A-Za-z0-9_]/', '', substr($where, strlen(" WHERE name='")));
+                $rows = array_values(array_filter($rows, function ($r) use ($col) {
+                    return $r->Field === $col;
+                }));
+            }
+            $this->last_result   = $rows;
+            $this->num_rows      = count($rows);
+            $this->last_error    = '';
+            return null; // сигнал: результат уже подготовлен
+        }
+
+        // Date/time функции MySQL → SQLite
+        $query = preg_replace('/\bCURDATE\s*\(\s*\)/i', "date('now','localtime')", $query);
+        $query = preg_replace('/\bNOW\s*\(\s*\)/i', "datetime('now','localtime')", $query);
+        $units = ['MICROSECOND' => 'microseconds', 'SECOND' => 'seconds', 'MINUTE' => 'minutes',
+                  'HOUR' => 'hours', 'DAY' => 'days', 'WEEK' => 'weeks', 'MONTH' => 'months', 'YEAR' => 'years'];
+        $u = implode('|', array_keys($units));
+        $map = strtolower($units);
+        $query = preg_replace_callback(
+            "/\bDATE_SUB\s*\(\s*(?:CURDATE\s*\(\s*\)|NOW\s*\(\s*\)|datetime\('now','localtime'\)|date\('now','localtime'\))\s*,\s*INTERVAL\s+(-?\d+|%\w)\s+(?:$u)\s*\)/i",
+            function ($mm) use ($map) {
+                return "datetime('now','localtime','-{$mm[2]} " . $map[strtoupper($mm[3])] . "')";
+            },
+            $query
+        );
+        $query = preg_replace_callback(
+            "/\bDATE\s*\(\s*([A-Za-z0-9_.`]+)\s*\)/i",
+            function ($mm) {
+                return "date({$mm[1]})";
+            },
+            $query
+        );
+        return $query;
+    }
+
+    /**
      * Транслятор MySQL DDL → SQLite. Позволяет переиспользовать SQL-скрипты
      * плагина (CREATE TABLE ... KEY ..., UNIQUE KEY ...) на SQLite без правок:
      * ключевые конструкции KEY/UNIQUE KEY выносятся в отдельные CREATE INDEX,
@@ -235,6 +299,12 @@ class App_Database
             $query = $this->prepare($query, ...$args);
         }
         if ($this->type === 'sqlite') {
+            $translated = $this->translate_sql($query);
+            if ($translated === null) {
+                // SHOW COLUMNS: результат уже лежит в last_result
+                return $this->last_result;
+            }
+            $query = $translated;
             $query = $this->translate_mysql_ddl($query);
         }
         try {
