@@ -656,7 +656,7 @@ if (!function_exists('esc_url')) {
 function esc_url($url)
 {
     $url = (string) $url;
-    $url = preg_replace('#[^%a-zA-Z0-9\x7f-\xff\-_.,:/\?#&;=~+$@\!*\'()\[\] ]#', '', $url);
+    $url = preg_replace('/[^%a-zA-Z0-9\x7f-\xff\-_.,:\/\?#&;=~+$@!*\'()\[\] ]/', '', $url);
     $url = str_replace(' ', '%20', $url);
     return htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
 }
@@ -665,7 +665,7 @@ if (!function_exists('esc_url_raw')) {
 function esc_url_raw($url)
 {
     $url = (string) $url;
-    $url = preg_replace('#[^%a-zA-Z0-9\x7f-\xff\-_.,:/\?#&;=~+$@\!*\'()\[\] ]#', '', $url);
+    $url = preg_replace('/[^%a-zA-Z0-9\x7f-\xff\-_.,:\/\?#&;=~+$@!*\'()\[\] ]/', '', $url);
     return str_replace(' ', '%20', $url);
 }
 }

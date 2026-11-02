@@ -7,8 +7,15 @@
 // Раздача статики для встроенного сервера PHP (php -S localhost:8080 -t public)
 if (PHP_SAPI === 'cli-server') {
     $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-    if (preg_match('#^/assets/#', $path) && is_file(__DIR__ . $path)) {
-        return false; // отдаём файл как есть
+    // assets/ находятся в корне проекта (вне public/) — отдаём их напрямую
+    if (preg_match('#^/assets/#', $path) && is_file(dirname(__DIR__) . $path)) {
+        $file = dirname(__DIR__) . $path;
+        $types = ['css' => 'text/css', 'js' => 'application/javascript', 'png' => 'image/png',
+                  'jpg' => 'image/jpeg', 'svg' => 'image/svg+xml'];
+        $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+        header('Content-Type: ' . ($types[$ext] ?? 'application/octet-stream'));
+        readfile($file);
+        return true;
     }
 }
 

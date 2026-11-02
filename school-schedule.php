@@ -15,8 +15,26 @@ if (!defined('ABSPATH')) {
 if (!defined('SCHOOL_SCHEDULE_PATH')) {
     define('SCHOOL_SCHEDULE_PATH', APP_ROOT . '/');
 }
+// URL приложения может ещё не быть определён на момент загрузки этого файла
+// (bootstrap резолвит APP_URL позже для некоторых сценариев) — поэтому константу
+// SCHOOL_SCHEDULE_URL вычисляем лениво через функцию app_asset_url().
 if (!defined('SCHOOL_SCHEDULE_URL')) {
-    define('SCHOOL_SCHEDULE_URL', rtrim(plugin_dir_url(__FILE__), '/') . '/');
+    define('SCHOOL_SCHEDULE_URL', (defined('APP_URL') ? rtrim(APP_URL, '/') : '') . '/');
+}
+
+if (!function_exists('app_asset_url')) {
+    /**
+     * Ленивое построение URL к ассету проекта (assets/... или uploads/...).
+     * Использует актуальный APP_URL на момент вызова, а не на момент загрузки файла.
+     */
+    function app_asset_url($rel) {
+        $base = defined('APP_URL') ? rtrim(APP_URL, '/') : '';
+        if ($base === '' && PHP_SAPI !== 'cli' && !empty($_SERVER['HTTP_HOST'])) {
+            $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+            $base = $scheme . '://' . $_SERVER['HTTP_HOST'];
+        }
+        return $base . '/' . ltrim((string) $rel, '/');
+    }
 }
 define('SCHOOL_SCHEDULE_VERSION', '2.0.0');
 
@@ -352,7 +370,7 @@ class SchoolSchedule {
 
         wp_enqueue_style(
             'school-schedule',
-            SCHOOL_SCHEDULE_URL . 'assets/css/schedule.css',
+            app_asset_url('assets/css/schedule.css'),
             array(),
             SCHOOL_SCHEDULE_VERSION
         );
@@ -367,7 +385,7 @@ class SchoolSchedule {
 
         wp_enqueue_script(
             'school-schedule',
-            SCHOOL_SCHEDULE_URL . 'assets/js/schedule.js',
+            app_asset_url('assets/js/schedule.js'),
             array('jquery', 'jquery-ui-core', 'jquery-ui-selectmenu'),
             SCHOOL_SCHEDULE_VERSION,
             true
@@ -376,7 +394,7 @@ class SchoolSchedule {
         // Добавляем стили для шаблона
         wp_enqueue_style(
             'school-schedule-template',
-            SCHOOL_SCHEDULE_URL . 'assets/css/schedule-template.css',
+            app_asset_url('assets/css/schedule-template.css'),
             [],
             filemtime(SCHOOL_SCHEDULE_PATH . 'assets/css/schedule-template.css')
         );
@@ -408,14 +426,14 @@ class SchoolSchedule {
 
         wp_enqueue_style(
             'school-schedule-admin',
-            SCHOOL_SCHEDULE_URL . 'assets/css/admin.css',
+            app_asset_url('assets/css/admin.css'),
             [],
             filemtime(SCHOOL_SCHEDULE_PATH . 'assets/css/admin.css')
         );
 
         wp_enqueue_script(
             'school-schedule-admin',
-            SCHOOL_SCHEDULE_URL . 'assets/js/admin.js',
+            app_asset_url('assets/js/admin.js'),
             ['jquery'],
             filemtime(SCHOOL_SCHEDULE_PATH . 'assets/js/admin.js'),
             true
@@ -616,14 +634,14 @@ class SchoolSchedule {
         // Подключаем специальные скрипты для панелей
         wp_enqueue_style(
             'school-schedule',
-            SCHOOL_SCHEDULE_URL . 'assets/css/schedule.css',
+            app_asset_url('assets/css/schedule.css'),
             [],
             filemtime(SCHOOL_SCHEDULE_PATH . 'assets/css/schedule.css')
         );
 
         wp_enqueue_script(
             'school-schedule',
-            SCHOOL_SCHEDULE_URL . 'assets/js/schedule.js',
+            app_asset_url('assets/js/schedule.js'),
             ['jquery'],
             filemtime(SCHOOL_SCHEDULE_PATH . 'assets/js/schedule.js'),
             true
