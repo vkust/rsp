@@ -89,3 +89,6 @@ Stack trace:
 #5 /workspace/public/index.php(39): App_Router::dispatch()
 #6 {main}
   thrown in /workspace/includes/telegram-bot.php on line 2285
+[02-Nov-2026 15:49:50 Europe/Moscow] DB query error: SQLSTATE[HY000]: General error: 1 duplicate column name: source SQL: ALTER TABLE `schedule_notifications` ADD COLUMN `source` TEXT NOT NULL DEFAULT 'auto'
+[02-Nov-2026 15:49:55 Europe/Moscow] DB query error: SQLSTATE[HY000]: General error: 1 duplicate column name: source SQL: ALTER TABLE `schedule_notifications` ADD COLUMN `source` TEXT NOT NULL DEFAULT 'auto'
+[02-Nov-2026 15:50:12 Europe/Moscow] DB query error: SQLSTATE[HY000]: General error: 1 duplicate column name: source SQL: ALTER TABLE `schedule_notifications` ADD COLUMN `source` TEXT NOT NULL DEFAULT 'auto'

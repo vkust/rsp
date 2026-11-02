@@ -150,6 +150,22 @@ class App_Database
             $this->pending_after_ddl = array_merge($this->pending_after_ddl ?? [], $extra);
         }
 
+        // ALTER TABLE ... ADD COLUMN ... [AFTER ...] — SQLite не поддерживает AFTER,
+        // вырезаем его; enum(...) приводим к TEXT с CHECK.
+        if (preg_match('/^\s*ALTER\s+TABLE\s+[`"\']?([A-Za-z0-9_]+)[`"\']?\s+ADD\s+(?:COLUMN\s+)?[`"\']?(\w+)[`"\']?\s+(.*)$/is', $query, $am)) {
+            $def = $am[3];
+            $def = preg_replace('/\bAFTER\s+[`\w"]+\s*$/i', '', $def);
+            $def = $this->normalize_column_def_sqlite($def);
+            return "ALTER TABLE `{$am[1]}` ADD COLUMN `{$am[2]}` {$def}";
+        }
+        // ALTER TABLE ... MODIFY col ... — в SQLite изменение типа колонки невозможно;
+        // тип в SQLite динамический, поэтому запрос выполняется как no-op (успех без действий).
+        if (preg_match('/^\s*ALTER\s+TABLE\s+[`"\']?[A-Za-z0-9_]+[`"\']?\s+MODIFY\b/i', $query)) {
+            $this->last_error    = '';
+            $this->rows_affected = 0;
+            return ''; // пустой запрос: query() пропустит выполнение через PDO
+        }
+
         // SHOW TABLES LIKE 'name'
         if (preg_match("/^\\s*SHOW\\s+TABLES\\s+LIKE\\s+'([^']+)'/i", $query, $m)) {
             $t = str_replace("'", "''", $m[1]);
@@ -223,6 +239,16 @@ class App_Database
             $query
         );
         return $query;
+    }
+
+    /**
+     * Нормализация определения колонки MySQL → SQLite: enum('a','b') → TEXT.
+     */
+    private function normalize_column_def_sqlite($def)
+    {
+        $def = trim($def);
+        $def = preg_replace("/\benum\s*\([^)]*\)/i", 'TEXT', $def);
+        return $def;
     }
 
     /**
@@ -379,6 +405,12 @@ class App_Database
                 return $this->last_result;
             }
             $query = $translated;
+            if (trim($query) === '') {
+                // no-op (например, MySQL-специфичный ALTER ... MODIFY для SQLite)
+                $this->last_error    = '';
+                $this->rows_affected = 0;
+                return 0;
+            }
             $query = $this->translate_mysql_ddl($query);
         }
         try {
