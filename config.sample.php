@@ -25,8 +25,9 @@ return [
             'pass'    => getenv('SCHEDULE_DB_PASS') ?: '',
             'charset' => 'utf8mb4',
         ],
-        // Префикс таблиц (как $wpdb->prefix в WordPress). Таблицы будут schedule_users и т.д.
-        'prefix'   => 'schedule_',
+        // Префикс таблиц (как $wpdb->prefix в WordPress). По умолчанию пуст:
+        // таблицы называются schedule_users, schedule_options и т.д.
+        'prefix'   => '',
     ],
 
     // Каталог загрузки XML-файлов расписания (аналог wp_upload_dir()).

@@ -607,7 +607,9 @@ function wp_upload_dir($time = null, $create_dir = true, $refresh_cache = false)
     if ($create_dir && !is_dir($basedir)) {
         @mkdir($basedir, 0775, true);
     }
-    $baseurl = App_Config::site_url('uploads');
+    // baseurl строим от APP_URL (авто-определяется из запроса в bootstrap.php),
+    // чтобы относительные URL загрузок работали на любом хосте/порту.
+    $baseurl = rtrim(APP_URL, '/') . '/uploads';
     return [
         'path'     => $basedir,
         'url'      => $baseurl,

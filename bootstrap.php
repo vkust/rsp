@@ -12,8 +12,17 @@ require_once APP_ROOT . '/includes/core/config.php';
 App_Config::load();
 
 if (!defined('APP_URL')) {
-    // Базовый URL вычисляется из конфигурации (site_url); константа нужна для plugin_dir_url
-    define('APP_URL', rtrim((string) App_Config::get('site_url', ''), '/'));
+    // Базовый URL приложения. Берётся из config ('site_url'); если он не настроен
+    // или значение дефолтное — вычисляем из текущего HTTP-запроса (для CLI остаётся пустым).
+    $configured = rtrim((string) App_Config::get('site_url', ''), '/');
+    if ($configured === '' || (PHP_SAPI === 'cli-server' && strpos($configured, ':8080') !== false)) {
+        $configured = '';
+    }
+    if ($configured === '' && PHP_SAPI !== 'cli' && !empty($_SERVER['HTTP_HOST'])) {
+        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $configured = $scheme . '://' . $_SERVER['HTTP_HOST'];
+    }
+    define('APP_URL', $configured);
 }
 
 // Отображение ошибок (аналог WP_DEBUG из старого кода плагина)

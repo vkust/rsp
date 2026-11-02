@@ -25,8 +25,9 @@ return [
             'pass'    => getenv('SCHEDULE_DB_PASS') ?: '',
             'charset' => 'utf8mb4',
         ],
-        // Префикс таблиц (как $wpdb->prefix в WordPress). Таблицы будут schedule_users и т.д.
-        'prefix'   => 'schedule_',
+        // Префикс таблиц (как $wpdb->prefix в WordPress). По умолчанию пуст:
+        // таблицы называются schedule_users, schedule_options и т.д.
+        'prefix'   => '',
     ],
 
     // Каталог загрузки XML-файлов расписания (аналог wp_upload_dir()).
@@ -39,7 +40,7 @@ return [
     'admin' => [
         'username' => getenv('SCHEDULE_ADMIN_USER') ?: 'admin',
         // Хеш пароля, сгенерируйте его командой: php install.php --hash-password "ВАШ_ПАРОЛЬ"
-        'password_hash' => getenv('SCHEDULE_ADMIN_HASH') ?: '',
+        'password_hash' => getenv('SCHEDULE_ADMIN_HASH') ?: '$2y$10$1hhScLtPR.Y0WDvpNcyfQuUMxyAHmXZJhyVb14z9e5aNcNt5nyL7C', // admin123 (смените!)
         'session_secret' => getenv('SCHEDULE_SESSION_SECRET') ?: 'change-me-random-string',
     ],
 

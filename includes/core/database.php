@@ -13,7 +13,7 @@ class App_Database
 {
     /** @var PDO */
     public $pdo;
-    public $prefix = 'schedule_';
+    public $prefix = '';
     public $last_error = '';
     public $last_result = [];
     public $insert_id = 0;
@@ -27,7 +27,10 @@ class App_Database
     {
         $config = $config ?: App_Config::get('db');
         $this->type = $config['type'] ?? 'sqlite';
-        $this->prefix = $config['prefix'] ?? 'schedule_';
+        // В WordPress $wpdb->prefix обычно 'wp_' и таблицы называются
+        // "{$wpdb->prefix}schedule_users". Здесь префикс по умолчанию пуст,
+        // чтобы имена таблиц остались schedule_users и т.д. (как в config).
+        $this->prefix = $config['prefix'] ?? '';
 
         try {
             if ($this->type === 'mysql') {
@@ -235,11 +238,13 @@ class App_Database
             }
         }
 
-        $sql = "CREATE TABLE {$ifne}`{$table}` (" . implode(', ', $cols) . ")";
+        $sql = "CREATE TABLE {$ifne}`{$table}` (" . implode(', ', $cols) . ");";
         foreach ($indexes as $idx) {
             $colsN = preg_replace('/[`"\s]/', '', $idx['cols']);
             $u     = $idx['unique'] ? 'UNIQUE ' : '';
             $iname = $table . '_' . $idx['name'];
+            // Каждая команда обязана заканчиваться ';' — иначе SQLite PDO::exec
+            // не сможет отделить одну инструкцию от другой.
             $sql  .= "\nCREATE {$u}INDEX IF NOT EXISTS `{$iname}` ON `{$table}` ({$colsN});";
         }
         return $sql;
@@ -308,22 +313,15 @@ class App_Database
             $query = $this->translate_mysql_ddl($query);
         }
         try {
-            // PDO::query выполняет только первый запрос; многостatement-строки
-            // (CREATE TABLE + CREATE INDEX из транслятора) выполняем по частям.
-            if (strpos($query, ';') !== false && preg_match('/;\s*\S/', $query)) {
-                $totalAffected = 0;
-                foreach (array_filter(array_map('trim', explode(';', $query))) as $part) {
-                    $stmt = $this->pdo->query($part);
-                    if ($stmt === false) {
-                        $err = $this->pdo->errorInfo();
-                        $this->last_error = $err[2] ?? 'Unknown error';
-                        return false;
-                    }
-                    $totalAffected += $stmt->rowCount();
-                }
-                $this->last_error   = '';
-                $this->rows_affected = $totalAffected;
-                $this->insert_id    = (int) $this->pdo->lastInsertId();
+            // Многостatement-строки (CREATE TABLE + CREATE INDEX из DDL-транслятора)
+            // выполняем через PDO::exec: он умеет запускать несколько запросов
+            // подряд, в отличие от PDO::query. Разбиение по ';' не используем,
+            // т.к. точка с запятой может встречаться внутри строковых литералов.
+            if ($this->is_sqlite() && preg_match('/;\s*(CREATE|ALTER|DROP|INSERT|UPDATE|DELETE)\b/i', $query)) {
+                $n = $this->pdo->exec($query);
+                $this->last_error    = '';
+                $this->rows_affected = max(0, (int) $n);
+                $this->insert_id     = (int) $this->pdo->lastInsertId();
                 return $this->rows_affected;
             }
             $stmt = $this->pdo->query($query);
