@@ -52,3 +52,21 @@ Stack trace:
 #1 /workspace/public/index.php(28): App_Router::dispatch()
 #2 {main}
   thrown in /workspace/includes/core/router.php on line 321
+[02-Nov-2026 15:32:34 Europe/Moscow] PHP Fatal error:  Uncaught Error: Call to undefined function wp_get_referer() in /workspace/includes/core/router.php:321
+Stack trace:
+#0 /workspace/includes/core/router.php(92): App_Router::handle_options_post()
+#1 /workspace/public/index.php(28): App_Router::dispatch()
+#2 {main}
+  thrown in /workspace/includes/core/router.php on line 321
+[02-Nov-2026 15:32:42 Europe/Moscow] PHP Fatal error:  Uncaught Error: Call to undefined function wp_get_referer() in /workspace/includes/core/router.php:321
+Stack trace:
+#0 /workspace/includes/core/router.php(92): App_Router::handle_options_post()
+#1 /workspace/public/index.php(28): App_Router::dispatch()
+#2 {main}
+  thrown in /workspace/includes/core/router.php on line 321
+[02-Nov-2026 15:32:47 Europe/Moscow] PHP Fatal error:  Uncaught Error: Call to undefined function wp_get_referer() in /workspace/includes/core/router.php:321
+Stack trace:
+#0 /workspace/includes/core/router.php(92): App_Router::handle_options_post()
+#1 /workspace/public/index.php(28): App_Router::dispatch()
+#2 {main}
+  thrown in /workspace/includes/core/router.php on line 321

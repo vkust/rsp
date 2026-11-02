@@ -139,31 +139,36 @@ class App_Database
                   'HOUR' => 'hours', 'DAY' => 'days', 'WEEK' => 'weeks', 'MONTH' => 'months', 'YEAR' => 'years'];
         $u = implode('|', array_keys($units));
         $map = array_change_key_case($units, CASE_LOWER);
-        // INTERVAL <n> UNIT / INTERVAL <'%s'> UNIT (после подстановки %s числом или в кавычках)
-        $query = preg_replace_callback(
-            "/\bDATE_SUB\s*\(\s*(?:CURDATE\s*\(\s*\)|NOW\s*\(\s*\)|datetime\('now','localtime'\)|date\('now','localtime'\))\s*,\s*INTERVAL\s+(['\"]?)(-?[\d%a-z_]+)\1\s+(?:$u)\s*\)/i",
-            function ($mm) use ($map) {
-                $n = $mm[2];
-                if (is_numeric($n)) {
-                    return "datetime('now','localtime','-$n " . $map[strtoupper($mm[3])] . "')";
-                }
-                // параметр вида %d/%s — подставляем как выражение: '-' || param || ' unit'
-                return "datetime('now','localtime','-'||" . $n . "||' " . $map[strtoupper($mm[3])] . "')";
-            },
-            $query
-        );
-        // DATE_ADD симметрично (со знаком +)
-        $query = preg_replace_callback(
-            "/\bDATE_ADD\s*\(\s*(?:CURDATE\s*\(\s*\)|NOW\s*\(\s*\)|datetime\('now','localtime'\)|date\('now','localtime'\))\s*,\s*INTERVAL\s+(['\"]?)(-?[\d%a-z_]+)\1\s+(?:$u)\s*\)/i",
-            function ($mm) use ($map) {
-                $n = $mm[2];
-                if (is_numeric($n)) {
-                    return "datetime('now','localtime','+$n " . $map[strtoupper($mm[3])] . "')";
-                }
-                return "datetime('now','localtime','+'||" . $n . "||' " . $map[strtoupper($mm[3])] . "')";
-            },
-            $query
-        );
+        // Интервал: число (или параметр %d/%s, уже подставленный) в кавычках или без них.
+        $interval = "\s*INTERVAL\s+['\"]?(-?[\d%a-z_]+)['\"]?\s+($u)\s*";
+        $inner    = "(?:CURDATE\\s*\\(\\s*\\)|NOW\\s*\\(\\s*\\)|datetime\\('now','localtime'\\)|date\\('now','localtime'\\)|"
+                  . "datetime\\('now','localtime',[^)]*\\)|date\\([^()]*\\))";
+        // Сначала заменяем вложенные вызовы на каноническую форму SQLite,
+        // затем сами DATE_SUB/DATE_ADD с этой канонической формой.
+        for ($pass = 0; $pass < 3; $pass++) {
+            $query = preg_replace_callback(
+                "/\\bDATE_SUB\\s*\\(\\s*{$inner},{$interval}\\)/i",
+                function ($mm) use ($map) {
+                    $n = $mm[1];
+                    if (is_numeric($n)) {
+                        return "datetime('now','localtime','-$n " . $map[strtolower($mm[2])] . "')";
+                    }
+                    return "datetime('now','localtime','-'||" . $n . "||' " . $map[strtolower($mm[2])] . "')";
+                },
+                $query
+            );
+            $query = preg_replace_callback(
+                "/\\bDATE_ADD\\s*\\(\\s*{$inner},{$interval}\\)/i",
+                function ($mm) use ($map) {
+                    $n = $mm[1];
+                    if (is_numeric($n)) {
+                        return "datetime('now','localtime',\"+$n " . $map[strtolower($mm[2])] . "\")";
+                    }
+                    return "datetime('now','localtime','+'||" . $n . "||' " . $map[strtolower($mm[2])] . "')";
+                },
+                $query
+            );
+        }
         $query = preg_replace_callback(
             "/\bDATE\s*\(\s*([A-Za-z0-9_.`]+)\s*\)/i",
             function ($mm) {

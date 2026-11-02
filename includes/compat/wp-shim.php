@@ -760,6 +760,24 @@ function wp_unslash($value)
     return stripslashes((string) $value);
 }
 }
+if (!function_exists('wp_get_referer')) {
+/**
+ * Аналог WP: URL из заголовка Referer (очищенный) либо false.
+ */
+function wp_get_referer()
+{
+    if (empty($_SERVER['HTTP_REFERER'])) {
+        return false;
+    }
+    $ref = trim(wp_unslash((string) $_SERVER['HTTP_REFERER']));
+    // Отбрасываем фрагмент и запрещённые схемы
+    if (preg_match('#^[a-z][a-z0-9+.-]*://#i', $ref) === 0 && strpos($ref, '/') !== 0) {
+        return false;
+    }
+    $ref = preg_replace('/#.*$/', '', $ref);
+    return esc_url_raw($ref);
+}
+}
 if (!function_exists('wp_parse_args')) {
 function wp_parse_args($args, $defaults = [])
 {

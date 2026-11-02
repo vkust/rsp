@@ -1,1 +1,3 @@
-*.sqlite
+*.log
+logs/
+data/*.sqlite
