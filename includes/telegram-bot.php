@@ -97,7 +97,7 @@ class ScheduleTelegramBot {
                 KEY created_at (created_at)
             ) $charset_collate;";
 
-        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+        
             dbDelta($sql);
 
         // Проверяем и обновляем структуру таблицы подписок
@@ -762,7 +762,7 @@ class ScheduleTelegramBot {
                     KEY created_at (created_at)
                 ) $charset_collate;";
                 
-                require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+                
                 dbDelta($sql);
             }
             

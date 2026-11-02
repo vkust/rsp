@@ -11,23 +11,32 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-// Определяем константы плагина
-define('SCHOOL_SCHEDULE_PATH', plugin_dir_path(__FILE__));
-define('SCHOOL_SCHEDULE_URL', plugin_dir_url(__FILE__));
-define('SCHOOL_SCHEDULE_VERSION', '1.9.1');
+// Определяем константы приложения (в автономном режиме это пути проекта)
+if (!defined('SCHOOL_SCHEDULE_PATH')) {
+    define('SCHOOL_SCHEDULE_PATH', APP_ROOT . '/');
+}
+// URL приложения может ещё не быть определён на момент загрузки этого файла
+// (bootstrap резолвит APP_URL позже для некоторых сценариев) — поэтому константу
+// SCHOOL_SCHEDULE_URL вычисляем лениво через функцию app_asset_url().
+if (!defined('SCHOOL_SCHEDULE_URL')) {
+    define('SCHOOL_SCHEDULE_URL', (defined('APP_URL') ? rtrim(APP_URL, '/') : '') . '/');
+}
 
-// Временно включаем отображение ошибок для отладки
-if (!defined('WP_DEBUG')) {
-    define('WP_DEBUG', true);
+if (!function_exists('app_asset_url')) {
+    /**
+     * Ленивое построение URL к ассету проекта (assets/... или uploads/...).
+     * Использует актуальный APP_URL на момент вызова, а не на момент загрузки файла.
+     */
+    function app_asset_url($rel) {
+        $base = defined('APP_URL') ? rtrim(APP_URL, '/') : '';
+        if ($base === '' && PHP_SAPI !== 'cli' && !empty($_SERVER['HTTP_HOST'])) {
+            $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+            $base = $scheme . '://' . $_SERVER['HTTP_HOST'];
+        }
+        return $base . '/' . ltrim((string) $rel, '/');
+    }
 }
-if (!defined('WP_DEBUG_DISPLAY')) {
-    define('WP_DEBUG_DISPLAY', true);
-}
-if (!defined('WP_DEBUG_LOG')) {
-    define('WP_DEBUG_LOG', true);
-}
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+define('SCHOOL_SCHEDULE_VERSION', '2.0.0');
 
 class SchoolSchedule {
     private $default_categories = array(
@@ -361,7 +370,7 @@ class SchoolSchedule {
 
         wp_enqueue_style(
             'school-schedule',
-            SCHOOL_SCHEDULE_URL . 'assets/css/schedule.css',
+            app_asset_url('assets/css/schedule.css'),
             array(),
             SCHOOL_SCHEDULE_VERSION
         );
@@ -376,7 +385,7 @@ class SchoolSchedule {
 
         wp_enqueue_script(
             'school-schedule',
-            SCHOOL_SCHEDULE_URL . 'assets/js/schedule.js',
+            app_asset_url('assets/js/schedule.js'),
             array('jquery', 'jquery-ui-core', 'jquery-ui-selectmenu'),
             SCHOOL_SCHEDULE_VERSION,
             true
@@ -385,7 +394,7 @@ class SchoolSchedule {
         // Добавляем стили для шаблона
         wp_enqueue_style(
             'school-schedule-template',
-            SCHOOL_SCHEDULE_URL . 'assets/css/schedule-template.css',
+            app_asset_url('assets/css/schedule-template.css'),
             [],
             filemtime(SCHOOL_SCHEDULE_PATH . 'assets/css/schedule-template.css')
         );
@@ -417,14 +426,14 @@ class SchoolSchedule {
 
         wp_enqueue_style(
             'school-schedule-admin',
-            SCHOOL_SCHEDULE_URL . 'assets/css/admin.css',
+            app_asset_url('assets/css/admin.css'),
             [],
             filemtime(SCHOOL_SCHEDULE_PATH . 'assets/css/admin.css')
         );
 
         wp_enqueue_script(
             'school-schedule-admin',
-            SCHOOL_SCHEDULE_URL . 'assets/js/admin.js',
+            app_asset_url('assets/js/admin.js'),
             ['jquery'],
             filemtime(SCHOOL_SCHEDULE_PATH . 'assets/js/admin.js'),
             true
@@ -551,7 +560,8 @@ class SchoolSchedule {
             $target_path = $schedule_dir . '/' . $filename;
 
             // Перемещаем файл
-            if (!move_uploaded_file($file['tmp_name'], $target_path)) {
+            $moved = is_uploaded_file($file["tmp_name"]) ? move_uploaded_file($file["tmp_name"], $target_path) : rename($file["tmp_name"], $target_path);
+            if (!$moved) {
                 throw new Exception('Не удалось переместить загруженный файл');
             }
 
@@ -625,14 +635,14 @@ class SchoolSchedule {
         // Подключаем специальные скрипты для панелей
         wp_enqueue_style(
             'school-schedule',
-            SCHOOL_SCHEDULE_URL . 'assets/css/schedule.css',
+            app_asset_url('assets/css/schedule.css'),
             [],
             filemtime(SCHOOL_SCHEDULE_PATH . 'assets/css/schedule.css')
         );
 
         wp_enqueue_script(
             'school-schedule',
-            SCHOOL_SCHEDULE_URL . 'assets/js/schedule.js',
+            app_asset_url('assets/js/schedule.js'),
             ['jquery'],
             filemtime(SCHOOL_SCHEDULE_PATH . 'assets/js/schedule.js'),
             true
@@ -1239,26 +1249,22 @@ class SchoolSchedule {
     public function update_database_structure() {
         global $wpdb;
         
-        // Проверяем наличие новых полей в таблице подписок
+        // Проверяем наличие новых полей в таблице подписок (через список колонок —
+        // совместимо и с MySQL, и с SQLite, где SHOW CREATE TABLE недоступен)
         $table_name = $wpdb->prefix . 'schedule_subscriptions';
-        $row = $wpdb->get_row("SHOW CREATE TABLE `{$table_name}`");
-        
-        if ($row) {
-            $create_table_sql = $row->{'Create Table'};
-            
-            // Добавляем поле notify_period_start, если его нет
-            if (strpos($create_table_sql, 'notify_period_start') === false) {
-                $wpdb->query("ALTER TABLE `{$table_name}` 
-                    ADD COLUMN `notify_period_start` tinyint(1) DEFAULT '0' 
-                    AFTER `notify_changes`");
-            }
-            
-            // Добавляем поле notify_period_end, если его нет
-            if (strpos($create_table_sql, 'notify_period_end') === false) {
-                $wpdb->query("ALTER TABLE `{$table_name}` 
-                    ADD COLUMN `notify_period_end` tinyint(1) DEFAULT '0' 
-                    AFTER `notify_period_start`");
-            }
+        $columns = array();
+        foreach ((array) $wpdb->get_columns($table_name) as $col) {
+            $columns[] = isset($col->Field) ? $col->Field : (isset($col->name) ? $col->name : '');
+        }
+
+        // Добавляем поле notify_period_start, если его нет
+        if (!in_array('notify_period_start', $columns, true)) {
+            $wpdb->query("ALTER TABLE `{$table_name}` ADD COLUMN `notify_period_start` tinyint(1) DEFAULT '0'");
+        }
+
+        // Добавляем поле notify_period_end, если его нет
+        if (!in_array('notify_period_end', $columns, true)) {
+            $wpdb->query("ALTER TABLE `{$table_name}` ADD COLUMN `notify_period_end` tinyint(1) DEFAULT '0'");
         }
     }
 

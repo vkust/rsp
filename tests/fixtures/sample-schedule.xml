@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schedule>
+    <periods>
+        <period period="1" name="1 урок" short="1" starttime="08:30" endtime="09:15"/>
+        <period period="2" name="2 урок" short="2" starttime="09:25" endtime="10:10"/>
+        <period period="3" name="3 урок" short="3" starttime="10:20" endtime="11:05"/>
+    </periods>
+    <subjects>
+        <subject id="101" name="Математика" short="Мат"/>
+        <subject id="102" name="Русский язык" short="Рус"/>
+        <subject id="103" name="Физика" short="Физ"/>
+    </subjects>
+    <teachers>
+        <teacher id="201" name="Иванова А. П." short="Иванова А.П."/>
+        <teacher id="202" name="Петров С. Н." short="Петров С.Н."/>
+    </teachers>
+    <classrooms>
+        <classroom id="301" name="Кабинет 101" short="101"/>
+        <classroom id="302" name="Кабинет 205" short="205"/>
+    </classrooms>
+    <classes>
+        <class id="401" name="5А класс" short="5А"/>
+        <class id="402" name="6Б класс" short="6Б"/>
+    </classes>
+    <groups>
+        <group id="501" classid="401" name="гр.1"/>
+        <group id="502" classid="401" name="гр.2"/>
+    </groups>
+    <lessons>
+        <lesson id="601" subjectid="101" teacherids="201" classids="401" groupids=""/>
+        <lesson id="602" subjectid="102" teacherids="202" classids="401" groupids=""/>
+        <lesson id="603" subjectid="103" teacherids="201" classids="402" groupids=""/>
+        <lesson id="604" subjectid="101" teacherids="201" classids="401" groupids="501,502"/>
+    </lessons>
+    <cards>
+        <card lessonid="601" days="10000" period="1" classroomids="301" weeks="" terms=""/>
+        <card lessonid="602" days="10000" period="2" classroomids="302" weeks="" terms=""/>
+        <card lessonid="603" days="01000" period="1" classroomids="301" weeks="" terms=""/>
+        <card lessonid="604" days="00100" period="3" classroomids="302" weeks="" terms=""/>
+    </cards>
+</schedule>
