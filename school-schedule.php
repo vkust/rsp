@@ -1231,7 +1231,7 @@ class SchoolSchedule {
         global $wpdb;
         
         // Проверяем наличие новых полей в таблице подписок
-        $table_name = $wpdb->prefix . 'schedule_subscriptions';
+        $table_name = $wpdb->prefix . '_schedule_subscriptions';
         $row = $wpdb->get_row("SHOW CREATE TABLE `{$table_name}`");
         
         if ($row) {

@@ -106,9 +106,30 @@ class App_Database
         $ifne  = trim($m[1]) !== '' ? 'IF NOT EXISTS ' : '';
         $table = $m[2];
 
-        $open  = strpos($query, '(', strpos($query, $table) + strlen($table));
-        $close = strrpos($query, ')');
-        if ($open === false || $close === false || $close <= $open) {
+        // Открывающая скобка — та, что из общего совпадения паттерна ($m[0]
+        // заканчивается на '(' сразу после имени таблицы).
+        $open = (int) strrpos($m[0], '(');
+        if ($open <= 0 || $query[$open] !== '(') {
+            return $query;
+        }
+
+        // Закрывающая скобка — парная к открывающей (с учётом вложенности),
+        // а не последняя в строке: после тела таблицы могут находиться
+        // суффиксы вида ENGINE=InnoDB DEFAULT CHARSET=utf8.
+        $depth = 0;
+        $close = false;
+        for ($i = $open, $len = strlen($query); $i < $len; $i++) {
+            if ($query[$i] === '(') {
+                $depth++;
+            } elseif ($query[$i] === ')') {
+                $depth--;
+                if ($depth === 0) {
+                    $close = $i;
+                    break;
+                }
+            }
+        }
+        if ($close === false) {
             return $query;
         }
         $body = substr($query, $open + 1, $close - $open - 1);

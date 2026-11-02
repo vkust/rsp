@@ -14,7 +14,10 @@ if (!defined('APP_ROOT')) {
 function app_install_schema()
 {
     $db = App_Database::instance();
-    $p = $db->prefix;
+    // Полное имя таблицы = префикс соединения + '_' + 'schedule_...'
+    // (например schedule_schedule_users). Все запросы в приложении используют
+    // тот же формат: "{$wpdb->prefix}_schedule_users".
+    $p = $db->prefix . '_';
     $created = [];
 
     // Опции (замена wp-options)
@@ -105,8 +108,7 @@ function app_install_schema()
 function app_uninstall_schema()
 {
     $db = App_Database::instance();
-    $p = $db->prefix;
     foreach (['schedule_subscriptions', 'schedule_users', 'schedule_notifications', 'schedule_cron', 'schedule_options'] as $t) {
-        $db->query("DROP TABLE IF EXISTS `{$p}{$t}`");
+        $db->query("DROP TABLE IF EXISTS `" . App_Database::instance()->prefix . "_{$t}`");
     }
 }

@@ -106,7 +106,7 @@ class ScheduleTelegramBot {
 
     private function update_subscriptions_table_structure() {
         global $wpdb;
-        $table_name = $wpdb->prefix . 'schedule_subscriptions';
+        $table_name = $wpdb->prefix . '_schedule_subscriptions';
 
         // Проверяем текущий тип поля entity_id
         $column_info = $wpdb->get_row("SHOW COLUMNS FROM {$table_name} WHERE Field = 'entity_id'");
@@ -744,7 +744,7 @@ class ScheduleTelegramBot {
     private function update_notifications_count() {
         try {
             global $wpdb;
-            $table_name = $wpdb->prefix . 'schedule_notifications';
+            $table_name = $wpdb->prefix . '_schedule_notifications';
             
             // Проверяем существование таблицы
             if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name) {
@@ -1116,7 +1116,7 @@ class ScheduleTelegramBot {
 
     private function create_subscription($chat_id, $action, $entity_id) {
         global $wpdb;
-        $table_name = $wpdb->prefix . 'schedule_subscriptions';
+        $table_name = $wpdb->prefix . '_schedule_subscriptions';
         
         // Определяем тип подписки из действия
         $subscription_type = str_replace('select_', '', $action);
@@ -1359,7 +1359,7 @@ class ScheduleTelegramBot {
             if ($time === 'off') {
                 // Отключаем уведомления
                 $result = $this->db->update(
-                    $this->db->prefix . 'schedule_subscriptions',
+                    $this->db->prefix . '_schedule_subscriptions',
                     [
                         'notify_next_day' => 0,
                         'next_lesson_type' => 'custom'
@@ -1376,7 +1376,7 @@ class ScheduleTelegramBot {
                 $time_with_seconds = sprintf('%02d:00:00', $global_time);
                 
                 $result = $this->db->update(
-                    $this->db->prefix . 'schedule_subscriptions',
+                    $this->db->prefix . '_schedule_subscriptions',
                     [
                         'notify_next_day' => 1,
                         'next_lesson_type' => 'auto',
@@ -1406,7 +1406,7 @@ class ScheduleTelegramBot {
                 }
 
                 $result = $this->db->update(
-                    $this->db->prefix . 'schedule_subscriptions',
+                    $this->db->prefix . '_schedule_subscriptions',
                     [
                         'notify_next_day' => 1,
                         'next_lesson_type' => 'custom',
@@ -1837,7 +1837,7 @@ class ScheduleTelegramBot {
         }
 
         $this->db->update(
-            $this->db->prefix . 'schedule_subscriptions',
+            $this->db->prefix . '_schedule_subscriptions',
             $update,
             ['chat_id' => $chat_id],
             ['%d', '%s', '%s'],
@@ -1873,7 +1873,7 @@ class ScheduleTelegramBot {
     private function set_next_day_notification($chat_id, $time) {
         if ($time === 'off') {
             $this->db->update(
-                $this->db->prefix . 'schedule_subscriptions',
+                $this->db->prefix . '_schedule_subscriptions',
                 ['notify_next_day' => 0],
                 ['chat_id' => $chat_id],
                 ['%d'],
@@ -1883,7 +1883,7 @@ class ScheduleTelegramBot {
             $message = "❌ Уведомления о расписании на завтра отключены";
         } else {
             $this->db->update(
-                $this->db->prefix . 'schedule_subscriptions',
+                $this->db->prefix . '_schedule_subscriptions',
                 [
                     'notify_next_day' => 1,
                     'next_day_time' => $time
@@ -1922,7 +1922,7 @@ class ScheduleTelegramBot {
 
         // Удаляем подписку
         $this->db->delete(
-            $this->db->prefix . 'schedule_subscriptions',
+            $this->db->prefix . '_schedule_subscriptions',
             [
                 'id' => $subscription_id,
                 'chat_id' => $chat_id
@@ -2012,7 +2012,7 @@ class ScheduleTelegramBot {
             if ($existing) {
                 // Обновляем существующую подписку
                 $result = $wpdb->update(
-                    $wpdb->prefix . 'schedule_subscriptions',
+                    $wpdb->prefix . '_schedule_subscriptions',
                     [
                         'notify_next_lesson' => 1,
                         'notify_next_day' => 1,
@@ -2029,7 +2029,7 @@ class ScheduleTelegramBot {
             } else {
                 // Создаем новую подписку
                 $result = $wpdb->insert(
-                    $wpdb->prefix . 'schedule_subscriptions',
+                    $wpdb->prefix . '_schedule_subscriptions',
                     [
                         'chat_id' => $chat_id,
                         'subscription_type' => $type,
@@ -2086,7 +2086,7 @@ class ScheduleTelegramBot {
         global $wpdb;
         try {
             $result = $wpdb->update(
-                $wpdb->prefix . 'schedule_subscriptions',
+                $wpdb->prefix . '_schedule_subscriptions',
                 ['active' => 0],
                 ['id' => $subscription_id],
                 ['%d'],
@@ -2283,7 +2283,7 @@ class ScheduleTelegramBot {
 
             // Обновляем или создаем запись в таблице users
             $this->db->replace(
-                $this->db->prefix . 'schedule_users',
+                $this->db->prefix . '_schedule_users',
                 [
                     'chat_id' => $chat_id,
                     'username' => $username,
@@ -2296,7 +2296,7 @@ class ScheduleTelegramBot {
             // Обновляем username во всех подписках пользователя
             if ($username !== null) {
                 $this->db->update(
-                    $this->db->prefix . 'schedule_subscriptions',
+                    $this->db->prefix . '_schedule_subscriptions',
                     ['username' => $username],
                     ['chat_id' => $chat_id],
                     ['%s'],
@@ -3088,7 +3088,7 @@ class ScheduleTelegramBot {
         
         // Удаляем подписку из базы данных
         $result = $this->db->delete(
-            $this->db->prefix . 'schedule_subscriptions',
+            $this->db->prefix . '_schedule_subscriptions',
             [
                 'id' => $subscription_id,
                 'chat_id' => $chat_id
@@ -3116,7 +3116,7 @@ class ScheduleTelegramBot {
 
     private function update_subscription_notification($subscription_id, $field, $value) {
         return $this->db->update(
-            $this->db->prefix . 'schedule_subscriptions',
+            $this->db->prefix . '_schedule_subscriptions',
             [$field => $value],
             ['id' => $subscription_id],
             ['%d'],
@@ -3126,7 +3126,7 @@ class ScheduleTelegramBot {
 
     private function disable_all_notifications($chat_id) {
         $result = $this->db->update(
-            $this->db->prefix . 'schedule_subscriptions',
+            $this->db->prefix . '_schedule_subscriptions',
             [
                 'notify_next_lesson' => 0,
                 'notify_next_day' => 0
@@ -3156,7 +3156,7 @@ class ScheduleTelegramBot {
 
     private function delete_all_subscriptions($chat_id) {
         $result = $this->db->delete(
-            $this->db->prefix . 'schedule_subscriptions',
+            $this->db->prefix . '_schedule_subscriptions',
             ['chat_id' => $chat_id],
             ['%d']
         );
@@ -3202,7 +3202,7 @@ class ScheduleTelegramBot {
         
         // Обновляем все уведомления для этой подписки
         $result = $this->db->update(
-            $this->db->prefix . 'schedule_subscriptions',
+            $this->db->prefix . '_schedule_subscriptions',
             [
                 'notify_next_lesson' => $new_value,
                 'notify_next_day' => $new_value
@@ -3305,7 +3305,7 @@ class ScheduleTelegramBot {
         }
 
         $result = $this->db->update(
-            $this->db->prefix . 'schedule_subscriptions',
+            $this->db->prefix . '_schedule_subscriptions',
             $update,
             ['id' => $subscription_id],
             ['%d', '%s', '%d'],
@@ -4040,7 +4040,7 @@ class ScheduleTelegramBot {
             $time_with_seconds = sprintf('%02d:00:00', $new_value);
             
             $result = $wpdb->update(
-                $wpdb->prefix . 'schedule_subscriptions',
+                $wpdb->prefix . '_schedule_subscriptions',
                 [
                     'next_day_time' => $time_with_seconds
                 ],
@@ -4294,7 +4294,7 @@ class ScheduleTelegramBot {
     private function save_notification($chat_id, $type, $message, $source = 'auto') {
         try {
             return $this->db->insert(
-                $this->db->prefix . 'schedule_notifications',
+                $this->db->prefix . '_schedule_notifications',
                 [
                     'chat_id' => $chat_id,
                     'notification_type' => $type,
@@ -4938,7 +4938,7 @@ class ScheduleTelegramBot {
         }
         
         global $wpdb;
-        $table_name = $wpdb->prefix . 'schedule_subscriptions';
+        $table_name = $wpdb->prefix . '_schedule_subscriptions';
         
         $new_value = !$subscription['notify_period_start'];
         $wpdb->update(
@@ -4963,7 +4963,7 @@ class ScheduleTelegramBot {
         }
         
         global $wpdb;
-        $table_name = $wpdb->prefix . 'schedule_subscriptions';
+        $table_name = $wpdb->prefix . '_schedule_subscriptions';
         
         $new_value = !$subscription['notify_period_end'];
         $wpdb->update(
@@ -5036,7 +5036,7 @@ class ScheduleTelegramBot {
     
     private function notify_period_start($period) {
         global $wpdb;
-        $table_name = $wpdb->prefix . 'schedule_subscriptions';
+        $table_name = $wpdb->prefix . '_schedule_subscriptions';
         
         // Получаем все подписки на этот период с включенными уведомлениями о начале
         $subscriptions = $wpdb->get_results($wpdb->prepare(
@@ -5064,7 +5064,7 @@ class ScheduleTelegramBot {
     
     private function notify_period_end($period) {
         global $wpdb;
-        $table_name = $wpdb->prefix . 'schedule_subscriptions';
+        $table_name = $wpdb->prefix . '_schedule_subscriptions';
         
         // Получаем все подписки на этот период с включенными уведомлениями об окончании
         $subscriptions = $wpdb->get_results($wpdb->prepare(
