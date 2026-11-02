@@ -1,0 +1,31 @@
+/* Стили для чистого шаблона расписания */
+.schedule-page {
+    background-color: #ffffff;
+}
+
+.schedule-content {
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 0;
+}
+
+/* Переопределение стилей темы */
+.schedule-page #wpadminbar,
+.schedule-page #masthead,
+.schedule-page .site-header,
+.schedule-page .site-footer,
+.schedule-page footer,
+.schedule-page .footer {
+    display: none !important;
+}
+
+.schedule-page .site {
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: 100% !important;
+}
+
+.schedule-page .site-content {
+    margin: 0 !important;
+    padding: 0 !important;
+} 

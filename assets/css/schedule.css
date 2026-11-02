@@ -1,0 +1,2225 @@
+/* Основные стили */
+:root {
+    /* Основные цвета */
+    --primary: #3b82f6;
+    --primary-dark: #2563eb;
+    --primary-light: #60a5fa;
+    --secondary: #64748b;
+    --success: #22c55e;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    
+    /* Нейтральные цвета */
+    --gray-50: #f8fafc;
+    --gray-100: #f1f5f9;
+    --gray-200: #e2e8f0;
+    --gray-300: #cbd5e1;
+    --gray-400: #94a3b8;
+    --gray-500: #64748b;
+    --gray-600: #475569;
+    --gray-700: #334155;
+    --gray-800: #1e293b;
+    --gray-900: #0f172a;
+    
+    /* Тени */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background-color: var(--gray-100);
+    color: var(--gray-800);
+    line-height: 1.5;
+    margin: 0;
+    padding: 0;
+}
+
+/* Контейнер расписания */
+.schedule-container {
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+/* Обновленные стили для панели управления */
+.schedule-controls {
+    background: white;
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    padding: 0rem 0.6rem 0.5rem 0.6rem;
+    margin-bottom: 1rem;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.controls-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    width: 100%;
+    padding: 0.5rem 0;
+}
+
+/* Левая группа */
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex: 0 1 auto;
+}
+
+.schedule-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--gray-800);
+    margin: 0;
+    white-space: nowrap;
+}
+
+.time-display {
+    background: var(--gray-50);
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.375rem;
+    border: 1px solid var(--gray-100);
+}
+
+.time-main-large {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--gray-800);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Центральная группа */
+.header-center {
+    flex: 1;
+    min-width: 0;
+}
+
+.period-status-container {
+    background: var(--gray-50);
+    border-radius: 0.375rem;
+    border: 1px solid var(--gray-100);
+    width: 100%;
+    overflow: hidden;
+}
+
+.time-status-large {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.5rem;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    min-height: 2.25rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.time-icon {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+    stroke-width: 2;
+    flex-shrink: 0;
+}
+
+.status-text {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Правая группа */
+.header-right {
+    flex: 0 0 auto;
+}
+
+.view-controls {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.control-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.375rem;
+    background: var(--primary);
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    height: 2.25rem;
+    transition: all 0.2s;
+}
+
+.control-btn:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+}
+
+.btn-icon {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+    stroke-width: 2;
+    fill: none;
+}
+
+/* Адаптивная верстка */
+@media (max-width: 1200px) {
+    .controls-header {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        padding: 0rem 0rem 0.5rem 0rem;
+    }
+
+    .header-left {
+        flex: 1 1 100%;
+        justify-content: space-between;
+    }
+
+    .header-center {
+        flex: 1 1 auto;
+        min-width: 200px;
+    }
+
+    .header-right {
+        flex: 0 1 auto;
+    }
+    .schedule-title {
+        display: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .schedule-controls {
+        padding: 0rem 0.6rem 0.5rem 0.6rem;
+    }
+
+    .controls-header {
+        gap: 0.5rem;
+        padding: 0rem 0rem 0.5rem 0rem;
+    }
+
+    .header-left {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .time-main-large {
+        font-size: 1.25rem;
+    }
+
+    .btn-text {
+        display: none;
+    }
+
+    .control-btn {
+        padding: 0.375rem;
+        width: 2.25rem;
+        justify-content: center;
+    }
+    .schedule-title {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .controls-header {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 0rem 0rem 0.5rem 0rem;
+        gap: 0.5rem;
+    }
+
+    .header-left,
+    .header-center,
+    .header-right {
+        width: 100%;
+    }
+
+    .view-controls {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .control-btn {
+        flex: 1;
+    }
+}
+
+/* Обновленные стили для контейнеров времени и статуса */
+.time-status-wrapper {
+    display: flow;
+    gap: 0.5rem;
+    flex: 1;
+    min-width: 140px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.time-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+    min-width: 90px;
+    flex: 0 0 auto;
+}
+
+.current-time-large {
+    text-align: center;
+    margin: 0;
+}
+
+.time-main-large {
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--gray-800);
+    font-variant-numeric: tabular-nums;
+}
+
+.period-container {
+    flex: 1;
+    background: var(--gray-50);
+    min-width: 180px;
+}
+
+.time-status-large {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    height: 100%;
+    font-size: 0.875rem;
+    font-weight: 500;
+    word-wrap: break-word;
+    white-space: normal;
+}
+
+.status-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.time-icon {
+    width: 20px;
+    height: 20px;
+    stroke: currentColor;
+    stroke-width: 2;
+    flex-shrink: 0;
+}
+
+/* Кнопки управления */
+.view-controls {
+    display: flex;
+    gap: 0.5rem;
+    flex: 0 0 auto;
+    min-width: 180px;
+}
+
+.btn {
+    font-size: 0.875rem;
+    white-space: nowrap;
+    padding: 0.7rem;
+}
+
+/* Сетка фильтров */
+.filters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.5rem;
+}
+
+.filter-select {
+    width: 100%;
+    padding: 0.375rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+/* Адаптивность */
+@media (max-width: 1200px) {
+    .controls-header {
+        flex-wrap: wrap;
+        padding: 0rem 0rem 0.5rem 0rem;
+        gap: 0.5rem;
+    }
+
+    .schedule-title {
+        flex: 1 1 100%;
+        text-align: center;
+        font-size: 1.25rem;
+    }
+
+    .time-container {
+        flex: 1 1 auto;
+        padding: 0.5rem 0rem 0.5rem 0rem;
+    }
+
+    .view-controls {
+        flex: 1 1 auto;
+        justify-content: flex-end;
+    }
+}
+
+@media (max-width: 768px) {
+    .schedule-controls {
+        padding: 0rem 0.6rem 0.5rem 0.6rem;
+        gap: 0.5rem;
+    }
+
+    .controls-header {
+        gap: 0.5rem;
+        padding: 0rem 0rem 0.5rem 0rem;
+    }
+
+    .time-container {
+        flex-direction: column;
+        padding: 0.5rem 0rem 0.5rem 0rem;
+        min-width: auto;
+    }
+
+    .time-main-large {
+        font-size: 1.75rem;
+    }
+
+    .view-controls {
+        justify-content: center;
+        width: 100%;
+    }
+
+    .btn span {
+        display: none;
+        padding: 0.5rem;
+    }
+
+    .btn {
+        flex: 1;
+        min-width: 36px;
+        display: flex;
+        justify-content: center;
+    }
+
+    .filters-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .schedule-controls {
+        padding: 0rem 0.6rem 0.5rem 0.6rem;
+        gap: 0.375rem;
+    }
+
+    .schedule-title {
+        font-size: 1.125rem;
+    }
+
+    .time-container {
+        padding: 0.5rem 0rem 0.5rem 0rem;
+    }
+
+    .time-main-large {
+        font-size: 1.5rem;
+    }
+
+    .time-status-large {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        min-width: 100px;
+    }
+
+    .filters-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .filter-select {
+        padding: 0.25rem 0.375rem;
+        font-size: 0.8125rem;
+    }
+}
+
+/* Панель управления */
+.schedule-controls {
+    background: white;
+    border-radius: 1rem;
+    box-shadow: var(--shadow-md);
+    max-width: 100%;
+    padding: 0rem 0.6rem 0.5rem 0.6rem;
+}
+
+.controls-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    width: 100%;
+    padding: 0.5rem 0;
+}
+
+.controls-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.view-controls {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: nowrap;
+    flex-shrink: 0;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    font-size: 0.875rem;
+    transition: all 0.2s;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+    min-width: max-content;
+}
+
+.btn-primary {
+    background: var(--primary-light);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--primary-dark);
+}
+
+.btn-secondary {
+    background: var(--gray-100);
+    color: var(--gray-700);
+}
+
+.btn-secondary:hover {
+    background: var(--gray-200);
+}
+
+/* Фильтры */
+.filters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.filter-select {
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--gray-200);
+    border-radius: 0.5rem;
+    background: white;
+    color: var(--gray-700);
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1rem;
+}
+
+.filter-select:hover {
+    border-color: var(--primary-light);
+    background-color: var(--gray-50);
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.filter-select option {
+    padding: 0.5rem;
+    font-weight: 500;
+    color: var(--gray-700);
+    background: white;
+}
+
+.filter-select option:first-child {
+    font-weight: 600;
+    color: var(--gray-400);
+}
+
+.filter-select option:hover {
+    background-color: var(--primary-light);
+    color: white;
+}
+
+/* Контейнер таблицы */
+.schedule-table-wrapper {
+    position: relative;
+    width: 100%;
+    background: white;
+    border-radius: 1rem;
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+    padding-bottom: 4px;
+}
+
+/* Верхнй скроллбар */
+.schedule-table-header-scroll {
+    height: 8px;
+    background: white;
+    overflow-x: auto;
+    overflow-y: hidden;
+    margin: 0;
+    padding: 0;
+}
+
+/* Основная область таблицы */
+.schedule-table-body {
+    overflow-x: auto;
+    width: 100%;
+}
+
+/* Показываем верхний скроллбар только когда есть оризонтальная прокрутка */
+.schedule-table-wrapper.has-scroll .schedule-table-header-scroll {
+    display: block;
+    visibility: visible;
+}
+
+/* Стили для таблицы */
+.schedule-table {
+    width: 100%;
+    min-width: 800px;
+    border-collapse: collapse;
+    background: white;
+}
+
+/* Фиксация заголовков */
+.schedule-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: white;
+}
+
+.schedule-table th {
+    position: sticky;
+    top: 0;
+    background: var(--gray-50);
+    z-index: 2;
+}
+
+/* Стили скроллбаров */
+.schedule-table-header-scroll::-webkit-scrollbar,
+.schedule-table-body::-webkit-scrollbar {
+    height: 8px;
+}
+
+.schedule-table-header-scroll::-webkit-scrollbar-track,
+.schedule-table-body::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 10px;
+}
+
+.schedule-table-header-scroll::-webkit-scrollbar-thumb,
+.schedule-table-body::-webkit-scrollbar-thumb {
+    background: rgba(203, 213, 225, 0.4);
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.schedule-table-header-scroll::-webkit-scrollbar-thumb:hover,
+.schedule-table-body::-webkit-scrollbar-thumb:hover {
+    background: rgba(148, 163, 184, 0.6);
+}
+
+/* Градиенты затхания */
+.schedule-table-wrapper::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    height: 20px;
+    background: linear-gradient(to top, white, transparent);
+    pointer-events: none;
+    opacity: 0.8;
+}
+
+/* Добавляем верхний градиент */
+.schedule-table-wrapper::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    border-radius: 1rem 1rem 0 0;
+}
+
+/* Обновленный контейнер таблицы */
+.schedule-table-wrapper {
+    position: relative;
+    width: 100%;
+    overflow-x: auto;
+    background: white;
+    border-radius: 1rem;
+    box-shadow: var(--shadow-md);
+    padding-bottom: 4px;
+}
+
+/* Стили для заголовков таблицы */
+.schedule-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: white;
+}
+
+.schedule-table th {
+    position: sticky;
+    top: 0;
+    background: var(--gray-50);
+    z-index: 1;
+}
+
+/* Убираем двойные границы у заголовков */
+.schedule-table thead::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 1px;
+    background: var(--gray-200);
+}
+
+.schedule-table {
+    width: 100%;
+    min-width: 800px;
+    border-collapse: collapse;
+    background: white;
+}
+
+.schedule-table th {
+    background: var(--gray-50);
+    padding: 0.25rem;
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--gray-800);
+    text-align: center;
+    border: 1px solid var(--gray-200);
+}
+
+.schedule-table td {
+    padding: 0.5rem;
+    border: 1px solid var(--gray-200);
+    vertical-align: top;
+}
+
+/* Ячейка урока */
+.lesson-cell {
+    background: white;
+    border-radius: 0.5rem;
+    padding: 0.7rem;
+    margin-bottom: 0.5rem;
+    border: 1px solid var(--gray-300);
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.lesson-cell:hover {
+    background: var(--gray-50);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+    border-color: var(--primary-light);
+}
+
+.lesson-subject {
+    color: var(--primary);
+    font-weight: 600;
+    font-size: 0.9375rem;
+    margin-bottom: 0.5rem;
+}
+
+.lesson-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--gray-200);
+}
+
+.teacher-info {
+    padding-bottom: 0.1rem;
+    border-bottom: 1px solid var(--gray-200);
+    color: var(--gray-500);
+    font-size: 0.75rem;
+}
+
+.class-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.25rem;
+}
+
+.class-badge {
+    display: block;
+    color: var(--gray-600);
+    font-size: 0.75rem;
+    line-height: 1.2;
+}
+
+.room-info {
+    padding-top: 0.1rem;
+    border-top: 1px solid var(--gray-200);
+    color: rgb(8 84 109 / 72%);
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .schedule-controls {
+        padding: 0rem 0.6rem 0.5rem 0.6rem;
+        margin: 0.5rem;
+    }
+    
+    .controls-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+        padding: 0rem 0rem 0.5rem 0rem;
+    }
+    
+    .controls-right {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+    
+    .view-controls {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 0.5rem;
+    }
+    
+    .filters-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+    
+    .filter-select {
+        width: 100%;
+        max-width: none;
+        padding: 0.625rem 0.875rem;
+        font-size: 0.8125rem;
+    }
+    
+    .current-time {
+        justify-content: center;
+        padding: 0.375rem 0.75rem;
+    }
+    
+    .schedule-title {
+        font-size: 1.25rem;
+        text-align: center;
+        margin: 0;
+    }
+}
+
+/* Добавляем стили для очень маленьких экранов */
+@media (max-width: 480px) {
+    .schedule-controls {
+        padding: 0rem 0.6rem 0.5rem 0.6rem;
+        margin: 0.25rem;
+    }
+    
+    .btn {
+        font-size: 0.8125rem;
+    }
+    
+    .view-controls {
+        grid-template-columns: 1fr;
+    }
+    
+    #toggleView {
+        width: 100%;
+    }
+}
+
+/* Стили для текста внутри ячеек */
+.lesson-teacher,
+.lesson-class {
+    font-size: 0.75rem;
+    color: var(--gray-500);
+    margin-bottom: 0.25rem;
+}
+
+.lesson-room {
+    font-size: 0.75rem;
+    color: var(--success);
+    font-weight: 500;
+}
+
+/* аголовки периодов */
+.period-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.25rem;
+    padding: 0 0.5rem;
+}
+
+.period-number {
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--gray-800);
+    text-align: center;
+    white-space: nowrap;
+}
+
+.period-time {
+    font-size: 0.75rem;
+    color: var(--gray-500);
+    text-align: center;
+    white-space: nowrap;
+}
+
+.schedule-table th:first-child,
+.schedule-table td:first-child {
+    width: 100px;
+    min-width: 100px;
+    max-width: 100px;
+    white-space: normal;
+    word-wrap: break-word;
+    background: var(--gray-50);
+}
+
+.schedule-table th:not(:first-child),
+.schedule-table td:not(:first-child) {
+    width: auto;
+}
+
+
+.view-icon {
+    width: 20px;
+    height: 20px;
+    transition: transform 0.3s ease;
+}
+
+.view-icon.vertical {
+    transform: rotate(90deg);
+}
+
+.btn .icon {
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    fill: none;
+}
+
+.btn-primary .icon {
+    stroke: white;
+}
+
+.subject-name {
+    color: #5083f4;
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 0.1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.lesson-cell p,
+.lesson-content p,
+.lesson-main p,
+.lesson-details p,
+.teacher-info p,
+.class-info p,
+.room-info p {
+    margin: 0;
+    padding: 0;
+    display: inline;
+}
+
+.lesson-cell > p {
+    display: none;
+}
+
+.lesson-content,
+.lesson-main,
+.lesson-details {
+    display: block;
+    margin: 0;
+    padding: 0;
+}
+
+.schedule-controls p,
+.controls-header p,
+.filters-grid p {
+    padding: 0;
+    display: inline;
+}
+
+.schedule-controls > p {
+    display: none;
+}
+
+.view-controls + p {
+    display: none;
+}
+
+.schedule-controls > p {
+    display: none;
+}
+
+.controls-header > p {
+    display: none;
+}
+
+.schedule-container > p,
+.filter-group > p,
+.schedule-controls > p,
+.controls-header > p,
+.view-controls + p,
+.filters-grid > p {
+    display: none;
+}
+
+/* Добавляем стили для дней недели в вертикальном режиме */
+.day-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.25rem;
+    padding: 0 0.5rem;
+}
+
+.day-name {
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--gray-800);
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* Добавляем стили для кнопки сброса */
+.btn-secondary svg {
+    width: 16px;
+    height: 16px;
+    margin-right: 0.5rem;
+}
+
+#resetFilters {
+    background: var(--gray-100);
+    color: var(--gray-700);
+    display: inline-flex;
+    align-items: center;
+}
+
+#resetFilters:hover {
+    background: var(--gray-200);
+}
+
+#resetFilters svg {
+    transition: transform 0.3s ease;
+}
+
+#resetFilters:hover svg {
+    transform: rotate(-180deg);
+}
+
+/* Общие стили для анимированных кнопк */
+.animated-btn {
+    transition: all 0.3s ease;
+}
+
+/* Оставляем только эффект нажатия */
+.animated-btn:active {
+    transform: scale(0.95);
+}
+
+/* Анимация для кнопки сброса фильтров */
+.filter-line-1,
+.filter-line-2,
+.filter-line-3 {
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    transform-origin: center;
+}
+
+#resetFilters:hover .filter-line-1 {
+    transform: translateX(-2px);
+}
+
+#resetFilters:hover .filter-line-2 {
+    transform: translateX(2px);
+}
+
+#resetFilters:hover .filter-line-3 {
+    transform: translateX(-2px);
+}
+
+/* Анимация для кнопки экспорта */
+.file-top,
+.file-fold,
+.arrow-line,
+.arrow-head {
+    transition: all 0.3s ease;
+    transform-origin: center;
+}
+
+#exportExcel:hover .file-top {
+    stroke-width: 2;
+}
+
+#exportExcel:hover .file-fold {
+    stroke-width: 2;
+    transform: translate(-1px, 1px);
+}
+
+#exportExcel:hover .arrow-line {
+    transform: scaleY(0.85);
+    stroke-width: 2;
+}
+
+#exportExcel:hover .arrow-head {
+    transform: translateY(2px) scale(1.2);
+    stroke-width: 2;
+}
+
+/* Добавляем эффект пульсации при нажатии */
+.animated-btn:active {
+    transform: scale(0.95);
+}
+
+/* Добавляе подсветку при наведении */
+.animated-btn:hover svg {
+    filter: brightness(1.2);
+}
+
+/* Анимация для кнопки экспорта */
+.arrow-stem,
+.arrow-left,
+.arrow-right,
+.landing-line {
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-origin: center;
+}
+
+/* Начальное состояние */
+.landing-line {
+    opacity: 0.6;
+}
+
+/* Анимация при наведении */
+@keyframes moveArrow {
+    0% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(5px);
+    }
+    100% {
+        transform: translateY(0);
+    }
+}
+
+#exportExcel:hover .arrow-stem,
+#exportExcel:hover .arrow-left,
+#exportExcel:hover .arrow-right {
+    animation: moveArrow 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    stroke-width: 2;
+}
+
+#exportExcel:hover .landing-line {
+    opacity: 1;
+    stroke-width: 2;
+    transform: scaleX(0.9);
+}
+
+/* Добавляем стили для времени */
+.current-time {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1.25rem;
+    background: var(--gray-50);
+    border-radius: 0.75rem;
+    border: 1px solid var(--gray-200);
+    transition: all 0.2s ease;
+}
+
+.current-time:hover {
+    background: white;
+    border-color: var(--primary-light);
+    box-shadow: var(--shadow-md);
+}
+
+.time-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.time-main {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--gray-800);
+    line-height: 1.2;
+}
+
+.time-info {
+    font-size: 0.875rem;
+    color: var(--gray-600);
+    font-weight: 500;
+}
+
+.current-time svg {
+    width: 24px;
+    height: 24px;
+    stroke: var(--primary);
+    stroke-width: 1.5;
+}
+
+/* Стили для статуса урока */
+.time-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.status-lesson {
+    background: var(--primary-light);
+    color: white;
+}
+
+.status-break {
+    background: var(--warning);
+    color: white;
+}
+
+.status-none {
+    background: var(--gray-200);
+    color: var(--gray-600);
+}
+
+/* Обновленные стили для кнопки "Вверх" */
+.schedule-container .scroll-to-top {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.625rem 1.25rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    font-size: 0.875rem;
+    background: var(--primary);
+    color: white;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+    min-width: max-content;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px);
+    transition: all 0.2s;
+    z-index: 9999;
+    box-shadow: var(--shadow-md);
+}
+
+.schedule-container .scroll-to-top.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.schedule-container .scroll-to-top svg {
+    width: 1.25rem;
+    height: 1.25rem;
+    stroke: currentColor;
+    stroke-width: 2;
+    fill: none;
+}
+
+.schedule-container .scroll-to-top:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .schedule-container .scroll-to-top {
+        bottom: 15px;
+        right: 15px;
+        padding: 0.625rem 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .schedule-container .scroll-to-top {
+        bottom: 10px;
+        right: 10px;
+        padding: 0.5rem 0.75rem;
+    }
+    
+    .schedule-container .scroll-to-top svg {
+        width: 1rem;
+        height: 1rem;
+    }
+}
+
+/* Обновленные стили для времени */
+.schedule-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.schedule-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--gray-800);
+    margin: 0;
+    flex: 0 0 auto;
+}
+
+.current-time-large {
+    display: flex;
+    align-items: center;
+    margin: 0;
+}
+
+.time-main-large {
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--gray-800);
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums;
+}
+
+.period-status {
+    display: flex;
+    align-items: center;
+}
+
+.time-status-large {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 1.125rem;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+.view-controls {
+    display: flex;
+    gap: 0.75rem;
+    flex: 0 0 auto;
+}
+
+/* Адаптивность */
+@media (max-width: 1024px) {
+    .controls-header {
+        flex-wrap: wrap;
+    }
+
+    .header-content,
+    .view-controls {
+        flex: 1 1 100%;
+        max-width: 100%;
+        order: 2;
+    }
+
+    .time-status-wrapper {
+        flex: 1 1 100%;
+        order: 1;
+    }
+
+    .view-controls {
+        justify-content: center;
+        order: 3;
+    }
+}
+
+@media (max-width: 768px) {
+    .header-content-wrapper {
+        gap: 0.5rem;
+    }
+
+    .schedule-title {
+        font-size: 1.25rem;
+    }
+
+    .schedule-qr {
+        max-width: 80px;
+        margin: 0 auto;
+    }
+}
+
+.time-icon {
+    width: 28px;
+    height: 28px;
+    stroke: currentColor;
+    stroke-width: 2;
+}
+
+/* Стили статусов */
+.status-lesson {
+    background: var(--primary-light);
+    color: white;
+}
+
+.status-break {
+    background: var(--warning);
+    color: white;
+}
+
+.status-none {
+    background: var(--gray-200);
+    color: var(--gray-600);
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .time-container {
+        flex-direction: column;
+        gap: 1rem;
+        padding: 0.5rem 0rem 0.5rem 0rem;
+    }
+
+    .current-time-large {
+        padding: 0;
+        margin: 0;
+    }
+
+    .time-main-large {
+        font-size: 2.5rem;
+    }
+    
+    .time-status-large {
+        font-size: 1rem;
+        padding: 0.375rem 0.75rem;
+    }
+}
+
+/* Контейнер для времени и статуса */
+.time-container {
+    display: flex;
+    align-items: center;
+    border-radius: 0.75rem;
+    margin: 0 auto;
+    flex: 1;
+    justify-content: center;
+}
+
+/* Стили для блока времени */
+.current-time-large {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+}
+
+.time-main-large {
+    font-size: 4rem;
+    font-weight: 700;
+    color: var(--gray-800);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+}
+
+/* Стили для блока статуса */
+.period-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.time-status-large {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 1.125rem;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: all 0.3s ease;
+    width: -webkit-fill-available;
+}
+
+.status-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    line-height: 1.2;
+    text-align: center;
+    width: 100%;
+}
+
+/* Для маленьких экранов уменьшаем размер второй строки */
+@media (max-width: 480px) {
+    .status-text br + * {
+        font-size: 0.875rem;
+        opacity: 0.9;
+    }
+}
+
+/* Адаптивность */
+@media (max-width: 1200px) {
+    .controls-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+        padding: 0rem 0rem 0.5rem 0rem;
+    }
+
+    .schedule-title {
+        text-align: center;
+    }
+
+    .time-container {
+        order: 1;
+        width: 100%;
+        padding: 0.5rem 0rem 0.5rem 0rem;
+    }
+
+    .view-controls {
+        order: 2;
+        justify-content: center;
+        flex-wrap: nowrap;
+        gap: 0.5rem;
+    }
+
+    .btn {
+        flex: 1;
+        min-width: 120px;
+        max-width: 200px;
+        padding: 0.5rem;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 768px) {
+    .time-container {
+        flex-direction: column;
+        gap: 1rem;
+        padding: 0.5rem 0rem 0.5rem 0rem;
+    }
+
+    .current-time-large {
+        order: 1;
+        margin: 0;
+    }
+
+    .period-status {
+        order: 2;
+    }
+
+    .view-controls {
+        gap: 0.5rem;
+    }
+
+    .btn {
+        font-size: 0.875rem;
+    }
+
+    .btn span {
+        display: none;
+    }
+
+    .btn .icon {
+        margin: 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .controls-header {
+        padding: 0rem 0rem 0.5rem 0rem;
+        gap: 0.5rem;
+    }
+
+    .schedule-title {
+        display: none;
+    }
+
+    .time-container {
+        padding: 0.5rem;
+        gap: 1rem;
+        padding: 0.5rem 0rem 0.5rem 0rem;
+    }
+
+    .time-main-large {
+        font-size: 2.5rem;
+    }
+
+    .time-status-large {
+        font-size: 0.875rem;
+        padding: 0.25rem 0.5rem;
+    }
+
+    .filters-grid {
+        gap: 0.375rem;
+    }
+
+    .filter-select {
+        padding: 0.375rem 0.5rem;
+        font-size: 0.8125rem;
+    }
+
+    .view-controls {
+        gap: 0.375rem;
+        width: 100%;
+    }
+
+    .btn {
+        min-width: 0;
+        max-width: none;
+        font-size: 0.8125rem;
+    }
+
+    /* Уменьшаем отступы в ячейках таблицы */
+    .schedule-table td {
+        padding: 0.25rem;
+    }
+
+    .lesson-cell {
+        padding: 0.5rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .lesson-info {
+        gap: 0.25rem;
+        padding-top: 0.25rem;
+    }
+}
+
+/* Стили для Telegram WebApp */
+.telegram-webapp {
+    background: var(--tg-theme-bg-color, #ffffff);
+    color: var(--tg-theme-text-color, #000000);
+}
+
+.telegram-webapp .schedule-container {
+    padding: 0.5rem;
+    background-color: var(--tg-theme-bg-color, #ffffff);
+}
+
+.telegram-webapp .schedule-controls {
+    background-color: var(--tg-theme-secondary-bg-color, #f5f5f5);
+    border: 1px solid var(--tg-theme-hint-color, #999999);
+}
+
+.telegram-webapp .schedule-title,
+.telegram-webapp .time-main-large {
+    color: var(--tg-theme-text-color, #000000);
+}
+
+.telegram-webapp .time-display,
+.telegram-webapp .period-status-container {
+    background-color: var(--tg-theme-secondary-bg-color, #f5f5f5);
+    border-color: var(--tg-theme-hint-color, #999999);
+}
+
+.telegram-webapp .control-btn {
+    background-color: var(--tg-theme-button-color, #3390ec);
+    color: var(--tg-theme-button-text-color, #ffffff);
+}
+
+.telegram-webapp .control-btn:hover {
+    opacity: 0.8;
+    background-color: var(--tg-theme-button-color, #3390ec);
+}
+
+.telegram-webapp .schedule-table th,
+.telegram-webapp .schedule-table td {
+    border-color: var(--tg-theme-hint-color, #999999);
+}
+
+.telegram-webapp .lesson-cell {
+    background-color: var(--tg-theme-secondary-bg-color, #f5f5f5);
+    border-color: var(--tg-theme-hint-color, #999999);
+}
+
+.telegram-webapp .filter-select {
+    background-color: var(--tg-theme-secondary-bg-color, #f5f5f5);
+    color: var(--tg-theme-text-color, #000000);
+    border-color: var(--tg-theme-hint-color, #999999);
+}
+
+/* Скрываем ненужные элементы в Telegram версии */
+.telegram-webapp .export-btn,
+.telegram-webapp .scroll-to-top {
+    display: none;
+}
+
+/* Скрываем кнопку экспорта для панелей */
+.schedule-panels .export-btn,
+.schedule-panels #exportExcel {
+    display: none !important;
+}
+
+/* Добавляем стили для разных категорий */
+.lesson-cell.category-main {
+    border-left: 3px solid #4CAF50;
+}
+
+.lesson-cell.category-extracurricular {
+    border-left: 3px solid #2196F3;
+}
+
+.lesson-cell.category-elective {
+    border-left: 3px solid #9C27B0;
+}
+
+.lesson-cell.category-additional {
+    border-left: 3px solid #FF9800;
+}
+
+.lesson-cell.category-consultation {
+    border-left: 3px solid #F44336;
+}
+
+/* Стили для подсветки ячеек */
+.current-period,
+.current-break {
+    position: relative;
+}
+
+.current-period::after,
+.current-break::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+}
+
+.current-period::after {
+    background-color: var(--primary-light);
+    opacity: 0.15;
+}
+
+.current-break::after {
+    background-color: var(--warning);
+    opacity: 0.15;
+}
+
+/* Подсветка заголовков в обоих видах */
+.current-period-header,
+.current-break-header {
+    position: relative;
+}
+
+/* Фон для заголовков в горизонтальном виде */
+.schedule-table:not(.vertical) .current-period-header {
+    background-color: var(--primary-light);
+    color: white !important;
+}
+
+.schedule-table:not(.vertical) .current-break-header {
+    background-color: var(--warning);
+    color: white !important;
+}
+
+/* Фон для заголовков в вертикальном виде */
+.schedule-table.vertical .current-period-header {
+    background-color: var(--primary-light);
+    color: white !important;
+}
+
+.schedule-table.vertical .current-break-header {
+    background-color: var(--warning);
+    color: white !important;
+}
+
+/* Делаем текст в заголовках белым для обоих видов */
+.current-period-header .period-header,
+.current-break-header .period-header,
+.current-period-header .period-number,
+.current-break-header .period-number,
+.current-period-header .period-time,
+.current-break-header .period-time,
+.current-period-header .day-header,
+.current-break-header .day-header {
+    color: white !important;
+    position: relative;
+    z-index: 1;
+}
+
+/* Поднимаем карточки уроков над подсветкой */
+.lesson-cell {
+    position: relative;
+    z-index: 2;
+}
+
+/* Стили для jQuery UI selectmenu */
+.ui-selectmenu-button.ui-button {
+    width: inherit;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--gray-200);
+    border-radius: 0.5rem;
+    background: white;
+    color: var(--gray-700);
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    cursor: pointer;
+    text-align: left;
+    position: relative;
+}
+
+.ui-selectmenu-button.ui-button:hover {
+    border-color: var(--primary);
+    background-color: var(--gray-50);
+    color: var(--gray-800);
+}
+
+.ui-selectmenu-button.ui-button:focus {
+    outline: none;
+    border-color: var(--primary);
+    background-color: white;
+    color: var(--gray-800);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+/* Стрелка с более сдержанным цветом */
+.ui-selectmenu-button.ui-button .ui-selectmenu-icon.ui-icon::after {
+    border-right: 2px solid var(--gray-400);
+    border-bottom: 2px solid var(--gray-400);
+}
+
+/* Цвет стрелки при наведении и фокусе */
+.ui-selectmenu-button.ui-button:hover .ui-selectmenu-icon.ui-icon::after,
+.ui-selectmenu-button.ui-button:focus .ui-selectmenu-icon.ui-icon::after {
+    border-color: var(--primary-light);
+}
+
+/* Стили для выпадающего меню */
+.ui-selectmenu-menu {
+    padding: 0;
+    margin: 0.25rem 0 0 0;
+    border: 1px solid var(--gray-200);
+    border-radius: 0.5rem;
+    background: white;
+    box-shadow: var(--shadow-md);
+    position: absolute;
+    animation: selectMenuAppear 0.15s ease;
+    margin-bottom: 2rem;
+    max-height: calc(100vh - 100px);
+}
+
+/* Более сдержанная анимация появления */
+@keyframes selectMenuAppear {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.ui-selectmenu-menu .ui-menu {
+    padding: 0.5rem 0;
+    max-height: calc(100vh - 120px);
+    min-height: 100px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+}
+
+/* Стили для элементов меню */
+.ui-selectmenu-menu .ui-menu .ui-menu-item-wrapper {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    color: var(--gray-700);
+    transition: all 0.2s;
+}
+
+/* Стили при наведении и активном состоянии */
+.ui-selectmenu-menu .ui-menu .ui-menu-item-wrapper:hover {
+    background-color: var(--primary-light);
+    color: white;
+}
+
+.ui-selectmenu-menu .ui-menu .ui-menu-item-wrapper.ui-state-active {
+    background-color: var(--primary-light);
+    color: white;
+    border: none;
+    margin: 0;
+}
+
+/* Стили для скроллбара */
+.ui-selectmenu-menu .ui-menu::-webkit-scrollbar {
+    width: 8px; /* Ширина скроллбара */
+}
+
+.ui-selectmenu-menu .ui-menu::-webkit-scrollbar-track {
+    background: var(--gray-100); /* Цвет фона трека */
+    border-radius: 4px; /* Радиус скругления */
+}
+
+.ui-selectmenu-menu .ui-menu::-webkit-scrollbar-thumb {
+    background: var(--primary-light); /* Цвет ползунка */
+    border-radius: 4px; /* Радиус скругления */
+    transition: background 0.3s ease; /* Плавный переход цвета */
+}
+
+.ui-selectmenu-menu .ui-menu::-webkit-scrollbar-thumb:hover {
+    background: var(--primary); /* Цвет ползунка при наведении */
+}
+
+/* Стили для первого пустого пункта (placeholder) */
+.ui-selectmenu-menu .ui-menu .ui-menu-item:first-child .ui-menu-item-wrapper {
+    color: var(--gray-400);
+    font-weight: 500;
+}
+
+/* При наведении на placeholder */
+.ui-selectmenu-menu .ui-menu .ui-menu-item:first-child .ui-menu-item-wrapper:hover,
+.ui-selectmenu-menu .ui-menu .ui-menu-item:first-child .ui-menu-item-wrapper.ui-state-active {
+    color: white;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .ui-selectmenu-button.ui-button {
+        padding: 0.625rem 0.875rem;
+        font-size: 0.8125rem;
+    }
+
+    .ui-selectmenu-menu .ui-menu .ui-menu-item-wrapper {
+        padding: 0.5rem 0.875rem;
+        font-size: 0.8125rem;
+    }
+}
+
+/* Стили для бегущей строки */
+.schedule-marquee {
+    overflow: hidden;
+    white-space: nowrap;
+    position: relative;
+}
+
+.schedule-marquee.fixed {
+    text-align: center;
+}
+
+.schedule-marquee.fixed .marquee-content {
+    animation: none;
+    padding: 0;
+    display: block;
+    /* Добавляем перенос слов для фиксированного текста на маленьких экранах */
+    white-space: normal;
+    word-wrap: break-word;
+}
+
+/* Контейнер для создания бесконечной анимации */
+.schedule-marquee.scroll {
+    display: flex;
+    width: 100%;
+}
+
+.schedule-marquee.scroll .marquee-content {
+    flex-shrink: 0;
+    padding-left: 100%;
+    animation: marquee 20s linear infinite;
+    white-space: nowrap;
+}
+
+@keyframes marquee {
+    0% {
+        transform: translate(0, 0);
+    }
+    100% {
+        transform: translate(-100%, 0);
+    }
+}
+
+/* При наведении останавливаем анимацию */
+.schedule-marquee:hover .marquee-content {
+    animation-play-state: paused;
+}
+
+/* Адаптивность для бегущей строки */
+@media (max-width: 768px) {
+    .schedule-marquee {
+        font-size: 14px !important; /* Переопределяем размер шрифта для мобильных */
+    }
+    
+    .schedule-marquee.scroll .marquee-content {
+        animation-duration: 15s !important; /* Ускоряем анимацию на мобильных */
+    }
+}
+
+@media (max-width: 480px) {
+    .schedule-marquee {
+        font-size: 12px !important;
+    }
+    
+    .schedule-marquee.scroll .marquee-content {
+        animation-duration: 10s !important;
+    }
+}
+
+/* Улучшаем адаптивность выпадающих списков */
+.filters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+    .filters-grid {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 0.75rem;
+    }
+
+    .filter-select,
+    .ui-selectmenu-button.ui-button {
+        font-size: 13px;
+        padding: 0.5rem 0.75rem;
+    }
+    
+    /* Уменьшаем размер выпадающего меню */
+    .ui-selectmenu-menu .ui-menu {
+        max-height: 60vh;
+    }
+}
+
+@media (max-width: 480px) {
+    .filters-grid {
+        grid-template-columns: 1fr; /* Один столбец на маленьких экранах */
+        gap: 0.5rem;
+    }
+
+    .filter-select,
+    .ui-selectmenu-button.ui-button {
+        font-size: 12px;
+        padding: 0.5rem;
+        width: 100%; /* Растягиваем на всю ширину */
+    }
+    
+    /* Делаем выпадающее меню шире на мобильных */
+    .ui-selectmenu-menu {
+        width: 100% !important;
+        left: 0 !important;
+    }
+    
+    .ui-selectmenu-menu .ui-menu {
+        max-height: 50vh;
+        width: 100% !important;
+    }
+    
+    /* Увеличиваем область касания для мобильных */
+    .ui-selectmenu-menu .ui-menu .ui-menu-item-wrapper {
+        padding: 0.75rem 1rem;
+        min-height: 44px; /* Минимальная высота для удобного тапа */
+    }
+}
+
+/* Улучшаем скроллбар на мобильных */
+@media (hover: none) {
+    .ui-selectmenu-menu .ui-menu::-webkit-scrollbar {
+        width: 8px; /* Делаем скроллбар немного шире для тачскринов */
+    }
+    
+    .ui-selectmenu-menu .ui-menu::-webkit-scrollbar-thumb {
+        background: rgba(148, 163, 184, 0.8); /* Делаем скроллбар более заметным */
+        border-radius: 4px;
+    }
+}
+
+/* Стили для нативных селектов на мобильных */
+@media (max-width: 768px) {
+    /* Скрываем неактивные опции в нативных селектах */
+    .native-select option[disabled],
+    .filter-select option[disabled],
+    select option.disabled-option {
+        display: none !important;
+    }
+    
+    /* Скрываем jQuery UI селекты */
+    .ui-selectmenu-button,
+    .ui-selectmenu-menu {
+        display: none !important;
+    }
+    
+    /* Показываем нативные селекты */
+    .native-select,
+    .filter-select {
+        display: block !important;
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 1px solid var(--gray-200);
+        border-radius: 0.5rem;
+        background: white;
+        color: var(--gray-700);
+        font-size: 16px; /* Предотвращает зум на iOS */
+        font-weight: 500;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        background-size: 1rem;
+    }
+
+    /* Стили для активных опций */
+    .native-select option:not([disabled]),
+    .filter-select option:not([disabled]),
+    select option:not(.disabled-option) {
+        display: block;
+        padding: 0.5rem;
+        color: var(--gray-700);
+    }
+}
+
+/* Дополнительные стили для очень маленьких экранов */
+@media (max-width: 480px) {
+    .native-select,
+    .filter-select {
+        padding: 0.625rem 0.875rem;
+        font-size: 14px;
+    }
+}
+
+.filter-select {
+    margin-bottom: 10px;
+}
+
+.ui-selectmenu-menu.ui-front {
+    margin-bottom: 2rem !important;
+}
+
+.ui-selectmenu-menu .ui-menu.ui-widget.ui-widget-content {
+    max-height: calc(80vh - 120px) !important;
+    min-height: 50px !important;
+    overflow-y: auto !important;
+}
+
+/* Добавляем медиа-запросы для разных размеров экрана */
+@media (max-height: 768px) {
+    .ui-selectmenu-menu .ui-menu.ui-widget.ui-widget-content {
+        max-height: calc(70vh - 120px) !important;
+    }
+}
+
+@media (max-height: 480px) {
+    .ui-selectmenu-menu .ui-menu.ui-widget.ui-widget-content {
+        max-height: calc(60vh - 120px) !important;
+    }
+}
+
+.disabled-option {
+    color: var(--gray-400) !important;
+    font-style: italic;
+}
+
+.ui-selectmenu-menu .ui-menu .ui-menu-item-wrapper.disabled-option {
+    color: var(--gray-400) !important;
+    background: var(--gray-50) !important;
+    cursor: not-allowed;
+}
+.ui-state-disabled.ui-menu-item {
+    display: none !important;
+}
+
+/* Добавьте эти стили к существующему файлу */
+.schedule-table th,
+.schedule-table td {
+    transition: all 0.3s ease;
+}
+
+.schedule-table th[style*="display: none"],
+.schedule-table td[style*="display: none"] {
+    width: 0;
+    padding: 0;
+    border: none;
+}
+
+/* Добавьте эти стили в конец файла */
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.schedule-banner {
+    flex: 1;
+    min-width: 200px;
+    max-width: 600px;
+}
+
+.schedule-qr {
+    width: 100px;
+    height: 100px;
+}
+
+.schedule-qr img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+@media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .schedule-banner {
+        width: 100%;
+        max-width: none;
+    }
+
+    .schedule-qr {
+        width: 80px;
+        height: 80px;
+    }
+}

@@ -1,0 +1,979 @@
+document.addEventListener('DOMContentLoaded', function() {
+    // Инициализация переменных
+    const toggleBtn = document.getElementById('toggleView');
+    const exportBtn = document.getElementById('exportExcel');
+    const isPanel = window.scheduleConfig?.isPanel || false;
+    const filters = {
+        teacher: document.getElementById('teacherFilter'),
+        subject: document.getElementById('subjectFilter'),
+        class: document.getElementById('classFilter'),
+        day: document.getElementById('dayFilter'),
+        classroom: document.getElementById('classroomFilter'),
+        category: document.getElementById('categoryFilter')?.value || ''
+    };
+
+    let isVertical = localStorage.getItem('scheduleView') !== 'horizontal';
+
+    // Добавляем функцию updateScrollVisibility в глобальную область видимости
+    function updateScrollVisibility() {
+        const wrapper = document.querySelector('.schedule-table-wrapper');
+        const bodyScroll = document.querySelector('.schedule-table-body');
+        const table = bodyScroll?.querySelector('.schedule-table');
+        
+        if (table && wrapper) {
+            const needsScroll = table.offsetWidth > wrapper.offsetWidth;
+            
+            wrapper.classList.toggle('has-scroll', needsScroll);
+            const headerScroll = document.querySelector('.schedule-table-header-scroll');
+            if (headerScroll && needsScroll) {
+                headerScroll.firstElementChild.style.width = `${table.offsetWidth}px`;
+            } else if (headerScroll) {
+                headerScroll.firstElementChild.style.width = '0';
+            }
+        }
+    }
+
+    // Функция инициализации фильтров
+    function initializeFilters() {
+        try {
+            // Проверяем, является ли устройство мобильным
+            const isMobile = window.matchMedia('(max-width: 768px)').matches;
+            
+            if (!isMobile && typeof jQuery !== 'undefined') {
+                // На десктопах используем jQuery UI selectmenu
+                jQuery('.filter-select').each(function() {
+                    try {
+                        if (jQuery(this).selectmenu('instance')) {
+                            jQuery(this).selectmenu('destroy');
+                        }
+                    } catch (e) {
+                        // Игнорируем ошибку, если selectmenu еще не был инициализирован
+                    }
+                });
+                
+                jQuery('.filter-select').selectmenu({
+                    change: function() {
+                        filterAll();
+                    }
+                });
+            } else {
+                // На мобильных используем нативные селекты
+                document.querySelectorAll('.filter-select').forEach(select => {
+                    select.classList.add('native-select');
+                    select.addEventListener('change', filterAll);
+                });
+            }
+        } catch (e) {
+            console.error('Ошибка инициализации фильтров:', e);
+        }
+    }
+
+    // Функция инициализации всех компонентов
+    function initializeAll() {
+        // Инициализация бегущей строки
+        const marquee = document.querySelector('.schedule-marquee');
+        if (marquee && marquee.classList.contains('scroll')) {
+            const content = marquee.querySelector('.marquee-content');
+            if (content) {
+                // Получаем скорость из data-атрибута
+                const speed = parseInt(marquee.dataset.speed) || 20;
+                
+                // Создаем один клон для бесконечной анимации
+                const clone = content.cloneNode(true);
+                marquee.appendChild(clone);
+
+                // Добавляем анимацию к элементам
+                const elements = marquee.querySelectorAll('.marquee-content');
+                elements.forEach((el, index) => {
+                    el.style.animation = `marquee ${speed}s linear infinite`;
+                    // Добавляем небольшую задержку для второго элемента
+                    if (index === 1) {
+                        el.style.animationDelay = `-${speed/2}s`;
+                    }
+                });
+            }
+        }
+        
+        // Инициализация фильтров
+        initializeFilters();
+
+        // Инициализация кнопки переключения вида
+        if (toggleBtn) {
+            updateButtonText();
+            if (isVertical) {
+                renderSchedule(true);
+            }
+
+            toggleBtn.addEventListener('click', function() {
+                isVertical = !isVertical;
+                renderSchedule(isVertical);
+                setTimeout(filterAll, 350);
+            });
+        }
+
+        // Инициализация фильтров
+        Object.values(filters).forEach(filter => {
+            if (filter) {
+                filter.addEventListener('change', filterAll);
+            }
+        });
+
+        // Инициализация кнопки экспорта
+        if (exportBtn && !isPanel) {
+            exportBtn.addEventListener('click', exportToExcel);
+        } else if (exportBtn) {
+            exportBtn.style.display = 'none';
+        }
+
+        // Инициализация кнопки сброса фильтров
+        const resetBtn = document.getElementById('resetFilters');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', resetFilters);
+        }
+
+        // Запуск начальной инициализации
+        loadFilters();
+        updateCurrentTime();
+        
+        // Создаем постоянный интервал обновления
+        const timeInterval = setInterval(updateCurrentTime, 1000);
+
+        // Добавляем обработчик для очистки интервала при уходе со страницы
+        window.addEventListener('beforeunload', function() {
+            clearInterval(timeInterval);
+        });
+
+        // Инициализация скроллбаров
+        initializeScrollbars();
+
+        // Обработка изменения размера окна
+        window.addEventListener('resize', debounce(() => {
+            initializeFilters();
+            hideEmptyDays(); // Обновляем видимость дней при изменении размера окна
+        }, 250));
+
+        // Добавляем вызов hideEmptyDays после загрузки
+        hideEmptyDays();
+    }
+
+    // Вспомогательная функция debounce
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    // Функция инициализации скроллбаров
+    function initializeScrollbars() {
+        const headerScroll = document.querySelector('.schedule-table-header-scroll');
+        const bodyScroll = document.querySelector('.schedule-table-body');
+
+        if (headerScroll && bodyScroll) {
+            // Синхронизация скроллбаров
+            headerScroll.addEventListener('scroll', () => {
+                bodyScroll.scrollLeft = headerScroll.scrollLeft;
+            });
+
+            bodyScroll.addEventListener('scroll', () => {
+                headerScroll.scrollLeft = bodyScroll.scrollLeft;
+            });
+
+            window.addEventListener('resize', updateScrollVisibility);
+            updateScrollVisibility();
+        }
+    }
+
+    // Ждем полной загрузки jQuery UI перед инициализацией
+    if (typeof jQuery !== 'undefined' && typeof jQuery.ui !== 'undefined') {
+        initializeAll();
+    } else {
+        const checkJQuery = setInterval(function() {
+            if (typeof jQuery !== 'undefined' && typeof jQuery.ui !== 'undefined') {
+                clearInterval(checkJQuery);
+                initializeAll();
+            }
+        }, 100);
+
+        // Таймаут на случай, если jQuery UI не загрузится
+        setTimeout(function() {
+            clearInterval(checkJQuery);
+            console.error('jQuery UI не был загружен вовремя');
+        }, 5000);
+    }
+
+    // Функция обновления текста кнопки переключения вида
+    function updateButtonText() {
+        const viewBtn = toggleBtn.querySelector('.view-icon');
+        if (!viewBtn) {
+            toggleBtn.innerHTML = `
+                <svg class="view-icon ${isVertical ? 'vertical' : ''}" viewBox="0 0 24 24">
+                    <path class="icon" d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+            `;
+        } else {
+            viewBtn.classList.toggle('vertical', isVertical);
+        }
+    }
+
+    // Функция фильтрации
+    function filterAll() {
+        const currentFilters = {
+            teacher: document.getElementById('teacherFilter').value,
+            subject: document.getElementById('subjectFilter').value,
+            class: document.getElementById('classFilter').value,
+            day: document.getElementById('dayFilter').value,
+            classroom: document.getElementById('classroomFilter').value,
+            category: document.getElementById('categoryFilter')?.value || ''
+        };
+        
+        const lessonCells = document.querySelectorAll('.lesson-cell');
+        
+        lessonCells.forEach(cell => {
+            const teachers = cell.getAttribute('data-teachers').split(',');
+            const subjects = cell.getAttribute('data-subject');
+            const classes = cell.getAttribute('data-classes').split(',');
+            const day = cell.getAttribute('data-day');
+            const classroom = cell.getAttribute('data-classroom');
+            const category = cell.getAttribute('data-category');
+            
+            const matches = (
+                (currentFilters.teacher === '' || teachers.includes(currentFilters.teacher)) &&
+                (currentFilters.subject === '' || subjects.includes(currentFilters.subject)) &&
+                (currentFilters.class === '' || classes.includes(currentFilters.class)) &&
+                (currentFilters.day === '' || day === currentFilters.day) &&
+                (currentFilters.classroom === '' || classroom === currentFilters.classroom) &&
+                (currentFilters.category === '' || category === currentFilters.category)
+            );
+
+            cell.style.display = matches ? '' : 'none';
+        });
+
+        updateFilterOptions();
+        saveFilters();
+        hideEmptyDays(); // Вызываем после фильтрации
+    }
+
+    // Функция обновления опций фильтров
+    function updateFilterOptions() {
+        const currentFilters = {
+            teacher: filters.teacher.value,
+            subject: filters.subject.value,
+            class: filters.class.value,
+            day: filters.day.value,
+            classroom: filters.classroom.value
+        };
+
+        // Получаем все видимые карточки уроков
+        const visibleCards = Array.from(document.querySelectorAll('.lesson-cell'))
+            .filter(card => card.style.display !== 'none');
+
+        // Собираем доступные значения для каждого фильтра
+        const availableValues = {
+            teacher: new Set(),
+            subject: new Set(),
+            class: new Set(),
+            classroom: new Set(),
+            day: new Set()
+        };
+
+        // Собираем значения из видимых карточек
+        visibleCards.forEach(card => {
+            card.getAttribute('data-teachers')?.split(',').forEach(id => availableValues.teacher.add(id));
+            availableValues.subject.add(card.getAttribute('data-subject'));
+            card.getAttribute('data-classes')?.split(',').forEach(id => availableValues.class.add(id));
+            availableValues.classroom.add(card.getAttribute('data-classroom'));
+            availableValues.day.add(card.getAttribute('data-day'));
+        });
+
+        // Обновляем опции для каждого селекта
+        Object.entries(filters).forEach(([filterName, select]) => {
+            if (!select || filterName === 'category') return;
+
+            // Сохраняем текущее значение
+            const currentValue = select.value;
+            
+            // Получаем все опции
+            const options = Array.from(select.options);
+            
+            // Первая опция (placeholder) всегда активна
+            options.slice(1).forEach(option => {
+                const isAvailable = availableValues[filterName].has(option.value);
+                
+                // Для нативных селектов используем атрибут disabled
+                option.disabled = !isAvailable;
+                
+                // Добавляем/удаляем класс для стилизации
+                if (isAvailable) {
+                    option.classList.remove('disabled-option');
+                } else {
+                    option.classList.add('disabled-option');
+                }
+            });
+
+            // Если текущее значение больше недоступно, сбрасываем фильтр
+            if (currentValue && !availableValues[filterName].has(currentValue)) {
+                select.value = '';
+            }
+
+            // Обновляем jQuery UI selectmenu только на десктопах
+            if (window.innerWidth > 768 && typeof jQuery !== 'undefined' && jQuery(select).selectmenu('instance')) {
+                jQuery(select).selectmenu('refresh');
+            }
+        });
+    }
+
+    // Функции сохранения и загрузки фильтров
+    function saveFilters() {
+        const filterValues = {};
+        Object.keys(filters).forEach(key => {
+            if (filters[key]) {
+                filterValues[key] = filters[key].value;
+            }
+        });
+        localStorage.setItem('scheduleFilters', JSON.stringify(filterValues));
+    }
+
+    function loadFilters() {
+        const savedFilters = localStorage.getItem('scheduleFilters');
+        if (savedFilters) {
+            const filterValues = JSON.parse(savedFilters);
+            Object.keys(filterValues).forEach(key => {
+                if (filters[key]) {
+                    filters[key].value = filterValues[key];
+                }
+            });
+            filterAll();
+        }
+    }
+
+    // Функция сброса фильтров
+    function resetFilters() {
+        Object.values(filters).forEach(filter => {
+            if (filter) {
+                filter.value = '';
+                // Добавляем сброс для selectmenu, если используется jQuery UI
+                if (typeof jQuery !== 'undefined' && jQuery(filter).selectmenu('instance')) {
+                    jQuery(filter).selectmenu('refresh');
+                }
+            }
+        });
+        localStorage.removeItem('scheduleFilters');
+        filterAll();
+    }
+
+    // Выносим функцию updateCurrentTime за пределы DOMContentLoaded
+    function updateCurrentTime() {
+        const timeElement = document.getElementById('currentTime');
+        if (!timeElement) return; // Добавляем проверку на существование элемента
+
+        const now = new Date();
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        
+        // Очищаем предыдущую подсветку
+        document.querySelectorAll('.current-period').forEach(el => {
+            el.classList.remove('current-period');
+        });
+        
+        // Получаем все периоды из таблицы
+        const periods = [];
+        document.querySelectorAll('.period-time').forEach(periodElement => {
+            const timeText = periodElement.textContent;
+            const [start, end] = timeText.split('—').map(t => t.trim());
+            periods.push({ start, end });
+        });
+
+        // Функция для преобразования времени в минуты
+        const timeToMinutes = (timeStr) => {
+            const [hours, minutes] = timeStr.split(':').map(Number);
+            return hours * 60 + minutes;
+        };
+
+        // Текущее время в минутах
+        const currentMinutes = timeToMinutes(`${hours}:${minutes}`);
+
+        // Определяем текущий статус
+        let currentStatus = {
+            type: 'none',
+            text: 'Уроков нет'
+        };
+
+        for (let i = 0; i < periods.length; i++) {
+            const period = periods[i];
+            const startMinutes = timeToMinutes(period.start);
+            const endMinutes = timeToMinutes(period.end);
+
+            if (currentMinutes >= startMinutes && currentMinutes <= endMinutes) {
+                const remainingMinutes = endMinutes - currentMinutes;
+                
+                if (remainingMinutes === 0 && i < periods.length - 1) {
+                    const nextPeriod = periods[i + 1];
+                    const nextStartMinutes = timeToMinutes(nextPeriod.start);
+                    const breakMinutes = nextStartMinutes - currentMinutes;
+                    currentStatus = {
+                        type: 'break',
+                        text: `Перемена, ${breakMinutes} ${declOfNum(breakMinutes, ['минута', 'минуты', 'минут'])}<br>до ${i + 2}-го урока`
+                    };
+                } else {
+                    currentStatus = {
+                        type: 'lesson',
+                        text: `${i + 1}-й урок, осталось ${remainingMinutes} ${declOfNum(remainingMinutes, ['минута', 'минуты', 'минут'])}`
+                    };
+                }
+                break;
+            } else if (i < periods.length - 1) {
+                const nextStartMinutes = timeToMinutes(periods[i + 1].start);
+                if (currentMinutes > endMinutes && currentMinutes < nextStartMinutes) {
+                    const remainingMinutes = nextStartMinutes - currentMinutes;
+                    currentStatus = {
+                        type: 'break',
+                        text: `Перемена, осталось ${remainingMinutes} ${declOfNum(remainingMinutes, ['минута', 'минуты', 'минут'])}<br>до ${i + 2}-го урока`
+                    };
+                    break;
+                }
+            }
+        }
+
+        // После определения текущего периода добавляем подсветку
+        if (currentStatus.type === 'lesson' || currentStatus.type === 'break') {
+            const periodIndex = currentStatus.type === 'lesson' 
+                ? parseInt(currentStatus.text) - 1 
+                : parseInt(currentStatus.text.match(/до (\d+)-го/)[1]) - 1;
+            const isVertical = localStorage.getItem('scheduleView') === 'vertical';
+            
+            // Очищаем предыдущие подсветки
+            document.querySelectorAll('.current-period, .current-period-header, .current-break, .current-break-header').forEach(el => {
+                el.classList.remove('current-period', 'current-period-header', 'current-break', 'current-break-header');
+            });
+            
+            // Определяем классы для текущего статуса
+            const cellClass = currentStatus.type === 'lesson' ? 'current-period' : 'current-break';
+            const headerClass = currentStatus.type === 'lesson' ? 'current-period-header' : 'current-break-header';
+            
+            if (isVertical) {
+                // Подсветка для вертикального вида
+                const headers = document.querySelectorAll('.schedule-table thead th');
+                const periodHeader = headers[periodIndex + 1];
+                if (periodHeader) {
+                    periodHeader.classList.add(headerClass);
+                }
+                
+                // Подсветка ячеек
+                document.querySelectorAll(`.schedule-table tbody td:nth-child(${periodIndex + 2})`).forEach(cell => {
+                    cell.classList.add(cellClass);
+                });
+            } else {
+                // Подсветка для горизонтального вида
+                const rows = document.querySelectorAll('.schedule-table tbody tr');
+                if (rows[periodIndex]) {
+                    // Подсветка строки с уроками
+                    rows[periodIndex].querySelectorAll('td').forEach(cell => {
+                        cell.classList.add(cellClass);
+                    });
+                    // Подсветка заголовка периода
+                    const periodHeader = rows[periodIndex].querySelector('td:first-child');
+                    if (periodHeader) {
+                        periodHeader.classList.add(headerClass);
+                    }
+                }
+            }
+        }
+
+        // Обновляем HTML
+        timeElement.innerHTML = `<div class="time-main-large">${hours}:${minutes}</div>`;
+        
+        // Обновляем статус
+        const statusElement = document.querySelector('.time-status-large');
+        if (statusElement) {
+            statusElement.className = `time-status-large status-${currentStatus.type}`;
+            statusElement.innerHTML = `
+                <svg class="time-icon" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 6v6l4 2"/>
+                </svg>
+                <div class="status-text">${currentStatus.text}</div>
+            `;
+        }
+    }
+
+    // Функция для склонения числительных
+    function declOfNum(number, words) {
+        return words[(number % 100 > 4 && number % 100 < 20) ? 2 : 
+            [2, 0, 1, 1, 1, 2][(number % 10 < 5) ? number % 10 : 5]];
+    }
+
+    // Функция рендеринга расписания
+    function renderSchedule(vertical = false) {
+        const wrapper = document.querySelector('.schedule-table-wrapper');
+        const table = document.querySelector('.schedule-table');
+        const tbody = table.querySelector('tbody');
+        const thead = table.querySelector('thead tr');
+        
+        if (!tbody || !thead) return;
+        
+        // Добавляем/убираем класс vertical для таблицы
+        table.classList.toggle('vertical', vertical);
+        
+        wrapper.scrollLeft = 0;
+        tbody.style.opacity = '0';
+        
+        setTimeout(() => {
+            if (vertical) {
+                const days = Array.from(thead.children).slice(1);
+                const periods = Array.from(tbody.children);
+                
+                let newHtml = '';
+                days.forEach((day, dayIndex) => {
+                    const dayId = day.getAttribute('data-day-id');
+                    newHtml += `<tr>
+                        <td class="day-cell" data-day-id="${dayId}">
+                            <div class="day-header">
+                                <span class="day-name">${day.textContent}</span>
+                            </div>
+                        </td>
+                        ${periods.map(period => {
+                            const cells = Array.from(period.children);
+                            const timeCell = cells[0];
+                            const lessonCell = cells[dayIndex + 1];
+                            
+                            return `<td data-time="${timeCell.textContent}">${lessonCell ? lessonCell.innerHTML : ''}</td>`;
+                        }).join('')}
+                    </tr>`;
+                });
+                
+                tbody.innerHTML = newHtml;
+                
+                thead.innerHTML = `
+                    <th>День/Урок</th>
+                    ${periods.map((period, index) => {
+                        const timeCell = period.children[0];
+                        const periodTime = timeCell.querySelector('.period-time')?.textContent || '';
+                        
+                        return `<th>
+                            <div class="period-header">
+                                <span class="period-number">${index + 1} урок</span>
+                                <span class="period-time">${periodTime}</span>
+                            </div>
+                        </th>`;
+                    }).join('')}
+                `;
+                
+            } else {
+                const days = Array.from(tbody.children);
+                const periods = Array.from(days[0].children).slice(1);
+                
+                let newHtml = '';
+                periods.forEach((_, periodIndex) => {
+                    const timeCell = thead.children[periodIndex + 1];
+                    const periodTime = timeCell.querySelector('.period-time')?.textContent || '';
+                    
+                    newHtml += `<tr>
+                        <td>
+                            <div class="period-header">
+                                <span class="period-number">${periodIndex + 1} урок</span>
+                                <span class="period-time">${periodTime}</span>
+                            </div>
+                        </td>
+                        ${days.map(day => {
+                            const cells = Array.from(day.children);
+                            const dayCell = cells[0];
+                            const lessonCell = cells[periodIndex + 1];
+                            return `<td data-day-id="${dayCell.getAttribute('data-day-id')}">${lessonCell ? lessonCell.innerHTML : ''}</td>`;
+                        }).join('')}
+                    </tr>`;
+                });
+                
+                tbody.innerHTML = newHtml;
+                
+                thead.innerHTML = `
+                    <th>Урок/День</th>
+                    ${days.map(day => {
+                        const dayCell = day.children[0];
+                        return `<th data-day-id="${dayCell.getAttribute('data-day-id')}">${dayCell.textContent}</th>`;
+                    }).join('')}
+                `;
+            }
+            
+            setTimeout(() => {
+                tbody.style.opacity = '1';
+                filterAll();
+                updateScrollVisibility();
+            }, 50);
+        }, 300);
+        
+        localStorage.setItem('scheduleView', vertical ? 'vertical' : 'horizontal');
+        updateButtonText();
+    }
+
+    // Функция экспорта в Excel
+    async function exportToExcel() {
+        try {
+            console.log('Начало экспорта...');
+            
+            // Получаем текущие фильтры
+            const currentFilters = {
+                teacher: document.getElementById('teacherFilter'),
+                subject: document.getElementById('subjectFilter'),
+                class: document.getElementById('classFilter'),
+                day: document.getElementById('dayFilter'),
+                classroom: document.getElementById('classroomFilter'),
+                category: document.getElementById('categoryFilter')
+            };
+
+            const table = document.querySelector('.schedule-table');
+            const workbook = new ExcelJS.Workbook();
+            const worksheet = workbook.addWorksheet('Расписание');
+            
+            // Получаем заголовки
+            const headers = [];
+            table.querySelectorAll('thead th').forEach(th => {
+                // Обрабатываем заголовки периодов
+                const periodNumber = th.querySelector('.period-number')?.textContent.trim() || '';
+                const periodTime = th.querySelector('.period-time')?.textContent.trim() || '';
+                
+                if (periodNumber && periodTime) {
+                    headers.push(`${periodNumber}\n${periodTime}`);
+                } else {
+                    headers.push(th.textContent.trim());
+                }
+            });
+            
+            const headerRow = worksheet.addRow(headers);
+            
+            // Изменяем стили для заголовков
+            const headerStyle = {
+                font: { bold: true, size: 12, color: { argb: 'FFFFFFFF' } },
+                fill: {
+                    type: 'pattern',
+                    pattern: 'solid',
+                    fgColor: { argb: 'FF3B82F6' }
+                },
+                border: {
+                    top: { style: 'thin' },
+                    left: { style: 'thin' },
+                    bottom: { style: 'thin' },
+                    right: { style: 'thin' }
+                },
+                alignment: {
+                    vertical: 'middle',
+                    horizontal: 'center',
+                    wrapText: true
+                }
+            };
+
+            // Применяем стили к заголовкам
+            headerRow.eachCell((cell) => {
+                Object.assign(cell, headerStyle);
+            });
+
+            // Добавляем данные
+            console.log('Добавление данных...');
+            table.querySelectorAll('tbody tr').forEach((tr) => {
+                const rowData = [];
+                tr.querySelectorAll('td').forEach((td, cellIndex) => {
+                    let cellContent = '';
+                    
+                    if (cellIndex === 0) {
+                        // Получаем элементы напрямую из DOM структуры
+                        const periodNumber = td.querySelector('.period-number')?.textContent.trim() || '';
+                        const periodTime = td.querySelector('.period-time')?.textContent.trim() || '';
+                        
+                        if (periodNumber && periodTime) {
+                            // Формируем строку с переносом без лишних пробелов
+                            cellContent = `${periodNumber}\n${periodTime}`;
+                        } else {
+                            // Запасной вариант, если структура отличается
+                            const periodText = td.textContent.trim();
+                            const matches = periodText.match(/(\d+)\s*урок\s*\(([^)]+)\)/i);
+                            if (matches) {
+                                const lessonNumber = matches[1].trim();
+                                const timeRange = matches[2]
+                                    .replace(/[\(\)]/g, '')
+                                    .replace(/\s+—\s+/g, '—')
+                                    .replace(/\s+/g, '')
+                                    .trim();
+                                cellContent = `${lessonNumber} урок\n${timeRange}`;
+                            } else {
+                                cellContent = periodText.replace(/\s+/g, ' ').trim();
+                            }
+                        }
+                    } else {
+                        const lessons = td.querySelectorAll('.lesson-cell');
+                        if (lessons.length > 0) {
+                            const lessonTexts = [];
+                            lessons.forEach(lesson => {
+                                if (lesson.style.display !== 'none') {
+                                    const lines = lesson.innerText
+                                        .split('\n')
+                                        .map(line => line.trim())
+                                        .filter(Boolean);
+                                    
+                                    if (lines.length) {
+                                        lessonTexts.push(lines.join('\n'));
+                                    }
+                                }
+                            });
+                            cellContent = lessonTexts.join('\n\n');
+                        } else {
+                            cellContent = td.textContent.trim();
+                        }
+                    }
+                    rowData.push(cellContent);
+                });
+                
+                if (rowData.some(cell => cell)) {
+                    const row = worksheet.addRow(rowData);
+                    row.height = 100; // Увеличиваем высоту строки
+                    
+                    // Применяем стили к ячейкам
+                    row.eachCell((cell, colNumber) => {
+                        // Базовые стили для всех ячеек
+                        cell.alignment = {
+                            vertical: 'middle',
+                            horizontal: 'center',
+                            wrapText: true
+                        };
+                        cell.border = {
+                            top: { style: 'thin' },
+                            left: { style: 'thin' },
+                            bottom: { style: 'thin' },
+                            right: { style: 'thin' }
+                        };
+
+                        // Если это ячейка с уроком (не первый столбец)
+                        if (colNumber > 1 && cell.value) {
+                            // Разбиваем текст ячейки на строки
+                            const lines = cell.value.split('\n');
+                            if (lines.length > 0) {
+                                // Делаем первую строку (название предмета) жирной
+                                cell.value = {
+                                    richText: [
+                                        { text: lines[0] + '\n', font: { bold: true } },
+                                        { text: lines.slice(1).join('\n') }
+                                    ]
+                                };
+                            }
+                        }
+
+                        // Специальные стили для первого столбца
+                        if (colNumber === 1) {
+                            Object.assign(cell, headerStyle);
+                        }
+                    });
+                }
+            });
+
+            // Добавляем информацию о фильтрах
+            console.log('Добавление информации о фильтрах...');
+            worksheet.addRow([]);
+            worksheet.addRow(['Примененные фильтры:']);
+
+            const filterLabels = {
+                teacher: 'Преподаватель:',
+                subject: 'Предмет:',
+                class: 'Класс:',
+                day: 'День:',
+                classroom: 'Кабинет:',
+                category: 'Категория:'
+            };
+
+            Object.entries(currentFilters).forEach(([key, filter]) => {
+                if (filter && filter.value) {
+                    worksheet.addRow([
+                        filterLabels[key],
+                        filter.options[filter.selectedIndex].text
+                    ]);
+                }
+            });
+
+            // Устанавливаем ширину колонок
+            worksheet.columns.forEach((column, index) => {
+                if (index === 0) {
+                    column.width = 15; // Ширина для первого столбца
+                } else {
+                    column.width = 35; // Увеличенная ширина для остальных столбцов
+                }
+            });
+
+            // Сохранение файла
+            console.log('Сохранение файла...');
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { 
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+            });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Расписание_${new Date().toLocaleDateString('ru-RU').replace(/\./g, '-')}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            console.log('Экспорт завершен успешно');
+        } catch (error) {
+            console.error('Подробная ошибка пи экспорте:', error);
+            console.error('Stack trace:', error.stack);
+            alert(`Произошла ошибка при экспорте в Excel: ${error.message}`);
+        }
+    }
+
+    // Обработка кнопки "Вверх"
+    const scrollToTopBtn = document.querySelector('.scroll-to-top');
+
+    window.addEventListener('scroll', () => {
+        if (window.pageYOffset > 300) {
+            scrollToTopBtn.classList.add('visible');
+        } else {
+            scrollToTopBtn.classList.remove('visible');
+        }
+    });
+
+    scrollToTopBtn.addEventListener('click', () => {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    });
+
+    // Добавляем стили для неактивных опций
+    const style = document.createElement('style');
+    style.textContent = `
+        .disabled-option {
+            color: var(--gray-400) !important;
+            font-style: italic;
+        }
+        
+        .ui-selectmenu-menu .ui-menu .ui-menu-item-wrapper.disabled-option {
+            color: var(--gray-400) !important;
+            background: var(--gray-50) !important;
+            cursor: not-allowed;
+        }
+    `;
+    document.head.appendChild(style);
+
+    // Функция скрытия пустых дней
+    function hideEmptyDays() {
+        const table = document.querySelector('.schedule-table');
+        if (!table) return;
+
+        const isVertical = localStorage.getItem('scheduleView') === 'vertical';
+
+        // Функция для проверки наличия уроков в ячейке
+        function hasVisibleLessons(cell) {
+            const lessonCells = cell.querySelectorAll('.lesson-cell');
+            return Array.from(lessonCells).some(lesson => lesson.style.display !== 'none');
+        }
+
+        if (isVertical) {
+            // Для вертикального вида
+            const days = table.querySelectorAll('tbody tr');
+            const periods = table.querySelectorAll('thead th');
+
+            // Находим последний период с уроками для каждого дня
+            let lastPeriodIndex = 0;
+            days.forEach(day => {
+                const cells = Array.from(day.children).slice(1); // Пропускаем первую ячейку (время)
+                
+                // Проверяем наличие уроков в дне
+                const hasLessons = cells.some(cell => hasVisibleLessons(cell));
+                
+                if (hasLessons) {
+                    day.style.display = '';
+                    // Находим последний период с уроками
+                    cells.forEach((cell, index) => {
+                        if (hasVisibleLessons(cell)) {
+                            lastPeriodIndex = Math.max(lastPeriodIndex, index);
+                        }
+                    });
+                } else {
+                    day.style.display = 'none';
+                }
+            });
+
+            // Скрываем пустые периоды после последнего урока
+            periods.forEach((period, index) => {
+                if (index > lastPeriodIndex + 1) { // +1 потому что первая ячейка - это заголовок "Время"
+                    period.style.display = 'none';
+                    table.querySelectorAll(`tbody tr`).forEach(row => {
+                        const cell = row.children[index];
+                        if (cell) cell.style.display = 'none';
+                    });
+                } else {
+                    period.style.display = '';
+                    table.querySelectorAll(`tbody tr`).forEach(row => {
+                        const cell = row.children[index];
+                        if (cell) cell.style.display = '';
+                    });
+                }
+            });
+
+        } else {
+            // Для горизонтального вида
+            const days = table.querySelectorAll('th[data-day-id]');
+            const rows = table.querySelectorAll('tbody tr');
+            const dayIndexes = new Map();
+
+            days.forEach((day, index) => {
+                dayIndexes.set(day.getAttribute('data-day-id'), index + 1);
+            });
+
+            // Находим последний период с уроками для каждого дня
+            let lastRowWithLessons = 0;
+            rows.forEach((row, rowIndex) => {
+                const cells = Array.from(row.children).slice(1); // Пропускаем ячейку времени
+                const hasAnyLessons = cells.some(cell => hasVisibleLessons(cell));
+                if (hasAnyLessons) {
+                    lastRowWithLessons = rowIndex;
+                }
+            });
+
+            // Скрываем пустые дни
+            days.forEach(day => {
+                const dayId = day.getAttribute('data-day-id');
+                const columnIndex = dayIndexes.get(dayId);
+                const cells = table.querySelectorAll(`td:nth-child(${columnIndex + 1})`);
+                const hasLessons = Array.from(cells).some(cell => hasVisibleLessons(cell));
+                
+                if (!hasLessons) {
+                    day.style.display = 'none';
+                    cells.forEach(cell => {
+                        cell.style.display = 'none';
+                    });
+                } else {
+                    day.style.display = '';
+                    cells.forEach(cell => {
+                        cell.style.display = '';
+                    });
+                }
+            });
+
+            // Скрываем пустые периоды после последнего урока
+            rows.forEach((row, index) => {
+                if (index > lastRowWithLessons) {
+                    row.style.display = 'none';
+                } else {
+                    row.style.display = '';
+                }
+            });
+        }
+    }
+
+    // Вызываем функцию после загрузки расписания
+    document.addEventListener('DOMContentLoaded', function() {
+        // ... existing code ...
+        hideEmptyDays();
+    });
+
+    // Добавляем вызов после фильтрации
+    function applyFilters() {
+        // ... existing filtering code ...
+        hideEmptyDays(); // Вызываем после применения фильтров
+    }
+});
