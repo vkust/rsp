@@ -1,0 +1,372 @@
+<?php
+/**
+ * Совместимый с WPwpdb слой доступа к базе данных поверх PDO.
+ * Поддерживает SQLite и MySQL, поддерживает %d/%s/%f в prepare(),
+ * методы get_results/get_row/get_var/query/insert/update/delete и псевдо-свойства.
+ */
+
+if (!defined('APP_ROOT')) {
+    exit;
+}
+
+class App_Database
+{
+    /** @var PDO */
+    public $pdo;
+    public $prefix = 'schedule_';
+    public $last_error = '';
+    public $last_result = [];
+    public $insert_id = 0;
+    public $rows_affected = 0;
+    public $num_rows = 0;
+
+    private $type;
+    private static $instance = null;
+
+    public function __construct($config = null)
+    {
+        $config = $config ?: App_Config::get('db');
+        $this->type = $config['type'] ?? 'sqlite';
+        $this->prefix = $config['prefix'] ?? 'schedule_';
+
+        try {
+            if ($this->type === 'mysql') {
+                $m = $config['mysql'];
+                $dsn = sprintf(
+                    'mysql:host=%s;port=%s;dbname=%s;charset=%s',
+                    $m['host'], $m['port'] ?? 3306, $m['name'], $m['charset'] ?? 'utf8mb4'
+                );
+                $this->pdo = new PDO($dsn, $m['user'], $m['pass'], [
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_OBJ,
+                ]);
+            } else {
+                $path = $config['sqlite']['path'];
+                $dir = dirname($path);
+                if (!is_dir($dir)) {
+                    @mkdir($dir, 0775, true);
+                }
+                $this->pdo = new PDO('sqlite:' . $path, null, null, [
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_OBJ,
+                ]);
+                $this->pdo->exec('PRAGMA journal_mode = WAL');
+                $this->pdo->exec('PRAGMA foreign_keys = ON');
+            }
+        } catch (PDOException $e) {
+            $this->last_error = $e->getMessage();
+            throw new RuntimeException('Database connection failed: ' . $e->getMessage());
+        }
+
+        self::$instance = $this;
+        // Глобал для совместимости с кодом вида global $wpdb;
+        $GLOBALS['wpdb'] = $this;
+    }
+
+    public static function instance()
+    {
+        if (self::$instance === null) {
+            new self();
+        }
+        return self::$instance;
+    }
+
+    public function is_sqlite()
+    {
+        return $this->type === 'sqlite';
+    }
+
+    public function is_mysql()
+    {
+        return $this->type === 'mysql';
+    }
+
+    /**
+     * Аналог $wpdb->get_charset_collate().
+     */
+    public function get_charset_collate()
+    {
+        return $this->is_mysql() ? 'DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci' : '';
+    }
+
+    /**
+     * Экранирование для LIKE (аналог $wpdb->esc_like).
+     */
+    public function esc_like($text)
+    {
+        return addcslashes((string) $text, '_%\\');
+    }
+
+    /**
+     * Аналог $wpdb->prepare с плейсхолдерами %d, %s, %f (включая %% escaping).
+     */
+    public function prepare($query, ...$args)
+    {
+        if (count($args) === 1 && is_array($args[0])) {
+            $args = $args[0];
+        }
+
+        $index = 0;
+        $result = preg_replace_callback('/%([sdFf]|%)/', function ($matches) use (&$args, &$index) {
+            if ($matches[1] === '%') {
+                return '%';
+            }
+            if (!array_key_exists($index, $args)) {
+                return $matches[0];
+            }
+            $value = $args[$index++];
+            switch ($matches[1]) {
+                case 'd':
+                    return (string) (int) $value;
+                case 'f':
+                case 'F':
+                    return (string) (float) $value;
+                case 's':
+                default:
+                    if ($value === null) {
+                        return 'NULL';
+                    }
+                    return $this->pdo->quote((string) $value);
+            }
+        }, $query);
+
+        return $result;
+    }
+
+    /**
+     * Выполнить запрос. Возвращает количество затронутых строк для изменяющих
+     * запросов или массив объектов для SELECT.
+     */
+    public function query($query, ...$args)
+    {
+        if ($args) {
+            $query = $this->prepare($query, ...$args);
+        }
+        try {
+            $stmt = $this->pdo->query($query);
+            $this->last_error = '';
+            if ($stmt === false) {
+                $err = $this->pdo->errorInfo();
+                $this->last_error = $err[2] ?? 'Unknown error';
+                return false;
+            }
+            $is_select = preg_match('/^\s*(SELECT|SHOW|PRAGMA|DESCRIBE|EXPLAIN)\b/i', $query);
+            if ($is_select) {
+                $this->last_result = $stmt->fetchAll(PDO::FETCH_OBJ);
+                $this->num_rows = count($this->last_result);
+                return $this->last_result;
+            }
+            $this->rows_affected = $stmt->rowCount();
+            $this->insert_id = (int) $this->pdo->lastInsertId();
+            return $this->rows_affected;
+        } catch (PDOException $e) {
+            $this->last_error = $e->getMessage();
+            error_log('DB query error: ' . $e->getMessage() . ' SQL: ' . $query);
+            return false;
+        }
+    }
+
+    public function get_results($query = null, $output = 'OBJECT')
+    {
+        if ($query === null) {
+            $rows = $this->last_result;
+        } else {
+            $rows = $this->query($query);
+            if ($rows === false) {
+                return null;
+            }
+        }
+        if ($output === ARRAY_A || $output === 'ARRAY_A') {
+            return array_map(function ($r) {
+                return (array) $r;
+            }, $rows);
+        }
+        if ($output === ARRAY_N || $output === 'ARRAY_N') {
+            return array_map(function ($r) {
+                return array_values((array) $r);
+            }, $rows);
+        }
+        return $rows;
+    }
+
+    public function get_row($query = null, $output = 'OBJECT', $y = 0)
+    {
+        $rows = $this->get_results($query, $output);
+        if (!$rows) {
+            return null;
+        }
+        return $rows[$y] ?? null;
+    }
+
+    public function get_var($query = null, $x = 0, $y = 0)
+    {
+        if ($query !== null) {
+            $this->query($query);
+        }
+        $rows = $this->last_result;
+        if (!isset($rows[$y])) {
+            return null;
+        }
+        $arr = (array) $rows[$y];
+        $values = array_values($arr);
+        return $values[$x] ?? null;
+    }
+
+    public function get_col($query = null, $x = 0)
+    {
+        if ($query !== null) {
+            $this->query($query);
+        }
+        $out = [];
+        foreach ($this->last_result as $row) {
+            $values = array_values((array) $row);
+            $out[] = $values[$x] ?? null;
+        }
+        return $out;
+    }
+
+    /**
+     * Аналог $wpdb->insert($table, $data, $format).
+     */
+    public function insert($table, $data, $format = null)
+    {
+        $columns = array_keys($data);
+        $placeholders = [];
+        $values = [];
+        foreach ($data as $i => $key) {
+            $fmt = $this->get_format_for($format, $i, $key);
+            $placeholders[] = $fmt;
+            $values[] = $key;
+        }
+        $sql = 'INSERT INTO `' . $table . '` (`' . implode('`, `', $columns) . '`) VALUES (' . implode(', ', $placeholders) . ')';
+        $sql = $this->prepare($sql, ...$values);
+        return $this->query($sql);
+    }
+
+    /**
+     * Аналог $wpdb->update($table, $data, $where, $format, $where_format).
+     */
+    public function update($table, $data, $where, $format = null, $where_format = null)
+    {
+        $set = [];
+        $values = [];
+        $i = 0;
+        foreach ($data as $key => $val) {
+            $set[] = '`' . $key . '` = ' . $this->get_format_for($format, $i, $key);
+            $values[] = $val;
+            $i++;
+        }
+        $conditions = [];
+        $j = 0;
+        foreach ($where as $key => $val) {
+            $conditions[] = '`' . $key . '` = ' . $this->get_format_for($where_format, $j, $key);
+            $values[] = $val;
+            $j++;
+        }
+        $sql = 'UPDATE `' . $table . '` SET ' . implode(', ', $set) . ' WHERE ' . implode(' AND ', $conditions);
+        $sql = $this->prepare($sql, ...$values);
+        return $this->query($sql);
+    }
+
+    /**
+     * Аналог $wpdb->delete($table, $where, $where_format).
+     */
+    public function delete($table, $where, $where_format = null)
+    {
+        $conditions = [];
+        $values = [];
+        $j = 0;
+        foreach ($where as $key => $val) {
+            $conditions[] = '`' . $key . '` = ' . $this->get_format_for($where_format, $j, $key);
+            $values[] = $val;
+            $j++;
+        }
+        $sql = 'DELETE FROM `' . $table . '` WHERE ' . implode(' AND ', $conditions);
+        $sql = $this->prepare($sql, ...$values);
+        return $this->query($sql);
+    }
+
+    private function get_format_for($format, $i, $key)
+    {
+        $fmt = null;
+        if (is_array($format)) {
+            $fmt = $format[$i] ?? null;
+        } elseif (is_string($format)) {
+            $fmt = $format;
+        }
+        if ($fmt === null) {
+            // Автоопределение по имени поля (эвристика как в WP)
+            if (strpos($key, 'id') !== false || strpos($key, 'chat_id') !== false) {
+                $fmt = '%d';
+            } else {
+                $fmt = '%s';
+            }
+        }
+        return $fmt;
+    }
+
+    /**
+     * Проверка существования таблицы.
+     */
+    public function table_exists($table)
+    {
+        if ($this->is_mysql()) {
+            $res = $this->get_var("SHOW TABLES LIKE '$table'");
+            return $res === $table;
+        }
+        $res = $this->get_var("SELECT name FROM sqlite_master WHERE type='table' AND name='" . str_replace("'", "''", $table) . "'");
+        return !empty($res);
+    }
+
+    /**
+     * Получить список колонок таблицы (универсально).
+     * Возвращает массив объектов {Field, Type, Null, Key, Default, Extra}.
+     */
+    public function get_columns($table)
+    {
+        if ($this->is_mysql()) {
+            return $this->get_results("SHOW COLUMNS FROM `$table`");
+        }
+        $rows = $this->query("PRAGMA table_info(`$table`)");
+        $out = [];
+        foreach ($rows as $r) {
+            $out[] = (object) [
+                'Field'   => $r->name,
+                'Type'    => $r->type,
+                'Null'    => $r->notnull ? 'NO' : 'YES',
+                'Key'     => $r->pk ? 'PRI' : '',
+                'Default' => $r->dflt_value,
+                'Extra'   => '',
+            ];
+        }
+        return $out;
+    }
+
+    /**
+     * Универсальный dbDelta-подобный метод: выполняет набор CREATE/ALTER запросов.
+     */
+    public function run_schema(array $statements)
+    {
+        foreach ($statements as $sql) {
+            $sql = trim($sql);
+            if ($sql === '') {
+                continue;
+            }
+            $this->query($sql);
+        }
+    }
+}
+
+// Константы вывода результатов, совместимые с WordPress
+if (!defined('OBJECT')) {
+    define('OBJECT', 'OBJECT');
+}
+if (!defined('ARRAY_A')) {
+    define('ARRAY_A', 'ARRAY_A');
+}
+if (!defined('ARRAY_N')) {
+    define('ARRAY_N', 'ARRAY_N');
+}
+if (!defined('OBJECT_K')) {
+    define('OBJECT_K', 'OBJECT_K');
+}

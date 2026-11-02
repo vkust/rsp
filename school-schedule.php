@@ -11,23 +11,14 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-// Определяем константы плагина
-define('SCHOOL_SCHEDULE_PATH', plugin_dir_path(__FILE__));
-define('SCHOOL_SCHEDULE_URL', plugin_dir_url(__FILE__));
-define('SCHOOL_SCHEDULE_VERSION', '1.9.1');
-
-// Временно включаем отображение ошибок для отладки
-if (!defined('WP_DEBUG')) {
-    define('WP_DEBUG', true);
+// Определяем константы приложения (в автономном режиме это пути проекта)
+if (!defined('SCHOOL_SCHEDULE_PATH')) {
+    define('SCHOOL_SCHEDULE_PATH', APP_ROOT . '/');
 }
-if (!defined('WP_DEBUG_DISPLAY')) {
-    define('WP_DEBUG_DISPLAY', true);
+if (!defined('SCHOOL_SCHEDULE_URL')) {
+    define('SCHOOL_SCHEDULE_URL', rtrim(plugin_dir_url(__FILE__), '/') . '/');
 }
-if (!defined('WP_DEBUG_LOG')) {
-    define('WP_DEBUG_LOG', true);
-}
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+define('SCHOOL_SCHEDULE_VERSION', '2.0.0');
 
 class SchoolSchedule {
     private $default_categories = array(
