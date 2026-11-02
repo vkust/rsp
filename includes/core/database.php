@@ -98,10 +98,56 @@ class App_Database
      * (CURDATE(), NOW(), DATE_SUB(NOW(), INTERVAL n UNIT), DATE(col)) —
      * на эквиваленты SQLite. На MySQL запросы проходят без изменений.
      */
+    /**
+     * Аналог $wpdb->replace() — INSERT OR REPLACE (SQLite) / REPLACE INTO (MySQL).
+     * Работает только при наличии UNIQUE/PK ограничения на ключевых колонках.
+     */
+    public function replace($table, $data, $format = null)
+    {
+        $columns = array_keys($data);
+        $placeholders = [];
+        $values = [];
+        foreach ($data as $i => $key) {
+            $placeholders[] = $this->get_format_for($format, $i, $key);
+            $values[] = $key;
+        }
+        $verb = $this->is_sqlite() ? 'INSERT OR REPLACE INTO' : 'REPLACE INTO';
+        $sql = $verb . ' `' . $table . '` (`' . implode('`, `', $columns) . '`) VALUES (' . implode(', ', $placeholders) . ')';
+        $sql = $this->prepare($sql, ...$values);
+        return $this->query($sql);
+    }
+
     private function translate_sql($query)
     {
         if (!$this->is_sqlite()) {
             return $query;
+        }
+
+        // DDL-совместимость: MySQL-синтаксис индексов внутри CREATE TABLE → SQLite
+        if (preg_match('/^\s*CREATE\s+TABLE/i', $query)) {
+            $table = '';
+            if (preg_match('/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?[`"]?([A-Za-z0-9_]+)[`"]?/i', $query, $tm)) {
+                $table = $tm[1];
+            }
+            // bigint(20)/tinyint(1) и т.п. → базовый тип
+            $query = preg_replace('/\b(bigint|int|smallint|tinyint|mediumint)\(\d+\)/i', '$1', $query);
+            // Убираем строки KEY / UNIQUE KEY / PRIMARY KEY(...) с запятыми
+            $extra = [];
+            $query = preg_replace_callback(
+                '/,\s*((?:UNIQUE\s+)?(?:KEY|INDEX)\s+[`\w]+\s*\([^)]*\)|PRIMARY\s+KEY\s*\([^)]*\))/i',
+                function ($m) use (&$extra, $table) {
+                    $s = trim($m[1]);
+                    if (preg_match('/^(UNIQUE\s+)?(?:KEY|INDEX)\s+`?(\w+)`?\s*\(([^)]*)\)/i', $s, $im)) {
+                        $u = stripos($im[1], 'UNIQUE') !== false ? 'UNIQUE ' : '';
+                        $cols = trim($im[3], " `");
+                        $extra[] = "CREATE {$u}INDEX IF NOT EXISTS {$table}_{$im[2]} ON {$table} ({$cols})";
+                    }
+                    return ''; // PRIMARY KEY inline уже объявлен на колонке — просто вырезаем
+                },
+                $query
+            );
+            $query = rtrim(trim($query), ';');
+            $this->pending_after_ddl = array_merge($this->pending_after_ddl ?? [], $extra);
         }
 
         // SHOW TABLES LIKE 'name'

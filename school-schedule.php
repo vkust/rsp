@@ -560,7 +560,8 @@ class SchoolSchedule {
             $target_path = $schedule_dir . '/' . $filename;
 
             // Перемещаем файл
-            if (!move_uploaded_file($file['tmp_name'], $target_path)) {
+            $moved = is_uploaded_file($file["tmp_name"]) ? move_uploaded_file($file["tmp_name"], $target_path) : rename($file["tmp_name"], $target_path);
+            if (!$moved) {
                 throw new Exception('Не удалось переместить загруженный файл');
             }
 

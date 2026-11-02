@@ -1523,7 +1523,7 @@ function wp_handle_upload($file, $overrides = [], $time = null)
     $upload = wp_upload_dir();
     $name = sanitize_file_name($file['name']);
     $target = $upload['basedir'] . '/' . $name;
-    if (move_uploaded_file($file['tmp_name'], $target)) {
+    if (is_uploaded_file($file['tmp_name']) ? move_uploaded_file($file['tmp_name'], $target) : rename($file['tmp_name'], $target)) {
         return [
             'file' => $target,
             'url'  => $upload['baseurl'] . '/' . rawurlencode($name),

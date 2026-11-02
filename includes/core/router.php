@@ -311,9 +311,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;b
         }
 
         $registry = $GLOBALS['wp_app']['registered_settings'] ?? [];
-        if (!$registry) {
-            error_log('options.php: registry is EMPTY, POST keys=' . implode(',', array_keys($_POST)));
-        }
         $saved = 0;
         foreach ($registry as $name => $args) {
             if (!array_key_exists($name, $_POST)) {

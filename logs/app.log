@@ -74,3 +74,18 @@ Stack trace:
 Stack trace:
 #0 {main}
   thrown in Command line code on line 1
+[02-Nov-2026 15:44:41 Europe/Moscow] School Schedule Error: Ошибка проверки безопасности
+[02-Nov-2026 15:44:43 Europe/Moscow] School Schedule Error: Ошибка проверки безопасности
+[02-Nov-2026 15:44:57 Europe/Moscow] School Schedule Error: Не удалось переместить загруженный файл
+[02-Nov-2026 15:45:00 Europe/Moscow] School Schedule Error: Не удалось переместить загруженный файл
+[02-Nov-2026 15:45:05 Europe/Moscow] School Schedule Error: Не удалось переместить загруженный файл
+[02-Nov-2026 15:46:02 Europe/Moscow] PHP Fatal error:  Uncaught Error: Call to undefined method App_Database::replace() in /workspace/includes/telegram-bot.php:2285
+Stack trace:
+#0 /workspace/includes/telegram-bot.php(252): ScheduleTelegramBot->save_user_info()
+#1 /workspace/includes/telegram-bot.php(226): ScheduleTelegramBot->handle_message()
+#2 /workspace/includes/rest-api.php(42): ScheduleTelegramBot->handle_webhook()
+#3 /workspace/includes/core/router.php(360): ScheduleRestAPI->handle_webhook()
+#4 /workspace/includes/core/router.php(40): App_Router::handle_telegram_webhook()
+#5 /workspace/public/index.php(39): App_Router::dispatch()
+#6 {main}
+  thrown in /workspace/includes/telegram-bot.php on line 2285
