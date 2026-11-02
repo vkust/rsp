@@ -135,7 +135,7 @@ class App_Database
         $units = ['MICROSECOND' => 'microseconds', 'SECOND' => 'seconds', 'MINUTE' => 'minutes',
                   'HOUR' => 'hours', 'DAY' => 'days', 'WEEK' => 'weeks', 'MONTH' => 'months', 'YEAR' => 'years'];
         $u = implode('|', array_keys($units));
-        $map = strtolower($units);
+        $map = array_change_key_case($units, CASE_LOWER);
         $query = preg_replace_callback(
             "/\bDATE_SUB\s*\(\s*(?:CURDATE\s*\(\s*\)|NOW\s*\(\s*\)|datetime\('now','localtime'\)|date\('now','localtime'\))\s*,\s*INTERVAL\s+(-?\d+|%\w)\s+(?:$u)\s*\)/i",
             function ($mm) use ($map) {

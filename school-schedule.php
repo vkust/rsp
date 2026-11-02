@@ -1230,26 +1230,22 @@ class SchoolSchedule {
     public function update_database_structure() {
         global $wpdb;
         
-        // Проверяем наличие новых полей в таблице подписок
+        // Проверяем наличие новых полей в таблице подписок (через список колонок —
+        // совместимо и с MySQL, и с SQLite, где SHOW CREATE TABLE недоступен)
         $table_name = $wpdb->prefix . 'schedule_subscriptions';
-        $row = $wpdb->get_row("SHOW CREATE TABLE `{$table_name}`");
-        
-        if ($row) {
-            $create_table_sql = $row->{'Create Table'};
-            
-            // Добавляем поле notify_period_start, если его нет
-            if (strpos($create_table_sql, 'notify_period_start') === false) {
-                $wpdb->query("ALTER TABLE `{$table_name}` 
-                    ADD COLUMN `notify_period_start` tinyint(1) DEFAULT '0' 
-                    AFTER `notify_changes`");
-            }
-            
-            // Добавляем поле notify_period_end, если его нет
-            if (strpos($create_table_sql, 'notify_period_end') === false) {
-                $wpdb->query("ALTER TABLE `{$table_name}` 
-                    ADD COLUMN `notify_period_end` tinyint(1) DEFAULT '0' 
-                    AFTER `notify_period_start`");
-            }
+        $columns = array();
+        foreach ((array) $wpdb->get_columns($table_name) as $col) {
+            $columns[] = isset($col->Field) ? $col->Field : (isset($col->name) ? $col->name : '');
+        }
+
+        // Добавляем поле notify_period_start, если его нет
+        if (!in_array('notify_period_start', $columns, true)) {
+            $wpdb->query("ALTER TABLE `{$table_name}` ADD COLUMN `notify_period_start` tinyint(1) DEFAULT '0'");
+        }
+
+        // Добавляем поле notify_period_end, если его нет
+        if (!in_array('notify_period_end', $columns, true)) {
+            $wpdb->query("ALTER TABLE `{$table_name}` ADD COLUMN `notify_period_end` tinyint(1) DEFAULT '0'");
         }
     }
 
