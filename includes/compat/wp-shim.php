@@ -212,7 +212,7 @@ function do_shortcode($content)
 function app_options_table()
 {
     $db = App_Database::instance();
-    return $db->prefix . 'options';
+    return $db->prefix . 'schedule_options';
 }
 
 function app_load_options()
@@ -353,7 +353,7 @@ function delete_transient($name)
 function app_cron_table()
 {
     $db = App_Database::instance();
-    return $db->prefix . 'cron';
+    return $db->prefix . 'schedule_cron';
 }
 
 if (!function_exists('wp_get_schedules')) {

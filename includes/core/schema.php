@@ -18,19 +18,19 @@ function app_install_schema()
     $created = [];
 
     // Опции (замена wp-options)
-    if (!$db->table_exists("{$p}options")) {
-        $db->query("CREATE TABLE `{$p}options` (
+    if (!$db->table_exists("{$p}schedule_options")) {
+        $db->query("CREATE TABLE `{$p}schedule_options` (
             id INTEGER PRIMARY KEY " . ($db->is_mysql() ? 'BIGINT(20) NOT NULL AUTO_INCREMENT' : 'AUTOINCREMENT') . ",
             option_name VARCHAR(191) NOT NULL,
             option_value TEXT NOT NULL,
             UNIQUE KEY option_name (option_name)
         )" . $db->get_charset_collate());
-        $created[] = "{$p}options";
+        $created[] = "{$p}schedule_options";
     }
 
     // Планировщик (замена wp-cron)
-    if (!$db->table_exists("{$p}cron")) {
-        $db->query("CREATE TABLE `{$p}cron` (
+    if (!$db->table_exists("{$p}schedule_cron")) {
+        $db->query("CREATE TABLE `{$p}schedule_cron` (
             id INTEGER PRIMARY KEY " . ($db->is_mysql() ? 'BIGINT(20) NOT NULL AUTO_INCREMENT' : 'AUTOINCREMENT') . ",
             timestamp BIGINT(20) NOT NULL DEFAULT 0,
             interval BIGINT(20) NOT NULL DEFAULT 0,
@@ -39,7 +39,7 @@ function app_install_schema()
             args TEXT,
             KEY ts (timestamp)
         )" . $db->get_charset_collate());
-        $created[] = "{$p}cron";
+        $created[] = "{$p}schedule_cron";
     }
 
     // Пользователи Telegram
@@ -106,7 +106,7 @@ function app_uninstall_schema()
 {
     $db = App_Database::instance();
     $p = $db->prefix;
-    foreach (['schedule_subscriptions', 'schedule_users', 'schedule_notifications', 'cron', 'options'] as $t) {
+    foreach (['schedule_subscriptions', 'schedule_users', 'schedule_notifications', 'schedule_cron', 'schedule_options'] as $t) {
         $db->query("DROP TABLE IF EXISTS `{$p}{$t}`");
     }
 }

@@ -90,6 +90,77 @@ class App_Database
     }
 
     /**
+     * Транслятор MySQL DDL → SQLite. Позволяет переиспользовать SQL-скрипты
+     * плагина (CREATE TABLE ... KEY ..., UNIQUE KEY ...) на SQLite без правок:
+     * ключевые конструкции KEY/UNIQUE KEY выносятся в отдельные CREATE INDEX,
+     * суффиксы ENGINE=/CHARSET= отбрасываются.
+     */
+    private function translate_mysql_ddl($query)
+    {
+        if (!preg_match('/^\s*CREATE\s+TABLE/i', $query)) {
+            return $query;
+        }
+        if (!preg_match('/CREATE\s+TABLE\s+(IF\s+NOT\s+EXISTS\s+)?[`"]?([A-Za-z0-9_]+)[`"]?\s*\(/i', $query, $m)) {
+            return $query;
+        }
+        $ifne  = trim($m[1]) !== '' ? 'IF NOT EXISTS ' : '';
+        $table = $m[2];
+
+        $open  = strpos($query, '(', strpos($query, $table) + strlen($table));
+        $close = strrpos($query, ')');
+        if ($open === false || $close === false || $close <= $open) {
+            return $query;
+        }
+        $body = substr($query, $open + 1, $close - $open - 1);
+
+        // Разбиваем тело таблицы по запятым верхнего уровня
+        $parts = [];
+        $depth = 0;
+        $buf   = '';
+        for ($i = 0, $len = strlen($body); $i < $len; $i++) {
+            $ch = $body[$i];
+            if ($ch === '(') { $depth++; }
+            elseif ($ch === ')') { $depth--; }
+            if ($ch === ',' && $depth === 0) {
+                $parts[] = $buf;
+                $buf = '';
+            } else {
+                $buf .= $ch;
+            }
+        }
+        if (trim($buf) !== '') {
+            $parts[] = $buf;
+        }
+
+        $cols    = [];
+        $indexes = [];
+        foreach ($parts as $p) {
+            $t = trim($p);
+            if ($t === '') {
+                continue;
+            }
+            if (preg_match('/^UNIQUE\s+(?:KEY|INDEX)\s+[`"]?([A-Za-z0-9_]+)[`"]?\s*\(([^)]*)\)/i', $t, $mm)) {
+                $indexes[] = ['unique' => true,  'name' => $mm[1], 'cols' => $mm[2]];
+            } elseif (preg_match('/^(?:KEY|INDEX)\s+[`"]?([A-Za-z0-9_]+)[`"]?\s*\(([^)]*)\)/i', $t, $mm)) {
+                $indexes[] = ['unique' => false, 'name' => $mm[1], 'cols' => $mm[2]];
+            } elseif (preg_match('/^PRIMARY\s+KEY/i', $t)) {
+                $cols[] = $t; // SQLite понимает PRIMARY KEY (col) в теле таблицы
+            } else {
+                $cols[] = $t;
+            }
+        }
+
+        $sql = "CREATE TABLE {$ifne}`{$table}` (" . implode(', ', $cols) . ")";
+        foreach ($indexes as $idx) {
+            $colsN = preg_replace('/[`"\s]/', '', $idx['cols']);
+            $u     = $idx['unique'] ? 'UNIQUE ' : '';
+            $iname = $table . '_' . $idx['name'];
+            $sql  .= "\nCREATE {$u}INDEX IF NOT EXISTS `{$iname}` ON `{$table}` ({$colsN});";
+        }
+        return $sql;
+    }
+
+    /**
      * Экранирование для LIKE (аналог $wpdb->esc_like).
      */
     public function esc_like($text)
@@ -142,7 +213,28 @@ class App_Database
         if ($args) {
             $query = $this->prepare($query, ...$args);
         }
+        if ($this->type === 'sqlite') {
+            $query = $this->translate_mysql_ddl($query);
+        }
         try {
+            // PDO::query выполняет только первый запрос; многостatement-строки
+            // (CREATE TABLE + CREATE INDEX из транслятора) выполняем по частям.
+            if (strpos($query, ';') !== false && preg_match('/;\s*\S/', $query)) {
+                $totalAffected = 0;
+                foreach (array_filter(array_map('trim', explode(';', $query))) as $part) {
+                    $stmt = $this->pdo->query($part);
+                    if ($stmt === false) {
+                        $err = $this->pdo->errorInfo();
+                        $this->last_error = $err[2] ?? 'Unknown error';
+                        return false;
+                    }
+                    $totalAffected += $stmt->rowCount();
+                }
+                $this->last_error   = '';
+                $this->rows_affected = $totalAffected;
+                $this->insert_id    = (int) $this->pdo->lastInsertId();
+                return $this->rows_affected;
+            }
             $stmt = $this->pdo->query($query);
             $this->last_error = '';
             if ($stmt === false) {
