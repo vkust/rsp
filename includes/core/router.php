@@ -302,7 +302,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;b
             check_admin_referer($group); // аналог поведения options.php
         }
 
+        // Реестр register_setting() заполняется в хуке admin_menu
+        // (school-schedule.php::add_admin_menu). На прямом запросе
+        // /options.php хук ещё не выполнялся — вызываем его, иначе
+        // реестр пуст и настройки не сохранятся.
+        if (empty($GLOBALS['wp_app']['registered_settings'])) {
+            do_action('admin_menu');
+        }
+
         $registry = $GLOBALS['wp_app']['registered_settings'] ?? [];
+        if (!$registry) {
+            error_log('options.php: registry is EMPTY, POST keys=' . implode(',', array_keys($_POST)));
+        }
         $saved = 0;
         foreach ($registry as $name => $args) {
             if (!array_key_exists($name, $_POST)) {
