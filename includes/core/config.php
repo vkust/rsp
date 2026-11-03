@@ -26,6 +26,15 @@ class App_Config
     }
 
     /**
+     * Принудительная перечитка конфигурации (используется мастером установки setup.php).
+     */
+    public static function reload($path = null)
+    {
+        self::$config = null;
+        return self::load($path);
+    }
+
+    /**
      * Получение значения по "точечному" пути: get('db.prefix').
      */
     public static function get($key, $default = null)
