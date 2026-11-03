@@ -132,7 +132,7 @@ if (version_compare($ver, '8.0.0', '>=')) {
     $fatalEnv = true;
 }
 
-foreach (['pdo', 'curl', 'xml', 'mbstring'] as $ext) {
+foreach (['pdo', 'curl', 'xml', 'mbstring', 'json'] as $ext) {
     if (extension_loaded($ext)) {
         ok("Расширение php-{$ext}");
     } else {
