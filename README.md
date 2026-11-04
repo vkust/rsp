@@ -28,9 +28,28 @@ WordPress полностью устранена**: приложение рабо
 
 ## Быстрый старт
 
+### Установка на VPS одной командой
+
 ```bash
-git clone <URL репозитория> schedule && cd schedule   # либо скачайте ZIP и распакуйте
-chmod +x setup.sh                                     # если флаг исполнения не сохранился
+sh <(wget -qO- https://raw.githubusercontent.com/vkust/rsp/main/setup.sh)
+```
+
+Аналог через curl:
+
+```bash
+sh <(curl -fsSL https://raw.githubusercontent.com/vkust/rsp/main/setup.sh)
+```
+
+Скрипт скачает архив репозитория, распакует его в каталог `rsp`, установит
+зависимости (при отсутствии PHP выведет готовые команды для Debian/Fedora) и
+запустит мастер установки. Для неинтерактивного режима добавьте аргумент `--yes`
+(в однострочном виде: `sh <(curl -fsSL .../setup.sh) --yes`).
+
+### Ручная установка (клонирование)
+
+```bash
+git clone https://github.com/vkust/rsp.git rsp && cd rsp   # либо скачайте ZIP и распакуйте
+chmod +x setup.sh                                          # если флаг исполнения не сохранился
 
 ./setup.sh                 # интерактивная установка
 ./setup.sh --yes           # неинтерактивно (параметры по умолчанию, пароль — автогенерация)
