@@ -4,8 +4,8 @@
 подписками на уведомления и административной панелью.
 
 Ранее проект распространялся как плагин WordPress. В текущей версии **зависимость от
-WordPress полностью устранена**: приложение работает автономно, используя собственный
- роутер, слой совместимости с WP-функциями и базу данных через PDO (SQLite или MySQL).
+WordPress полностью устранена**: приложение работает автономно (собственный роутер,
+слой совместимости с WP-функциями, база данных через PDO — SQLite или MySQL).
 Весь исходный функционал плагина сохранён.
 
 ## Возможности
@@ -17,53 +17,50 @@ WordPress полностью устранена**: приложение рабо
 - Приём сообщений бота через Telegram Webhook (`POST /telegram-webhook`);
 - Планировщик задач (аналог WP-Cron) с запуском через системный crontab;
 - Административная панель: управление расписанием, настройки бота, статистика,
-  общие настройки (аналог `options.php`);
+  общие настройки;
 - REST-эндпоинты и AJAX-обработчики для фронтенда.
 
 ## Требования
 
-- PHP **8.0+** (проверено на 8.2) с расширениями `pdo`, `pdo_sqlite` (для SQLite),
-  `pdo_mysql` (для MySQL), `curl`, `xml`/`simplexml`, `mbstring`, `json`;
-- Для продакшена — любой веб-сервер (nginx/Apache) с PHP-FPM или встроенный сервер PHP.
+- PHP **8.0+** с расширениями `pdo`, `pdo_sqlite` (для SQLite) или `pdo_mysql` (для MySQL),
+  `curl`, `xml`, `mbstring`, `json`;
+- Для продакшена — любой веб-сервер (nginx/Apache) с PHP-FPM либо встроенный сервер PHP.
 
 ## Быстрый старт
 
-### Вариант 1 — мастер установки (рекомендуется)
-
 ```bash
-php setup.php
+git clone <URL репозитория> schedule && cd schedule   # либо скачайте ZIP и распакуйте
+chmod +x setup.sh                                     # если флаг исполнения не сохранился
+
+./setup.sh                 # интерактивная установка
+./setup.sh --yes           # неинтерактивно (параметры по умолчанию, пароль — автогенерация)
+./setup.sh --help          # справка
 ```
 
-Мастер по шагам: проверит PHP и расширения, спросит URL приложения, тип базы
-(SQLite/MySQL), пути каталогов, часовой пояс; предложит задать логин и пароль
-администратора (пароль запрашивается скрыто, в `config.php` сохраняется только
-хеш, а секрет сессий генерируется автоматически); затем создаст таблицы БД,
-зарегистрирует задачи планировщика и выведет итог с готовыми командами запуска.
-Существующий `config.php` не портится: его значения становятся значениями по
-умолчанию, а при пересоздании делается резервная копия `config.php.backup-*`.
+Мастер установки проходит по шагам:
 
-Неинтерактивная установка (все параметры по умолчанию, пароль генерируется
-автоматически и печатается один раз в конце):
+1. **Проверка окружения** — наличие PHP ≥ 8.0 и обязательных расширений (при отсутствии
+   выводятся команды установки PHP для Debian/Fedora).
+2. **Конфигурация** — пошаговый опрос: URL приложения, тип базы (SQLite/MySQL), путь к базе
+   или параметры MySQL, часовой пояс, логин и пароль администратора (вводится скрыто,
+   в `config.php` сохраняется только bcrypt-хеш). Существующий `config.php` не портится:
+   его текущие значения становятся значениями по умолчанию.
+3. **Инициализация базы данных** — подключение, создание таблиц, регистрация задач
+   планировщика.
+4. **Итог** — готовые команды запуска dev-сервера, строка для crontab и инструкция
+   по настройке Telegram-бота; сгенерированный пароль печатается один раз.
 
-```bash
-php setup.php --yes
-```
-
-### Вариант 2 — ручной запуск установщика
+Дополнительные команды мастера:
 
 ```bash
-# 1. Установка зависимостей нет — достаточно PHP. Создаём конфиг и базу:
-php install.php
-
-# 2. Задаём пароль администратора:
-php install.php --hash-password "ВАШ_ПАРОЛЬ"
-#    скопируйте полученный хеш в config.php => ['admin']['password_hash']
+./setup.sh hash "пароль"   # только сгенерировать bcrypt-хеш пароля
+./setup.sh deactivate      # снять задачи планировщика
+./setup.sh uninstall       # удалить таблицы приложения
 ```
 
 ### Запуск
 
 ```bash
-# Локальный сервер (для разработки):
 php -S 0.0.0.0:8080 -t public public/index.php
 ```
 
@@ -74,8 +71,8 @@ php -S 0.0.0.0:8080 -t public public/index.php
 
 ## Конфигурация
 
-Файл `config.php` создаётся из `config.sample.php` при первом запуске `install.php`.
-Все параметры можно задавать и через переменные окружения:
+Файл `config.php` создаётся мастером установки (или при первом запуске `install.php`).
+Все параметры можно задавать через переменные окружения:
 
 | Ключ | Переменная окружения | По умолчанию | Описание |
 |---|---|---|---|
@@ -83,43 +80,39 @@ php -S 0.0.0.0:8080 -t public public/index.php
 | `db.type` | `SCHEDULE_DB_TYPE` | `sqlite` | `sqlite` или `mysql` |
 | `db.sqlite.path` | — | `data/schedule.sqlite` | Путь к файлу базы SQLite |
 | `db.mysql.*` | `SCHEDULE_DB_HOST/PORT/NAME/USER/PASS` | localhost:3306 / schedule | Параметры MySQL |
-| `db.prefix` | — | `` (пусто) | Префикс таблиц (как `$wpdb->prefix`) |
 | `uploads_dir` | — | `data/uploads` | Каталог загружаемых XML-файлов |
 | `timezone` | `SCHEDULE_TZ` | `Europe/Moscow` | Часовой пояс приложения |
 | `admin.username` | `SCHEDULE_ADMIN_USER` | `admin` | Логин администратора |
-| `admin.password_hash` | `SCHEDULE_ADMIN_HASH` | — | Хеш пароля (`php install.php --hash-password "пароль"`) |
-| `admin.session_secret` | `SCHEDULE_SESSION_SECRET` | `change-me...` | Секрет подписи сессий — **обязательно измените** |
+| `admin.password_hash` | `SCHEDULE_ADMIN_HASH` | — | Хеш пароля (`./setup.sh hash "пароль"`) |
+| `admin.session_secret` | `SCHEDULE_SESSION_SECRET` | — | Секрет подписи сессий (генерируется мастером) |
 | `debug.*` | — | выключено | Аналог `WP_DEBUG`: вывод и лог (`logs/app.log`) |
 
-## Команды установки
+Низкоуровневая установка без мастера (альтернатива):
 
 ```bash
 php install.php                        # создать config.php + таблицы БД + задачи планировщика
 php install.php --hash-password "п"    # сгенерировать хеш пароля администратора
-php install.php --deactivate           # снять cron-задачи (аналог деактивации плагина)
-php install.php --uninstall            # удалить таблицы и настройки (аналог удаления плагина)
+php install.php --deactivate           # снять cron-задачи
+php install.php --uninstall            # удалить таблицы и настройки
 ```
 
 ## Планировщик (cron)
 
-Приложение не имеет внутреннего планировщика WordPress — вместо него используется
-системный crontab. Пример записи:
+Вместо WP-Cron используется системный crontab. Пример записей:
 
 ```cron
 */5 * * * * /usr/bin/php /path/to/app/cron.php next_lesson >> /path/to/app/logs/cron.log 2>&1
 0 20 * * *  /usr/bin/php /path/to/app/cron.php next_day    >> /path/to/app/logs/cron.log 2>&1
 ```
 
-Также доступен готовый скрипт-обёртка `cron-task.sh {next_lesson|next_day}`
-(логирует запуски в `logs/cron.log`).
-
 Задачи регистрируются в таблице `schedule_cron` и исполняются при наступлении срока
 во время любого HTTP-запроса (ленивый запуск, как wp-cron) либо через `cron.php`.
+Доступна обёртка с логированием `cron-task.sh {next_lesson|next_day}`.
 
 ## Настройка Telegram-бота
 
 1. Создайте бота у [@BotFather](https://t.me/BotFather), получите токен.
-2. В админке (`/admin/bot`) сохраните токен — настройки пишутся в таблицу `schedule_options`.
+2. В админке (`/admin/bot`) сохраните токен.
 3. Укажите webhook на ваш публичный URL:
 
 ```bash
@@ -135,24 +128,18 @@ curl -F "url=https://your-domain.example/telegram-webhook" \
 ├── public/index.php          — точка входа (весь трафик идёт через неё)
 ├── bootstrap.php             — загрузка ядра (аналог wp-load.php)
 ├── config.php / config.sample.php — конфигурация
-├── install.php               — CLI-установка/удаление
+├── setup.sh                  — мастер установки (shell-обёртка) — рекомендуется
+├── setup.php                 — ядро мастера (конфиг, хеш пароля, БД)
+├── install.php               — низкоуровневая CLI-установка/удаление
 ├── cron.php                  — запуск задач планировщика из crontab
 ├── cron-task.sh              — обёртка для crontab с логированием
 ├── school-schedule.php       — основной модуль приложения (бывший файл плагина)
 ├── page-schedule.php         — рендеринг публичной страницы расписания
 ├── includes/
-│   ├── core/
-│   │   ├── config.php        — загрузчик конфигурации
-│   │   ├── database.php      — App_Database: PDO-обёртка с API $wpdb
-│   │   │                     (prepare/get_results/get_var/insert/update/replace и
-│   │   │                      транслятор MySQL-SQL → SQLite: SHOW TABLES/COLUMNS,
-│   │   │                      CURDATE(), NOW(), DATE_SUB/DATE_ADD и т.д.)
-│   │   ├── router.php        — маршрутизация: фронтенд, /admin, AJAX, webhook,
-│   │   │                     /login /logout /options.php, раздача /assets и /uploads
-│   │   └── schema.php        — создание/удаление таблиц (аналог dbDelta)
-│   ├── compat/wp-shim.php    — слой совместимости: get_option/update_option,
-│   │                         add_action/do_action, трансиенты, хуки REST/AJAX,
-│   │                         esc_*__/*, nonce, dbDelta и сотни других WP-функций
+│   ├── core/                 — ядро: конфиг, App_Database (PDO-обёртка с API $wpdb
+│   │                           и транслятором MySQL-SQL → SQLite), роутер, схема БД
+│   ├── compat/wp-shim.php    — слой совместимости: get_option/update_option, хуки,
+│   │                           трансиенты, nonce, esc_* и другие WP-функции
 │   ├── parser.php            — парсер XML-расписания
 │   ├── scheduler.php         — логика уведомлений (next lesson / next day)
 │   ├── telegram-bot.php      — Telegram-бот (webhook, команды, подписки)
@@ -168,12 +155,12 @@ curl -F "url=https://your-domain.example/telegram-webhook" \
 | Путь | Метод | Назначение |
 |---|---|---|
 | `/`, `/schedule`, `/raspisanie` | GET | Публичная страница расписания |
-| `/panels` | GET | Панели (классы/преподаватели/кабинеты) — аналог шорткода `school_schedule_panels` |
-| `/telegram` | GET | Страница подписки бота — аналог шорткода `telegram_schedule` |
+| `/panels` | GET | Панели (классы/преподаватели/кабинеты) |
+| `/telegram` | GET | Страница подписки бота |
 | `/admin`, `/admin/...` | GET | Админка (требует сессию) |
 | `/login`, `/logout` | GET/POST | Вход и выход администратора |
-| `/options.php` | POST | Сохранение настроек (аналог `wp-admin/options.php`) |
-| `/telegram-webhook`, `/wp-json/school-schedule/v1/telegram-webhook` | POST | Webhook Telegram-бота |
+| `/options.php` | POST | Сохранение настроек |
+| `/telegram-webhook` | POST | Webhook Telegram-бота |
 | `/ajax?action=...` | GET/POST | AJAX-обработчики (аналог `admin-ajax.php`) |
 | `/assets/*`, `/uploads/*` | GET | Статика и загруженные XML-файлы |
 
@@ -199,18 +186,6 @@ server {
 Укажите реальный домен в `site_url` (`SCHEDULE_SITE_URL`) — от него зависит webhook
 Telegram и ссылки в уведомлениях. Директории `data/` и `logs/` должны быть доступны
 для записи пользователю PHP; наружу они не публикуются (root — только `public/`).
-
-## Отличие от прежней WP-версии
-
-- Нет требований к WordPress, темам, плагинам и авторизации WP;
-- `$wpdb` заменён на `App_Database` (PDO) с сохранением интерфейса и SQL-совместимости;
-- Хуки `add_action/add_filter/do_action` работают через собственный реестр
-  (`includes/compat/wp-shim.php`) — код модулей не переписывался;
-- WP-Cron заменён на таблицу `schedule_cron` + ленивый запуск + `cron.php` для crontab;
-- REST API WordPress заменён собственными маршрутами `/rest-api/*` (URL совместимы);
-- Опции WordPress хранятся в таблице `schedule_options` с теми же именами ключей;
-- Авторизация в админку — одна учётная запись из `config.php` (bcrypt-хеш) + сессии;
-- Функционал (парсер, бот, подписки, уведомления, статистика, панели) — без изменений.
 
 ## Лицензия
 
