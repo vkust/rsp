@@ -29,7 +29,7 @@ WordPress полностью устранена**: приложение рабо
 ## Быстрый старт
 
 ```bash
-git clone <URL репозитория> schedule && cd schedule   # либо скачайте ZIP и распакуйте
+git clone https://github.com/vkust/rsp.git schedule && cd schedule   # либо скачайте ZIP и распакуйте
 chmod +x setup.sh                                     # если флаг исполнения не сохранился
 
 ./setup.sh                 # интерактивная установка
