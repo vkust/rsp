@@ -1,199 +1,331 @@
 # Расписание занятий — автономное приложение
 
-Веб-приложение для отображения расписания занятий школы/колледжа с Telegram-ботом,
+Веб-приложение для отображения школьного/вузовского расписания с Telegram-ботом,
 подписками на уведомления и административной панелью.
 
-Ранее проект распространялся как плагин WordPress. В текущей версии **зависимость от
-WordPress полностью устранена**: приложение работает автономно (собственный роутер,
-слой совместимости с WP-функциями, база данных через PDO — SQLite или MySQL).
-Весь исходный функционал плагина сохранён.
+Проект вырос из WordPress-плагина, но сейчас **WordPress не нужен**. Приложение
+работает автономно: собственный роутер, слой совместимости с WP-функциями,
+база данных через PDO (SQLite или MySQL).
 
 ## Возможности
 
-- Импорт расписания из XML-файлов (выгрузка из 1С/электронного журнала) и его активация;
-- Публичные страницы расписания: по классам, по преподавателям, по кабинетам («панели»);
-- Telegram-бот: команды `/start`, `/help`, подписка на изменения расписания,
-  уведомления о ближайшем занятии и о расписании на завтра;
-- Приём сообщений бота через Telegram Webhook (`POST /telegram-webhook`);
-- Планировщик задач (аналог WP-Cron) с запуском через системный crontab;
-- Административная панель: управление расписанием, настройки бота, статистика,
-  общие настройки;
-- REST-эндпоинты и AJAX-обработчики для фронтенда.
+- импорт расписания из XML (aSc Timetables, 1С, электронный журнал);
+- публичные страницы расписания: обычная и режим «панели» (классы, преподаватели,
+  кабинеты);
+- управление категориями предметов и их видимостью;
+- бегущая строка, баннеры, QR-коды и заголовок страницы;
+- Telegram-бот: `/start`, `/help`, подписка на изменения, уведомления о ближайшем
+  занятии и расписании на завтра;
+- приём сообщений бота через webhook;
+- планировщик уведомлений (аналог WP-Cron) с запуском через системный `cron`;
+- админ-панель: загрузка XML, настройки сайта, смена пароля, порт сервера,
+  настройки Telegram, статистика;
+- смена порта и пароля администратора прямо из админки;
+- HTTPS через reverse proxy (nginx/Caddy/Traefik).
 
 ## Требования
 
-- PHP **8.0+** с расширениями `pdo`, `pdo_sqlite` (для SQLite) или `pdo_mysql` (для MySQL),
-  `curl`, `xml`, `mbstring`, `json`;
-- Для продакшена — любой веб-сервер (nginx/Apache) с PHP-FPM либо встроенный сервер PHP.
+- PHP **8.0+**;
+- расширения: `pdo`, `pdo_sqlite` или `pdo_mysql`, `curl`, `xml`, `mbstring`,
+  `json`;
+- для установки одной командой: `git` + `unzip` либо `wget`/`curl` + `unzip`;
+- для продакшена: nginx/Apache + PHP-FPM либо встроенный сервер PHP;
+- для уведомлений: системный `cron` (необязательно, есть ленивый запуск при
+  HTTP-запросах).
+
+Установщик `setup.sh` сам ставит PHP и расширения в Debian/Ubuntu, Fedora/RHEL и
+Alpine. На других системах он выведет команды для ручной установки.
 
 ## Быстрый старт
 
-### Установка на VPS одной командой
+### Установка одной командой
 
 ```bash
 sh <(wget -qO- https://raw.githubusercontent.com/vkust/rsp/main/setup.sh)
 ```
 
-Аналог через curl:
+Или через `curl`:
 
 ```bash
 sh <(curl -fsSL https://raw.githubusercontent.com/vkust/rsp/main/setup.sh)
 ```
 
-Скрипт скачает архив репозитория, распакует его в каталог `rsp`, установит
-зависимости (при отсутствии PHP выведет готовые команды для Debian/Fedora) и
-запустит мастер установки. Для неинтерактивного режима добавьте аргумент `--yes`
-(в однострочном виде: `sh <(curl -fsSL .../setup.sh) --yes`).
-
-### Ручная установка (клонирование)
+Неинтерактивный режим:
 
 ```bash
-git clone https://github.com/vkust/rsp.git rsp && cd rsp   # либо скачайте ZIP и распакуйте
-chmod +x setup.sh                                          # если флаг исполнения не сохранился
-
-./setup.sh                 # интерактивная установка
-./setup.sh --yes           # неинтерактивно (параметры по умолчанию, пароль — автогенерация)
-./setup.sh --help          # справка
+sh <(wget -qO- https://raw.githubusercontent.com/vkust/rsp/main/setup.sh) --yes
 ```
 
-Мастер установки проходит по шагам:
+Что делает установщик:
 
-1. **Проверка окружения** — наличие PHP ≥ 8.0 и обязательных расширений (при отсутствии
-   выводятся команды установки PHP для Debian/Fedora).
-2. **Конфигурация** — пошаговый опрос: URL приложения, тип базы (SQLite/MySQL), путь к базе
-   или параметры MySQL, часовой пояс, логин и пароль администратора (вводится скрыто,
-   в `config.php` сохраняется только bcrypt-хеш). Существующий `config.php` не портится:
-   его текущие значения становятся значениями по умолчанию.
-3. **Инициализация базы данных** — подключение, создание таблиц, регистрация задач
-   планировщика.
-4. **Итог** — готовые команды запуска dev-сервера, строка для crontab и инструкция
-   по настройке Telegram-бота; сгенерированный пароль печатается один раз.
+1. скачивает репозиторий в `./rsp` (через `git`, иначе ZIP-архив);
+2. проверяет PHP и расширения, при необходимости устанавливает их;
+3. запускает `setup.php` (интерактивно или с `--yes`);
+4. запускает встроенный PHP-сервер:
+   - как systemd-сервис `rsp-schedule.service`, если systemd доступен;
+   - иначе через `nohup` с логом `logs/server.log`;
+5. печатает адреса приложения, админки и рекомендации по cron/Telegram.
 
-Дополнительные команды мастера:
+Параметры запуска:
 
 ```bash
-./setup.sh hash "пароль"   # только сгенерировать bcrypt-хеш пароля
-./setup.sh deactivate      # снять задачи планировщика
-./setup.sh uninstall       # удалить таблицы приложения
+SCHEDULE_PORT=8080 SCHEDULE_BIND=0.0.0.0 \
+  sh <(wget -qO- https://raw.githubusercontent.com/vkust/rsp/main/setup.sh)
+
+SCHEDULE_USER=www-data \
+  sh <(wget -qO- https://raw.githubusercontent.com/vkust/rsp/main/setup.sh)
 ```
 
-### Запуск
+| Переменная | По умолчанию | Назначение |
+|---|---|---|
+| `SCHEDULE_PORT` | `8080` | Порт встроенного сервера |
+| `SCHEDULE_BIND` | `0.0.0.0` | Адрес привязки |
+| `SCHEDULE_USER` | `root` | Пользователь systemd-сервиса |
+
+### Ручная установка из клонированного репозитория
 
 ```bash
-php -S 0.0.0.0:8080 -t public public/index.php
+git clone https://github.com/vkust/rsp.git rsp
+cd rsp
+chmod +x setup.sh
+
+./setup.sh            # интерактивная установка
+./setup.sh --yes      # неинтерактивно, параметры по умолчанию
+./setup.sh --help     # справка
 ```
 
-Откройте:
-
-- `http://localhost:8080/` — публичная страница расписания;
-- `http://localhost:8080/admin` — вход в админку (логин `admin`, пароль — ваш).
-
-## Конфигурация
-
-Файл `config.php` создаётся мастером установки (или при первом запуске `install.php`).
-Все параметры можно задавать через переменные окружения:
-
-| Ключ | Переменная окружения | По умолчанию | Описание |
-|---|---|---|---|
-| `site_url` | `SCHEDULE_SITE_URL` | `http://localhost:8080` | Полный URL приложения (нужен для Telegram webhook и ссылок) |
-| `db.type` | `SCHEDULE_DB_TYPE` | `sqlite` | `sqlite` или `mysql` |
-| `db.sqlite.path` | — | `data/schedule.sqlite` | Путь к файлу базы SQLite |
-| `db.mysql.*` | `SCHEDULE_DB_HOST/PORT/NAME/USER/PASS` | localhost:3306 / schedule | Параметры MySQL |
-| `uploads_dir` | — | `data/uploads` | Каталог загружаемых XML-файлов |
-| `timezone` | `SCHEDULE_TZ` | `Europe/Moscow` | Часовой пояс приложения |
-| `admin.username` | `SCHEDULE_ADMIN_USER` | `admin` | Логин администратора |
-| `admin.password_hash` | `SCHEDULE_ADMIN_HASH` | — | Хеш пароля (`./setup.sh hash "пароль"`) |
-| `admin.session_secret` | `SCHEDULE_SESSION_SECRET` | — | Секрет подписи сессий (генерируется мастером) |
-| `debug.*` | — | выключено | Аналог `WP_DEBUG`: вывод и лог (`logs/app.log`) |
-
-Низкоуровневая установка без мастера (альтернатива):
+`setup.php` можно запускать отдельно:
 
 ```bash
-php install.php                        # создать config.php + таблицы БД + задачи планировщика
-php install.php --hash-password "п"    # сгенерировать хеш пароля администратора
-php install.php --deactivate           # снять cron-задачи
-php install.php --uninstall            # удалить таблицы и настройки
+php setup.php         # интерактивная настройка
+php setup.php --yes   # неинтерактивно
 ```
 
-## Планировщик (cron)
+## Первый запуск
 
-Вместо WP-Cron используется системный crontab. Пример записей:
+После установки откройте:
 
-```cron
-*/5 * * * * /usr/bin/php /path/to/app/cron.php next_lesson >> /path/to/app/logs/cron.log 2>&1
-0 20 * * *  /usr/bin/php /path/to/app/cron.php next_day    >> /path/to/app/logs/cron.log 2>&1
+- `http://<host>:8080/` — обычное расписание;
+- `http://<host>:8080/panels` — расписание для панелей;
+- `http://<host>:8080/admin` — вход в админку.
+
+Логин по умолчанию — `admin`. Пароль:
+
+- задаётся вручную в интерактивном режиме;
+- при первой установке в режиме `--yes` генерируется автоматически и печатается
+  в конце установки (сохраните его).
+
+Если пароль известен, его можно сменить на странице **«Настройки сайта»** в
+админке. Если пароль утерян, сгенерируйте новый хеш и обновите `config.php`:
+
+```bash
+php install.php --hash-password "новый_пароль"
+# полученный хеш скопируйте в config.php → admin.password_hash
 ```
 
-Задачи регистрируются в таблице `schedule_cron` и исполняются при наступлении срока
-во время любого HTTP-запроса (ленивый запуск, как wp-cron) либо через `cron.php`.
-Доступна обёртка с логированием `cron-task.sh {next_lesson|next_day}`.
+## Админ-панель
 
-## Настройка Telegram-бота
+Главная страница — **«Основные настройки»** (`/admin?page=school-schedule`):
 
-1. Создайте бота у [@BotFather](https://t.me/BotFather), получите токен.
-2. В админке (`/admin/bot`) сохраните токен.
-3. Укажите webhook на ваш публичный URL:
+- загрузка XML-файла расписания и активация нужной версии;
+- список загруженных файлов;
+- настройки категорий предметов (видимость и назначение категорий);
+- настройки бегущей строки;
+- настройки баннеров и заголовка;
+- блок **«Управление страницами»** со ссылками на обычное расписание и панели.
+
+Остальные разделы:
+
+| Раздел | Адрес |
+|---|---|
+| Настройки сайта | `/admin?page=schedule-site-settings` |
+| Telegram-бот | `/admin?page=schedule-telegram-settings` |
+| Статистика бота | `/admin?page=schedule-telegram-stats` |
+
+### Настройки сайта
+
+На странице `/admin?page=schedule-site-settings`:
+
+- **Полный URL приложения** — можно оставить пустым, тогда URL определяется из
+  текущего HTTP-запроса;
+- **HTTPS** — флаг для работы за reverse proxy;
+- **Путь к SSL-сертификату и ключу** — для справки и генерации конфига nginx;
+- **Порт веб-сервера** — сохраняется в `config.php`, systemd-сервис обновляется
+  и перезапускается автоматически;
+- **Смена пароля администратора** — текущий пароль, новый пароль и подтверждение.
+
+Если systemd недоступен, после смены порта сервер нужно перезапустить вручную.
+Если используется reverse proxy, не забудьте обновить upstream.
+
+## XML-расписание
+
+1. Откройте **«Основные настройки»**.
+2. Загрузите XML-файл через форму «Загрузка расписания».
+3. Файл сохраняется в `data/uploads/schedules/` и становится активным.
+4. При необходимости настройте категории предметов и их видимость.
+5. Откройте публичную страницу `/` или `/panels`.
+
+Парсер поддерживает формат aSc Timetables (секции `periods`, `subjects`,
+`teachers`, `classrooms`, `classes`, `lessons`, `cards`; группы классов — при
+наличии `groups`).
+
+## Telegram-бот
+
+1. Создайте бота у [@BotFather](https://t.me/BotFather) и получите токен.
+2. Откройте в админке **«Telegram бот»** и сохраните токен.
+3. Укажите webhook:
 
 ```bash
 curl -F "url=https://your-domain.example/telegram-webhook" \
      "https://api.telegram.org/bot<TOKEN>/setWebhook"
 ```
 
-4. Проверьте работу: отправьте боту `/start`.
+4. Отправьте боту `/start` и проверьте подписку.
+
+Для webhook нужен публичный HTTPS-адрес. Если `site_url` не задан, приложение
+определяет его из запроса, но для стабильной работы лучше указать домен в
+**«Настройках сайта»**.
+
+## Планировщик (cron)
+
+Уведомления можно запускать двумя способами:
+
+- ленивый запуск — просроченные задачи выполняются при любом HTTP-запросе;
+- системный `cron` — надёжнее для продакшена.
+
+Пример crontab:
+
+```cron
+* * * * * /usr/bin/php /path/to/rsp/cron.php next_lesson >> /path/to/rsp/logs/cron.log 2>&1
+0 20 * * * /usr/bin/php /path/to/rsp/cron.php next_day >> /path/to/rsp/logs/cron.log 2>&1
+```
+
+Без аргумента `cron.php` обрабатывает все просроченные задачи:
+
+```bash
+php cron.php
+```
+
+Доступные обработчики: `next_lesson`, `next_day`, `current_period`.
+Обёртка `cron-task.sh` добавляет логирование.
+
+## Конфигурация
+
+`config.php` создаётся мастером установки и **не хранится в репозитории**.
+Шаблон — `config.sample.php`. Существующий `config.php` при повторном запуске
+мастера сохраняется: его значения становятся значениями по умолчанию.
+
+Основные параметры:
+
+| Ключ | Переменная окружения* | По умолчанию | Описание |
+|---|---|---|---|
+| `site_url` | `SCHEDULE_SITE_URL` | пусто | Полный URL; пусто — автоопределение из запроса |
+| `server.bind` | `SCHEDULE_BIND` | `0.0.0.0` | Адрес привязки сервера |
+| `server.port` | `SCHEDULE_PORT` | `8080` | Порт сервера |
+| `db.type` | `SCHEDULE_DB_TYPE` | `sqlite` | `sqlite` или `mysql` |
+| `db.sqlite.path` | — | `data/schedule.sqlite` | Путь к SQLite-базе |
+| `db.mysql.*` | `SCHEDULE_DB_HOST/PORT/NAME/USER/PASS` | `localhost:3306`, `schedule` | Параметры MySQL |
+| `uploads_dir` | — | `data/uploads` | Каталог XML-файлов |
+| `timezone` | `SCHEDULE_TZ` | `Europe/Moscow` | Часовой пояс |
+| `admin.username` | `SCHEDULE_ADMIN_USER` | `admin` | Логин администратора |
+| `admin.password_hash` | `SCHEDULE_ADMIN_HASH` | — | Bcrypt-хеш пароля |
+| `admin.session_secret` | `SCHEDULE_SESSION_SECRET` | генерируется | Секрет подписи сессий/nonce |
+| `debug.enabled` | — | `false` | Включить отладку (аналог `WP_DEBUG`) |
+| `debug.display` | — | `false` | Показывать ошибки в браузере |
+| `debug.log` | — | `logs/app.log` | Файл лога ошибок |
+
+\* Переменные окружения из таблицы читает `config.sample.php`; `setup.sh` и
+`setup.php` дополнительно учитывают `SCHEDULE_PORT` и `SCHEDULE_BIND`. В
+сгенерированном `config.php` значения уже записаны явно — после установки их
+удобнее менять в админке или в `config.php`.
+
+Сгенерировать хеш пароля вручную:
+
+```bash
+php install.php --hash-password "новый_пароль"
+```
+
+## Низкоуровневая установка (`install.php`)
+
+`install.php` — альтернатива мастеру для скриптов и отладки:
+
+```bash
+php install.php                        # config.php (из sample) + таблицы + cron
+php install.php --hash-password "пароль"
+php install.php --deactivate           # снять cron-задачи
+php install.php --uninstall            # удалить таблицы приложения
+```
+
+Для обычной установки используйте `setup.sh` / `setup.php`: они создают
+нормальный `config.php` с паролем и параметрами подключения.
 
 ## Структура проекта
 
-```
-├── public/index.php          — точка входа (весь трафик идёт через неё)
-├── bootstrap.php             — загрузка ядра (аналог wp-load.php)
-├── config.php / config.sample.php — конфигурация
-├── setup.sh                  — мастер установки (shell-обёртка) — рекомендуется
-├── setup.php                 — ядро мастера (конфиг, хеш пароля, БД)
-├── install.php               — низкоуровневая CLI-установка/удаление
-├── cron.php                  — запуск задач планировщика из crontab
-├── cron-task.sh              — обёртка для crontab с логированием
-├── school-schedule.php       — основной модуль приложения (бывший файл плагина)
-├── page-schedule.php         — рендеринг публичной страницы расписания
+```text
+├── public/index.php           — точка входа (фронт-контроллер)
+├── bootstrap.php              — загрузка ядра (аналог wp-load.php)
+├── config.php                 — создаётся установщиком (не в git)
+├── config.sample.php          — шаблон конфигурации
+├── setup.sh                   — установщик одной командой + запуск сервера
+├── setup.php                  — мастер настройки (config, БД, пароль)
+├── install.php                — низкоуровневые CLI-команды
+├── cron.php                   — запуск задач планировщика
+├── cron-task.sh               — обёртка cron с логированием
+├── school-schedule.php        — основной модуль приложения
+├── page-schedule.php          — рендеринг публичной страницы
 ├── includes/
-│   ├── core/                 — ядро: конфиг, App_Database (PDO-обёртка с API $wpdb
-│   │                           и транслятором MySQL-SQL → SQLite), роутер, схема БД
-│   ├── compat/wp-shim.php    — слой совместимости: get_option/update_option, хуки,
-│   │                           трансиенты, nonce, esc_* и другие WP-функции
-│   ├── parser.php            — парсер XML-расписания
-│   ├── scheduler.php         — логика уведомлений (next lesson / next day)
-│   ├── telegram-bot.php      — Telegram-бот (webhook, команды, подписки)
-│   └── rest-api.php          — эндпоинты JSON для фронтенда
-├── templates/                — HTML-шаблоны страниц и админки
-├── assets/                   — CSS/JS/img (раздаются по /assets/*)
-├── data/                     — база SQLite и uploads/ (создаётся автоматически)
-└── logs/                     — app.log, cron.log
+│   ├── core/
+│   │   ├── config.php         — App_Config
+│   │   ├── database.php       — PDO-обёртка с API $wpdb
+│   │   ├── router.php         — маршрутизация и админ-оболочка
+│   │   └── schema.php         — схема БД и миграции
+│   ├── compat/wp-shim.php     — совместимость с WP-функциями
+│   ├── parser.php             — парсер XML-расписания
+│   ├── scheduler.php          — уведомления next_lesson / next_day
+│   ├── telegram-bot.php       — Telegram-бот
+│   ├── rest-api.php           — REST/webhook
+│   └── debug.php              — отладочные хелперы
+├── templates/                 — шаблоны страниц и админки
+├── assets/                    — CSS/JS (раздаются по /assets/*)
+├── data/                      — SQLite и uploads/ (создаётся автоматически)
+└── logs/                      — app.log, cron.log, telegram-bot.log;
+                                 server.log — при запуске через nohup
 ```
 
-## Маршруты приложения
+## Маршруты
 
 | Путь | Метод | Назначение |
 |---|---|---|
-| `/`, `/schedule`, `/raspisanie` | GET | Публичная страница расписания |
-| `/panels` | GET | Панели (классы/преподаватели/кабинеты) |
-| `/telegram` | GET | Страница подписки бота |
-| `/admin`, `/admin/...` | GET | Админка (требует сессию) |
-| `/login`, `/logout` | GET/POST | Вход и выход администратора |
-| `/options.php` | POST | Сохранение настроек |
-| `/telegram-webhook` | POST | Webhook Telegram-бота |
-| `/ajax?action=...` | GET/POST | AJAX-обработчики (аналог `admin-ajax.php`) |
-| `/assets/*`, `/uploads/*` | GET | Статика и загруженные XML-файлы |
+| `/`, `/schedule`, `/raspisanie` | GET | Обычное расписание |
+| `/panels` | GET | Расписание для панелей |
+| `/telegram` | GET | Страница подписки Telegram |
+| `/admin`, `/admin/...` | GET | Админка (нужна сессия) |
+| `/admin/admin-post.php` | POST | Обработчики форм админки |
+| `/login`, `/logout` | GET/POST | Вход и выход |
+| `/options`, `/options.php` | POST | Сохранение настроек |
+| `/ajax` | GET/POST | AJAX-обработчики |
+| `/telegram-webhook` | POST | Webhook Telegram |
+| `/wp-json/school-schedule/v1/telegram-webhook` | POST | Алиас webhook |
+| `/assets/*`, `/uploads/*` | GET | Статика и XML-файлы |
 
-## Деплой в продакшене (nginx пример)
+## Продакшен и HTTPS
+
+Встроенный PHP-сервер (`php -S`) не поддерживает HTTPS. Для HTTPS используйте
+reverse proxy (nginx, Caddy, Traefik). Пример nginx:
 
 ```nginx
 server {
     listen 443 ssl;
     server_name schedule.example.com;
-    root /var/www/schedule/public;
+    root /var/www/rsp/public;
+
+    ssl_certificate     /etc/letsencrypt/live/schedule.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/schedule.example.com/privkey.pem;
 
     location / {
         try_files $uri $uri/ /index.php$is_args$args;
     }
+
     location ~ \.php$ {
         fastcgi_pass unix:/run/php/php8.2-fpm.sock;
         fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
@@ -202,9 +334,34 @@ server {
 }
 ```
 
-Укажите реальный домен в `site_url` (`SCHEDULE_SITE_URL`) — от него зависит webhook
-Telegram и ссылки в уведомлениях. Директории `data/` и `logs/` должны быть доступны
-для записи пользователю PHP; наружу они не публикуются (root — только `public/`).
+Укажите домен в **«Настройках сайта»** (`site_url`). Директории `data/` и
+`logs/` должны быть доступны для записи пользователю PHP; наружу публикуется
+только `public/`.
+
+Для небольших установок можно оставить встроенный сервер:
+
+```bash
+php -S 0.0.0.0:8080 -t public public/index.php
+```
+
+## Обновление
+
+```bash
+cd rsp
+git pull
+sudo systemctl restart rsp-schedule   # если установлено как systemd-сервис
+```
+
+`config.php`, `data/` и `logs/` при обновлении не перезаписываются.
+
+## Резервное копирование
+
+Достаточно сохранить:
+
+- `config.php`;
+- `data/schedule.sqlite` (или дамп MySQL);
+- `data/uploads/`;
+- при необходимости — `logs/`.
 
 ## Лицензия
 
