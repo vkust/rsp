@@ -859,8 +859,9 @@ class App_Updater
             return $release;
         }
 
+        $cacheBust = '?t=' . time();
         $base = 'https://raw.githubusercontent.com/' . $this->repo . '/' . $this->branch;
-        $version = trim($this->httpGet($base . '/VERSION'));
+        $version = trim($this->httpGet($base . '/VERSION' . $cacheBust));
         if ($version === '') {
             throw new RuntimeException('Не удалось прочитать VERSION из репозитория.');
         }
@@ -870,7 +871,7 @@ class App_Updater
         $notes = null;
         try {
             $json = json_decode($this->httpGet(
-                'https://api.github.com/repos/' . $this->repo . '/commits/' . rawurlencode($this->branch)
+                'https://api.github.com/repos/' . $this->repo . '/commits/' . rawurlencode($this->branch) . $cacheBust
             ), true);
             if (is_array($json)) {
                 $identifier = $json['sha'] ?? null;
@@ -899,7 +900,7 @@ class App_Updater
     {
         try {
             $json = json_decode($this->httpGet(
-                'https://api.github.com/repos/' . $this->repo . '/releases/latest'
+                'https://api.github.com/repos/' . $this->repo . '/releases/latest?t=' . time()
             ), true);
             if (!is_array($json) || empty($json['tag_name'])) {
                 return null;
