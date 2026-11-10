@@ -456,12 +456,32 @@
     </div>
 
     <div class="card">
-        <h2>Инструкция</h2>
-        <p>1. Загрузите XML файл с расписанием через форму выше</p>
-        <p>2. Настройте категории предметов и их видимость</p>
-        <p>3. Используйте шорткод <code>[school_schedule]</code> на любой странице для отображения обычной страницы расписания</p>
-        <p>4. Используйте шорткод <code>[school_schedule_panels]</code> на любой странице для отображения страницы расписания для панелей</p>
-        <p>5. Используйте шорткод <code>[telegram_schedule]</code> на любой странице для отображения страницы расписания для Telegram</p>
-        <p>5. Для включения режима отладки используйте <code>[school_schedule debug="1"]</code></p>
+        <h2>Управление страницами</h2>
+        <p>Публичные страницы приложения доступны по постоянным адресам:</p>
+        <table class="list">
+            <thead>
+                <tr>
+                    <th>Страница</th>
+                    <th>Адрес</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Обычное расписание</strong></td>
+                    <td><code><?php echo esc_html(App_Config::site_url('/')); ?></code></td>
+                    <td>
+                        <a class="button" href="<?php echo esc_url(App_Config::site_url('/')); ?>" target="_blank" rel="noopener">Открыть</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>Расписание для панелей</strong></td>
+                    <td><code><?php echo esc_html(App_Config::site_url('panels')); ?></code></td>
+                    <td>
+                        <a class="button" href="<?php echo esc_url(App_Config::site_url('panels')); ?>" target="_blank" rel="noopener">Открыть</a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
     </div>
 </div> 

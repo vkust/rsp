@@ -242,7 +242,12 @@ code { background:#f0f0f1; padding:2px 5px; border-radius:3px; }
             $user = sanitize_text_field($_POST['app_user'] ?? '');
             $pass = (string) ($_POST['app_password'] ?? '');
             $cfg_user = (string) App_Config::get('admin.username', 'admin');
-            $hash = (string) App_Config::get('admin.password_hash', '');
+            // Пароль, изменённый из админки, хранится в опциях и имеет приоритет
+            // над значением из config.php (на случай, если файл недоступен для записи).
+            $hash = (string) get_option('schedule_admin_password_hash', '');
+            if ($hash === '') {
+                $hash = (string) App_Config::get('admin.password_hash', '');
+            }
             if ($hash !== '' && $user === $cfg_user && password_verify($pass, $hash)) {
                 session_regenerate_id(true);
                 $_SESSION['schedule_admin'] = $user;

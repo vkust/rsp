@@ -250,11 +250,28 @@ run_setup_php() {
     fi
 }
 
+# --- Чтение порта из config.php --------------------------------------------
+config_port() {
+    if [ -f config.php ]; then
+        p=$("$PHP_BIN" -r '$c = include "config.php"; echo isset($c["server"]["port"]) ? (int) $c["server"]["port"] : 0;' 2>/dev/null || true)
+        case "$p" in
+            ''|*[!0-9]*) ;;
+            *)
+                if [ "$p" -ge 1 ] && [ "$p" -le 65535 ]; then
+                    echo "$p"
+                    return 0
+                fi
+                ;;
+        esac
+    fi
+    echo "$DEFAULT_PORT"
+}
+
 # --- Запуск веб-сервера ----------------------------------------------------
 start_server() {
     step "Запуск веб-сервера"
 
-    port="${SCHEDULE_PORT:-$DEFAULT_PORT}"
+    port="${SCHEDULE_PORT:-$(config_port)}"
     bind="${SCHEDULE_BIND:-0.0.0.0}"
     app_root=$(pwd)
 
@@ -301,7 +318,7 @@ EOF
 # --- Итог ------------------------------------------------------------------
 print_summary() {
     step "Установка завершена"
-    port="${SCHEDULE_PORT:-$DEFAULT_PORT}"
+    port="${SCHEDULE_PORT:-$(config_port)}"
     bind="${SCHEDULE_BIND:-0.0.0.0}"
     echo "  ${C_GREEN}•${C_OFF} Приложение:     http://${bind}:${port}"
     echo "  ${C_GREEN}•${C_OFF} Админка:        http://${bind}:${port}/admin"

@@ -119,6 +119,8 @@ class SchoolSchedule {
         add_action('admin_post_delete_schedule', [$this, 'delete_schedule_file']);
         add_action('admin_post_save_schedule_settings', [$this, 'handle_settings_save']);
         add_action('admin_post_save_site_settings', [$this, 'handle_save_site_settings']);
+        add_action('admin_post_save_server_settings', [$this, 'handle_save_server_settings']);
+        add_action('admin_post_change_admin_password', [$this, 'handle_change_admin_password']);
         add_action('admin_post_save_marquee_settings', [$this, 'handle_save_marquee_settings']);
         add_action('admin_post_manage_webhook', [$this, 'handle_webhook_management']);
         add_action('admin_post_save_bot_code', [$this, 'handle_bot_code_save']);
@@ -425,9 +427,23 @@ class SchoolSchedule {
     }
 
     public function enqueue_admin_assets($hook) {
-        if (!in_array($hook, ['toplevel_page_school-schedule', 'расписание_page_schedule-telegram-settings'])) {
+        if (!in_array($hook, [
+            'toplevel_page_school-schedule',
+            'расписание_page_schedule-telegram-settings',
+            'расписание_page_schedule-site-settings',
+        ])) {
             return;
         }
+
+        // jQuery используется админскими скриптами (в автономном режиме
+        // зависимости в shim не разрешаются автоматически, поэтому подключаем явно).
+        wp_enqueue_script(
+            'jquery',
+            'https://code.jquery.com/jquery-3.6.0.min.js',
+            [],
+            '3.6.0',
+            true
+        );
 
         // Добавляем эти строки для CodeMirror
         if ($hook === 'расписание_page_schedule-telegram-settings') {
@@ -751,7 +767,190 @@ class SchoolSchedule {
         ]);
 
         wp_redirect(add_query_arg(
-            ['page' => 'schedule-site-settings', 'settings-updated' => 'true'],
+            ['page' => 'schedule-site-settings', 'settings-updated' => 'site'],
+            admin_url('admin.php')
+        ));
+        exit;
+    }
+
+    /**
+     * Сохранение порта веб-сервера и перезапуск systemd-сервиса.
+     */
+    public function handle_save_server_settings() {
+        if (!current_user_can('manage_options')) {
+            wp_die('У вас нет прав для выполнения этого действия.');
+        }
+
+        check_admin_referer('server_settings', 'server_settings_nonce');
+
+        $port = isset($_POST['server_port']) ? (int) $_POST['server_port'] : 0;
+        if ($port < 1 || $port > 65535) {
+            wp_redirect(add_query_arg(
+                [
+                    'page' => 'schedule-site-settings',
+                    'settings-error' => 'Некорректный порт. Укажите число от 1 до 65535.',
+                ],
+                admin_url('admin.php')
+            ));
+            exit;
+        }
+
+        $currentPort = (int) App_Config::get('server.port', get_option('schedule_server_port', 8080));
+        if ($port !== $currentPort) {
+            $probe = @fsockopen('127.0.0.1', $port, $errno, $errstr, 0.3);
+            if ($probe) {
+                fclose($probe);
+                wp_redirect(add_query_arg(
+                    [
+                        'page' => 'schedule-site-settings',
+                        'settings-error' => 'Порт ' . $port . ' уже занят другим процессом.',
+                    ],
+                    admin_url('admin.php')
+                ));
+                exit;
+            }
+        }
+
+        update_option('schedule_server_port', $port);
+
+        if (!$this->update_config_file(['server.port' => $port])) {
+            wp_redirect(add_query_arg(
+                [
+                    'page' => 'schedule-site-settings',
+                    'settings-error' => 'Не удалось обновить config.php. Проверьте права на файл.',
+                ],
+                admin_url('admin.php')
+            ));
+            exit;
+        }
+
+        if ($port === $currentPort) {
+            wp_redirect(add_query_arg(
+                [
+                    'page' => 'schedule-site-settings',
+                    'settings-updated' => 'site',
+                ],
+                admin_url('admin.php')
+            ));
+            exit;
+        }
+
+        $restartScheduled = $this->restart_server_with_port($port);
+
+        wp_redirect(add_query_arg(
+            [
+                'page' => 'schedule-site-settings',
+                'settings-updated' => $restartScheduled ? 'port' : 'port-manual',
+            ],
+            admin_url('admin.php')
+        ));
+        exit;
+    }
+
+    /**
+     * Обновляет systemd-юнит и планирует перезапуск сервиса на новом порту.
+     */
+    private function restart_server_with_port($port) {
+        $serviceFile = '/etc/systemd/system/rsp-schedule.service';
+        if (!is_file($serviceFile) || !is_writable($serviceFile) || !function_exists('exec')) {
+            return false;
+        }
+
+        $content = @file_get_contents($serviceFile);
+        if ($content === false) {
+            return false;
+        }
+
+        $updated = preg_replace_callback(
+            '/^ExecStart=(.*?)-S\s+([^\s:]+):(\d+)(.*)$/m',
+            function ($m) use ($port) {
+                return 'ExecStart=' . $m[1] . '-S ' . $m[2] . ':' . $port . $m[4];
+            },
+            $content
+        );
+
+        if ($updated === null || $updated === $content) {
+            return false;
+        }
+
+        $updated = preg_replace(
+            '/^Environment=SCHEDULE_SITE_URL=.*$/m',
+            'Environment=SCHEDULE_SITE_URL=http://localhost:' . $port,
+            $updated
+        );
+
+        if (@file_put_contents($serviceFile, $updated) === false) {
+            return false;
+        }
+
+        $output = [];
+        $code = 0;
+        @exec('systemctl daemon-reload 2>&1', $output, $code);
+        if ($code !== 0) {
+            return false;
+        }
+
+        // Перезапускаем чуть позже, чтобы текущий HTTP-ответ успел уйти.
+        @exec('nohup sh -c "sleep 2; systemctl restart rsp-schedule" >/dev/null 2>&1 &');
+        return true;
+    }
+
+    /**
+     * Смена пароля администратора.
+     */
+    public function handle_change_admin_password() {
+        if (!current_user_can('manage_options')) {
+            wp_die('У вас нет прав для выполнения этого действия.');
+        }
+
+        check_admin_referer('admin_password', 'admin_password_nonce');
+
+        $current = isset($_POST['current_password']) ? (string) $_POST['current_password'] : '';
+        $new = isset($_POST['new_password']) ? (string) $_POST['new_password'] : '';
+        $confirm = isset($_POST['confirm_password']) ? (string) $_POST['confirm_password'] : '';
+
+        // Хеш может быть переопределён значением из БД (если config.php недоступен для записи).
+        $hash = (string) get_option('schedule_admin_password_hash', '');
+        if ($hash === '') {
+            $hash = (string) App_Config::get('admin.password_hash', '');
+        }
+
+        $error = '';
+        if ($hash === '' || !password_verify($current, $hash)) {
+            $error = 'Текущий пароль указан неверно.';
+        } elseif (strlen($new) < 8) {
+            $error = 'Новый пароль должен содержать не менее 8 символов.';
+        } elseif ($new !== $confirm) {
+            $error = 'Новый пароль и подтверждение не совпадают.';
+        }
+
+        if ($error !== '') {
+            wp_redirect(add_query_arg(
+                [
+                    'page' => 'schedule-site-settings',
+                    'settings-error' => $error,
+                ],
+                admin_url('admin.php')
+            ));
+            exit;
+        }
+
+        $newHash = password_hash($new, PASSWORD_DEFAULT);
+        $configUpdated = $this->update_config_file(['admin.password_hash' => $newHash]);
+
+        if ($configUpdated) {
+            // config.php — основной источник пароля; убираем возможное устаревшее переопределение.
+            delete_option('schedule_admin_password_hash');
+        } else {
+            // Файл недоступен для записи — сохраняем хеш в БД.
+            update_option('schedule_admin_password_hash', $newHash);
+        }
+
+        wp_redirect(add_query_arg(
+            [
+                'page' => 'schedule-site-settings',
+                'settings-updated' => $configUpdated ? 'password' : 'password-db',
+            ],
             admin_url('admin.php')
         ));
         exit;
@@ -1261,6 +1460,9 @@ class SchoolSchedule {
 
         // Если URL пустой — показываем текущий автоопределенный
         $effective_url = $site_url ?: App_Config::site_url();
+
+        $server_port = (int) App_Config::get('server.port', get_option('schedule_server_port', 8080));
+        $admin_username = (string) App_Config::get('admin.username', 'admin');
 
         include SCHOOL_SCHEDULE_PATH . 'templates/site-settings.php';
     }

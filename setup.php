@@ -327,6 +327,12 @@ $debugOn = $NON_INTERACTIVE
 $q = function ($s) { return str_replace(['\\', "'"], ['\\\\', "\\'"], (string) $s); };
 $debugFlag = $debugOn ? 'true' : 'false';
 
+$serverPort = (int) $getEx('server.port', getenv('SCHEDULE_PORT') ?: 8080);
+if ($serverPort < 1 || $serverPort > 65535) {
+    $serverPort = 8080;
+}
+$serverBind = (string) $getEx('server.bind', getenv('SCHEDULE_BIND') ?: '0.0.0.0');
+
 $configCode = "<?php\n"
     . "/**\n"
     . " * Конфигурация автономного приложения «Расписание занятий».\n"
@@ -334,6 +340,10 @@ $configCode = "<?php\n"
     . " */\n\n"
     . "return [\n"
     . "    'site_url' => '" . $q($siteUrl) . "',\n\n"
+    . "    'server' => [\n"
+    . "        'bind' => '" . $q($serverBind) . "',\n"
+    . "        'port' => " . (int) $serverPort . ",\n"
+    . "    ],\n\n"
     . "    'db' => [\n"
     . "        'type'   => '" . $q($dbType) . "',\n"
     . "        'sqlite' => ['path' => '" . $q($sqlitePath) . "'],\n"

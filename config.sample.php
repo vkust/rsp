@@ -10,6 +10,12 @@ return [
     // Если оставить пустым, URL будет определяться автоматически из текущего HTTP-запроса.
     'site_url' => getenv('SCHEDULE_SITE_URL') ?: '',
 
+    // Параметры встроенного веб-сервера (используются setup.sh и админкой).
+    'server' => [
+        'bind' => getenv('SCHEDULE_BIND') ?: '0.0.0.0',
+        'port' => (int) (getenv('SCHEDULE_PORT') ?: 8080),
+    ],
+
     // База данных. Поддерживаются sqlite и mysql.
     'db' => [
         'type'     => getenv('SCHEDULE_DB_TYPE') ?: 'sqlite',   // sqlite | mysql
