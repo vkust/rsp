@@ -36,7 +36,7 @@ if (!function_exists('app_asset_url')) {
         return $base . '/' . ltrim((string) $rel, '/');
     }
 }
-define('SCHOOL_SCHEDULE_VERSION', '2.5.1');
+define('SCHOOL_SCHEDULE_VERSION', '2.5.2');
 
 class SchoolSchedule {
     private $default_categories = array(
@@ -384,8 +384,29 @@ class SchoolSchedule {
     }
 
     public function enqueue_frontend_assets() {
-        // jQuery/jQuery UI больше не нужны: фильтры используют нативные select,
-        // ExcelJS подключается только в момент экспорта.
+        // jQuery и jQuery UI нужны для оформления фильтров (selectmenu).
+        wp_enqueue_script(
+            'jquery',
+            'https://code.jquery.com/jquery-3.6.0.min.js',
+            array(),
+            '3.6.0',
+            true
+        );
+        wp_enqueue_script(
+            'jquery-ui',
+            'https://code.jquery.com/ui/1.13.2/jquery-ui.min.js',
+            array('jquery'),
+            '1.13.2',
+            true
+        );
+
+        wp_enqueue_style(
+            'jquery-ui-style',
+            'https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css',
+            array(),
+            '1.13.2'
+        );
+
         wp_enqueue_style(
             'school-schedule',
             app_asset_url('assets/css/schedule.css'),
@@ -393,10 +414,11 @@ class SchoolSchedule {
             SCHOOL_SCHEDULE_VERSION
         );
 
+        // ExcelJS загружается только при экспорте (см. assets/js/schedule.js).
         wp_enqueue_script(
             'school-schedule',
             app_asset_url('assets/js/schedule.js'),
-            array(),
+            array('jquery', 'jquery-ui'),
             SCHOOL_SCHEDULE_VERSION,
             true
         );

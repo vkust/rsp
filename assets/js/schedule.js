@@ -33,15 +33,42 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Функция инициализации фильтров (нативные select — без jQuery UI)
+    // Функция инициализации фильтров
     function initializeFilters() {
-        document.querySelectorAll('.filter-select').forEach(select => {
-            select.classList.add('native-select');
-            if (select.dataset.filterBound !== '1') {
-                select.addEventListener('change', filterAll);
-                select.dataset.filterBound = '1';
+        try {
+            // Проверяем, является ли устройство мобильным
+            const isMobile = window.matchMedia('(max-width: 768px)').matches;
+
+            if (!isMobile && typeof jQuery !== 'undefined') {
+                // На десктопах используем jQuery UI selectmenu
+                jQuery('.filter-select').each(function() {
+                    try {
+                        if (jQuery(this).selectmenu('instance')) {
+                            jQuery(this).selectmenu('destroy');
+                        }
+                    } catch (e) {
+                        // Игнорируем ошибку, если selectmenu еще не был инициализирован
+                    }
+                });
+
+                jQuery('.filter-select').selectmenu({
+                    change: function() {
+                        filterAll();
+                    }
+                });
+            } else {
+                // На мобильных используем нативные селекты
+                document.querySelectorAll('.filter-select').forEach(select => {
+                    select.classList.add('native-select');
+                    if (select.dataset.filterBound !== '1') {
+                        select.addEventListener('change', filterAll);
+                        select.dataset.filterBound = '1';
+                    }
+                });
             }
-        });
+        } catch (e) {
+            console.error('Ошибка инициализации фильтров:', e);
+        }
     }
 
     // Функция инициализации всех компонентов
@@ -165,8 +192,23 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Инициализация не зависит от внешних библиотек.
-    initializeAll();
+    // Ждем полной загрузки jQuery UI перед инициализацией
+    if (typeof jQuery !== 'undefined' && typeof jQuery.ui !== 'undefined') {
+        initializeAll();
+    } else {
+        const checkJQuery = setInterval(function() {
+            if (typeof jQuery !== 'undefined' && typeof jQuery.ui !== 'undefined') {
+                clearInterval(checkJQuery);
+                initializeAll();
+            }
+        }, 100);
+
+        // Таймаут на случай, если jQuery UI не загрузится
+        setTimeout(function() {
+            clearInterval(checkJQuery);
+            console.error('jQuery UI не был загружен вовремя');
+        }, 5000);
+    }
 
     // Функция обновления текста кнопки переключения вида
     function updateButtonText() {
@@ -282,6 +324,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 select.value = '';
             }
 
+            // Обновляем jQuery UI selectmenu только на десктопах
+            if (window.innerWidth > 768 && typeof jQuery !== 'undefined' && jQuery(select).selectmenu('instance')) {
+                jQuery(select).selectmenu('refresh');
+            }
         });
     }
 
@@ -314,6 +360,10 @@ document.addEventListener('DOMContentLoaded', function() {
         Object.values(filters).forEach(filter => {
             if (filter) {
                 filter.value = '';
+                // Добавляем сброс для selectmenu, если используется jQuery UI
+                if (typeof jQuery !== 'undefined' && jQuery(filter).selectmenu('instance')) {
+                    jQuery(filter).selectmenu('refresh');
+                }
             }
         });
         localStorage.removeItem('scheduleFilters');
@@ -823,6 +873,12 @@ document.addEventListener('DOMContentLoaded', function() {
         .disabled-option {
             color: var(--gray-400) !important;
             font-style: italic;
+        }
+
+        .ui-selectmenu-menu .ui-menu .ui-menu-item-wrapper.disabled-option {
+            color: var(--gray-400) !important;
+            background: var(--gray-50) !important;
+            cursor: not-allowed;
         }
     `;
     document.head.appendChild(style);
