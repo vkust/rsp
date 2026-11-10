@@ -42,8 +42,11 @@ if (in_array('--help', $options, true) || in_array('-h', $options, true)) {
     exit(0);
 }
 
-$NON_INTERACTIVE = in_array('--yes', $options, true) || in_array('-y', $options, true)
-    || !getenv('SCHEDULE_FORCE_TTY'); // в CI/пайпах stdin не tty — но здесь решает флаг
+$isTty = false;
+if (function_exists('posix_isatty')) {
+    $isTty = @posix_isatty(STDIN);
+}
+$NON_INTERACTIVE = in_array('--yes', $options, true) || in_array('-y', $options, true) || !$isTty;
 
 /* ========================================================================
  *  Вспомогательные функции вывода и ввода
