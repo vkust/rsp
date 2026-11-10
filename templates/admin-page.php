@@ -59,6 +59,12 @@
         </div>
     <?php endif; ?>
 
+    <?php if (isset($_GET['settings-updated'])): ?>
+        <div class="notice notice-success">
+            <p>Настройки сохранены.</p>
+        </div>
+    <?php endif; ?>
+
     <div class="card">
         <h2>Загрузка расписания</h2>
         <div class="upload-form">
@@ -172,6 +178,34 @@
         </div>
     </div>
     <?php endif; ?>
+
+    <div class="card">
+        <h2>Отображение расписания</h2>
+        <form method="POST" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+            <?php wp_nonce_field('display_settings', 'display_nonce'); ?>
+            <input type="hidden" name="action" value="save_display_settings">
+
+            <div class="setting-row">
+                <label class="switch-label">
+                    <span>Показывать группы классов в карточках уроков</span>
+                    <label class="switch">
+                        <input type="checkbox"
+                               name="show_class_groups"
+                               <?php checked(get_option('schedule_show_class_groups'), 'on'); ?>>
+                        <span class="slider round"></span>
+                    </label>
+                </label>
+                <p class="description">
+                    Если в XML-файле есть подгруппы классов, они будут показаны рядом с классом
+                    (например, «гр. 1 группа»). Для обычной страницы и панелей настройка общая.
+                </p>
+            </div>
+
+            <div class="submit-wrapper">
+                <button type="submit" class="button button-primary">Сохранить настройки</button>
+            </div>
+        </form>
+    </div>
 
     <div class="card">
         <div class="card-header">

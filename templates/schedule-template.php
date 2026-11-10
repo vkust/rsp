@@ -32,6 +32,18 @@ if (!function_exists('shouldShowPeriod')) {
         return false;
     }
 }
+
+$show_class_groups = get_option('schedule_show_class_groups', 'off') === 'on';
+$group_names = [];
+if ($show_class_groups && !empty($schedule['classes'])) {
+    foreach ($schedule['classes'] as $class) {
+        foreach (($class['groups'] ?? []) as $groupId => $group) {
+            if (!empty($group['name'])) {
+                $group_names[$groupId] = $group['name'];
+            }
+        }
+    }
+}
 ?>
 
 <div class="schedule-container<?php echo $atts['is_panel'] ? ' schedule-panels' : ''; ?>">
@@ -342,6 +354,20 @@ if (!function_exists('shouldShowPeriod')) {
                                                             }
                                                             ?>
                                                         </div>
+
+                                                        <?php if ($show_class_groups && !empty($lesson['groupIds'])): ?>
+                                                            <div class="group-info">
+                                                                <?php
+                                                                foreach ($lesson['groupIds'] as $groupId) {
+                                                                    if (isset($group_names[$groupId])) {
+                                                                        echo '<span class="group-badge">' .
+                                                                             esc_html($group_names[$groupId]) .
+                                                                             '</span>';
+                                                                    }
+                                                                }
+                                                                ?>
+                                                            </div>
+                                                        <?php endif; ?>
 
                                                         <?php if (isset($lesson['classroomId']) && 
                                                                   !empty($lesson['classroomId']) && 

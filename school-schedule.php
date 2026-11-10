@@ -36,7 +36,7 @@ if (!function_exists('app_asset_url')) {
         return $base . '/' . ltrim((string) $rel, '/');
     }
 }
-define('SCHOOL_SCHEDULE_VERSION', '2.1.0');
+define('SCHOOL_SCHEDULE_VERSION', '2.2.0');
 
 class SchoolSchedule {
     private $default_categories = array(
@@ -124,6 +124,7 @@ class SchoolSchedule {
         add_action('admin_post_check_updates', [$this, 'handle_check_updates']);
         add_action('admin_post_run_update', [$this, 'handle_run_update']);
         add_action('admin_post_run_rollback', [$this, 'handle_run_rollback']);
+        add_action('admin_post_save_display_settings', [$this, 'handle_save_display_settings']);
         add_action('admin_post_save_marquee_settings', [$this, 'handle_save_marquee_settings']);
         add_action('admin_post_manage_webhook', [$this, 'handle_webhook_management']);
         add_action('admin_post_save_bot_code', [$this, 'handle_bot_code_save']);
@@ -1074,6 +1075,26 @@ class SchoolSchedule {
             }
         }
         return $template;
+    }
+
+    // Настройки отображения расписания
+    public function handle_save_display_settings() {
+        if (!current_user_can('manage_options')) {
+            wp_die('Недостаточно прав');
+        }
+
+        check_admin_referer('display_settings', 'display_nonce');
+
+        update_option(
+            'schedule_show_class_groups',
+            isset($_POST['show_class_groups']) ? 'on' : 'off'
+        );
+
+        wp_redirect(add_query_arg(
+            ['page' => 'school-schedule', 'settings-updated' => 'display'],
+            admin_url('admin.php')
+        ));
+        exit;
     }
 
     // Добавляем обработчик сохранения настроек бегущей строки
