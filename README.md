@@ -192,6 +192,11 @@ php update.php status
 из ветки `main` по SHA коммита. Версия приложения хранится в файле `VERSION`,
 состояние установки — в `.updates/current.json`.
 
+Если сервер выходит в интернет через прокси, укажите его в
+`updates.proxy` (например, `http://proxy:3128`) или в переменной
+`SCHEDULE_UPDATE_PROXY`. `setup.sh` также пробрасывает `HTTP_PROXY`,
+`HTTPS_PROXY` и `NO_PROXY` в systemd-сервис.
+
 ## XML-расписание
 
 1. Откройте **«Основные настройки»**.
