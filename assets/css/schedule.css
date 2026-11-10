@@ -1840,12 +1840,6 @@ body {
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
 }
 
-/* Стрелка рисуется через ::after — фоновые иконки темы не нужны. */
-.ui-selectmenu-button .ui-icon,
-.ui-selectmenu-icon.ui-icon {
-    background-image: none !important;
-}
-
 /* Стрелка с более сдержанным цветом */
 .ui-selectmenu-button.ui-button .ui-selectmenu-icon.ui-icon::after {
     border-right: 2px solid var(--gray-400);
