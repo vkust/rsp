@@ -335,7 +335,7 @@ php install.php --uninstall            # удалить таблицы прил�
 │   ├── rest-api.php           — REST/webhook
 │   └── debug.php              — отладочные хелперы
 ├── templates/                 — шаблоны страниц и админки
-├── assets/                    — CSS/JS (раздаются по /assets/*)
+├── assets/                    — CSS/JS и локальные vendor-библиотеки (/assets/*)
 ├── data/                      — SQLite и uploads/ (создаётся автоматически)
 ├── .updates/                  — снимки, статус и current.json (создаётся автоматически)
 └── logs/                      — app.log, cron.log, telegram-bot.log, updater.log;

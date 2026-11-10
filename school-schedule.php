@@ -36,7 +36,7 @@ if (!function_exists('app_asset_url')) {
         return $base . '/' . ltrim((string) $rel, '/');
     }
 }
-define('SCHOOL_SCHEDULE_VERSION', '2.5.2');
+define('SCHOOL_SCHEDULE_VERSION', '2.5.3');
 
 class SchoolSchedule {
     private $default_categories = array(
@@ -385,26 +385,27 @@ class SchoolSchedule {
 
     public function enqueue_frontend_assets() {
         // jQuery и jQuery UI нужны для оформления фильтров (selectmenu).
+        // Лежат локально, чтобы не зависеть от внешнего CDN.
         wp_enqueue_script(
             'jquery',
-            'https://code.jquery.com/jquery-3.6.0.min.js',
+            app_asset_url('assets/vendor/jquery-3.6.0.min.js'),
             array(),
-            '3.6.0',
+            filemtime(SCHOOL_SCHEDULE_PATH . 'assets/vendor/jquery-3.6.0.min.js'),
             true
         );
         wp_enqueue_script(
             'jquery-ui',
-            'https://code.jquery.com/ui/1.13.2/jquery-ui.min.js',
+            app_asset_url('assets/vendor/jquery-ui/jquery-ui.min.js'),
             array('jquery'),
-            '1.13.2',
+            filemtime(SCHOOL_SCHEDULE_PATH . 'assets/vendor/jquery-ui/jquery-ui.min.js'),
             true
         );
 
         wp_enqueue_style(
             'jquery-ui-style',
-            'https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css',
+            app_asset_url('assets/vendor/jquery-ui/jquery-ui.min.css'),
             array(),
-            '1.13.2'
+            filemtime(SCHOOL_SCHEDULE_PATH . 'assets/vendor/jquery-ui/jquery-ui.min.css')
         );
 
         wp_enqueue_style(
@@ -446,9 +447,9 @@ class SchoolSchedule {
         // зависимости в shim не разрешаются автоматически, поэтому подключаем явно).
         wp_enqueue_script(
             'jquery',
-            'https://code.jquery.com/jquery-3.6.0.min.js',
+            app_asset_url('assets/vendor/jquery-3.6.0.min.js'),
             [],
-            '3.6.0',
+            filemtime(SCHOOL_SCHEDULE_PATH . 'assets/vendor/jquery-3.6.0.min.js'),
             true
         );
 
