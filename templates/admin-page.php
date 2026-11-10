@@ -179,6 +179,36 @@
     </div>
     <?php endif; ?>
 
+    <?php
+    $visible_group_ids = get_option('schedule_visible_class_groups', null);
+    $group_selection_configured = is_array($visible_group_ids);
+    if (!$group_selection_configured) {
+        $visible_group_ids = [];
+    }
+    $visible_group_ids = array_map('strval', $visible_group_ids);
+
+    $classes_with_groups = [];
+    if (!empty($schedule['classes'])) {
+        foreach ($schedule['classes'] as $class_id => $class) {
+            $subgroups = [];
+            foreach (($class['groups'] ?? []) as $group_id => $group) {
+                if (empty($group['entireclass']) && !empty($group['name'])) {
+                    $subgroups[$group_id] = $group;
+                }
+            }
+            if (!empty($subgroups)) {
+                $classes_with_groups[$class_id] = [
+                    'name' => $class['name'],
+                    'groups' => $subgroups,
+                ];
+            }
+        }
+        uasort($classes_with_groups, function ($a, $b) {
+            return strcmp($a['name'], $b['name']);
+        });
+    }
+    ?>
+
     <div class="card">
         <h2>Отображение расписания</h2>
         <form method="POST" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
@@ -200,6 +230,46 @@
                     (например, «гр. 1 группа»). Для обычной страницы и панелей настройка общая.
                 </p>
             </div>
+
+            <?php if (!empty($classes_with_groups)): ?>
+                <input type="hidden" name="groups_selection_present" value="1">
+                <div class="groups-selection-header">
+                    <h3>Какие группы показывать</h3>
+                    <div class="groups-selection-actions">
+                        <button type="button" class="button" data-groups-action="all">Выбрать все</button>
+                        <button type="button" class="button" data-groups-action="none">Снять все</button>
+                    </div>
+                </div>
+
+                <div class="groups-selection">
+                    <?php foreach ($classes_with_groups as $class): ?>
+                        <div class="class-groups-item">
+                            <div class="class-groups-title"><?php echo esc_html($class['name']); ?></div>
+                            <div class="class-groups-list">
+                                <?php foreach ($class['groups'] as $group_id => $group): ?>
+                                    <?php
+                                    $is_checked = !$group_selection_configured
+                                        || in_array((string) $group_id, $visible_group_ids, true);
+                                    ?>
+                                    <label class="group-checkbox">
+                                        <input type="checkbox"
+                                               name="visible_class_groups[]"
+                                               value="<?php echo esc_attr($group_id); ?>"
+                                               <?php checked($is_checked); ?>>
+                                        <span><?php echo esc_html($group['name']); ?></span>
+                                    </label>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+                <p class="description">
+                    Отметьте группы, которые нужно показывать. Если снять все галочки,
+                    группы не будут отображаться даже при включённом переключателе.
+                </p>
+            <?php else: ?>
+                <p class="description">В загруженном XML нет подгрупп классов.</p>
+            <?php endif; ?>
 
             <div class="submit-wrapper">
                 <button type="submit" class="button button-primary">Сохранить настройки</button>

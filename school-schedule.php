@@ -36,7 +36,7 @@ if (!function_exists('app_asset_url')) {
         return $base . '/' . ltrim((string) $rel, '/');
     }
 }
-define('SCHOOL_SCHEDULE_VERSION', '2.2.1');
+define('SCHOOL_SCHEDULE_VERSION', '2.3.0');
 
 class SchoolSchedule {
     private $default_categories = array(
@@ -1089,6 +1089,21 @@ class SchoolSchedule {
             'schedule_show_class_groups',
             isset($_POST['show_class_groups']) ? 'on' : 'off'
         );
+
+        // Список выбранных групп передаётся только если в XML есть подгруппы.
+        // Пустой список означает «не показывать ни одной группы».
+        if (isset($_POST['groups_selection_present'])) {
+            $groups = [];
+            if (isset($_POST['visible_class_groups']) && is_array($_POST['visible_class_groups'])) {
+                foreach ($_POST['visible_class_groups'] as $group_id) {
+                    $group_id = sanitize_text_field($group_id);
+                    if ($group_id !== '') {
+                        $groups[] = $group_id;
+                    }
+                }
+            }
+            update_option('schedule_visible_class_groups', array_values(array_unique($groups)));
+        }
 
         wp_redirect(add_query_arg(
             ['page' => 'school-schedule', 'settings-updated' => 'display'],

@@ -34,14 +34,25 @@ if (!function_exists('shouldShowPeriod')) {
 }
 
 $show_class_groups = get_option('schedule_show_class_groups', 'off') === 'on';
+$visible_group_ids = get_option('schedule_visible_class_groups', null);
+$group_selection_configured = is_array($visible_group_ids);
+if ($group_selection_configured) {
+    $visible_group_ids = array_map('strval', $visible_group_ids);
+}
+
 $group_names = [];
 if ($show_class_groups && !empty($schedule['classes'])) {
     foreach ($schedule['classes'] as $class) {
         foreach (($class['groups'] ?? []) as $groupId => $group) {
             // «Весь класс» — это не подгруппа, её не показываем.
-            if (!empty($group['name']) && empty($group['entireclass'])) {
-                $group_names[$groupId] = $group['name'];
+            if (empty($group['name']) || !empty($group['entireclass'])) {
+                continue;
             }
+            // Если список групп настроен, показываем только отмеченные.
+            if ($group_selection_configured && !in_array((string) $groupId, $visible_group_ids, true)) {
+                continue;
+            }
+            $group_names[$groupId] = $group['name'];
         }
     }
 }
