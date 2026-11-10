@@ -224,7 +224,9 @@ class ScheduleParser {
                 if (isset($this->schedule['classes'][$classId])) {
                     $this->schedule['classes'][$classId]['groups'][$groupId] = [
                         'name' => (string)$group['name'],
-                        'id' => $groupId
+                        'id' => $groupId,
+                        'entireclass' => (string)$group['entireclass'] === '1',
+                        'divisiontag' => (string)$group['divisiontag'],
                     ];
                 }
             }

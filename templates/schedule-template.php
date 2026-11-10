@@ -38,7 +38,8 @@ $group_names = [];
 if ($show_class_groups && !empty($schedule['classes'])) {
     foreach ($schedule['classes'] as $class) {
         foreach (($class['groups'] ?? []) as $groupId => $group) {
-            if (!empty($group['name'])) {
+            // «Весь класс» — это не подгруппа, её не показываем.
+            if (!empty($group['name']) && empty($group['entireclass'])) {
                 $group_names[$groupId] = $group['name'];
             }
         }
