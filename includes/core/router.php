@@ -215,14 +215,9 @@ code { background:#f0f0f1; padding:2px 5px; border-radius:3px; }
     <nav class="admin-nav">
         <div class="brand">📅 Расписание</div>
         <?php
-        $items = [
-            'school-schedule' => 'Основные настройки',
-            'schedule-telegram-settings' => 'Telegram бот',
-            'schedule-telegram-stats' => 'Статистика бота',
-        ];
-        foreach ($items as $slug => $title) {
+        foreach ($sub as $slug => $item) {
             $active = ($page === $slug) ? ' class="active"' : '';
-            echo '<a' . $active . ' href="' . esc_attr(App_Config::site_url('admin?page=' . $slug)) . '">' . esc_html($title) . '</a>';
+            echo '<a' . $active . ' href="' . esc_attr(App_Config::site_url('admin?page=' . $slug)) . '">' . esc_html($item['menu_title']) . '</a>';
         }
         ?>
         <a href="<?= esc_url(App_Config::site_url('/')) ?>">🔗 Открыть расписание</a>

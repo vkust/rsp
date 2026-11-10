@@ -250,8 +250,8 @@ class ScheduleParser {
             // Получаем категорию предмета
             $category = $subject_categories[$subject_id] ?? 'main';
             
-            // Проверяем видимость категории
-            if (!isset($categories[$category]) || !$categories[$category]['visible']) {
+            // Проверяем видимость категории (если категории вообще не настроены — показываем всё)
+            if ($categories && (!isset($categories[$category]) || empty($categories[$category]['visible']))) {
                 continue; // Пропускаем урок если его категория скрыта
             }
 
