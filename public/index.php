@@ -4,6 +4,11 @@
  * Веб-сервер (Apache/Nginx/PHP built-in) должен направлять все запросы сюда.
  */
 
+// Сжимаем текстовые ответы (HTML/CSS/JS/XML/JSON). Бинарные файлы отдаются как есть.
+if (extension_loaded('zlib') && !ini_get('zlib.output_compression') && !headers_sent()) {
+    ob_start('ob_gzhandler');
+}
+
 // Раздача статики для встроенного сервера PHP (php -S localhost:8080 -t public)
 if (PHP_SAPI === 'cli-server') {
     $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
@@ -22,9 +27,19 @@ if (PHP_SAPI === 'cli-server') {
     if ($file !== null) {
         $types = ['css' => 'text/css', 'js' => 'application/javascript', 'png' => 'image/png',
                   'jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'gif' => 'image/gif',
-                  'svg' => 'image/svg+xml', 'xml' => 'text/xml', 'ico' => 'image/x-icon'];
+                  'webp' => 'image/webp', 'svg' => 'image/svg+xml', 'xml' => 'text/xml',
+                  'ico' => 'image/x-icon', 'woff2' => 'font/woff2'];
         $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+        // Не сжимаем уже сжатые изображения и шрифты.
+        if (in_array($ext, ['png', 'jpg', 'jpeg', 'gif', 'webp', 'ico', 'woff2'], true)) {
+            while (ob_get_level() > 0) {
+                ob_end_clean();
+            }
+        }
         header('Content-Type: ' . ($types[$ext] ?? 'application/octet-stream'));
+        if (preg_match('#^/assets/#', $path)) {
+            header('Cache-Control: public, max-age=31536000, immutable');
+        }
         readfile($file);
         return true;
     }

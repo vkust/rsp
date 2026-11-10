@@ -278,6 +278,7 @@ if ($show_class_groups && !empty($schedule['classes'])) {
         </div>
                                 <td>
         <!-- Таблица распиания -->
+        <?php ob_start(); ?>
         <div class="schedule-table-wrapper">
             <div class="schedule-table-header-scroll">
                 <div style="width: 100%; height: 1px;"></div>
@@ -417,6 +418,11 @@ if ($show_class_groups && !empty($schedule['classes'])) {
                 </table>
             </div>
         </div>
+        <?php
+        $table_html = ob_get_clean();
+        $minified = preg_replace('/>\s+</', '><', $table_html);
+        echo $minified !== null ? $minified : $table_html;
+        ?>
 
         <?php if ($debug_mode): ?>
             <div class="debug-info">

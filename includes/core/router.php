@@ -460,10 +460,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;b
         $file = realpath(APP_ROOT . '/assets/' . $rel);
         if ($file && strpos($file, realpath(APP_ROOT . '/assets')) === 0 && is_file($file)) {
             $types = ['css' => 'text/css', 'js' => 'application/javascript', 'png' => 'image/png',
-                      'jpg' => 'image/jpeg', 'svg' => 'image/svg+xml', 'woff2' => 'font/woff2'];
+                      'jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'gif' => 'image/gif',
+                      'webp' => 'image/webp', 'svg' => 'image/svg+xml', 'ico' => 'image/x-icon',
+                      'woff2' => 'font/woff2'];
             $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-            header('Content-Type: ' . ($types[$ext] ?? 'application/octet-stream') . '; charset=UTF-8');
-            header('Cache-Control: public, max-age=3600');
+            if (in_array($ext, ['png', 'jpg', 'jpeg', 'gif', 'webp', 'ico', 'woff2'], true)) {
+                while (ob_get_level() > 0) {
+                    ob_end_clean();
+                }
+            }
+            header('Content-Type: ' . ($types[$ext] ?? 'application/octet-stream') . (in_array($ext, ['css', 'js', 'svg'], true) ? '; charset=UTF-8' : ''));
+            header('Cache-Control: public, max-age=31536000, immutable');
             readfile($file);
             exit;
         }
@@ -479,7 +486,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;b
             $types = ['xml' => 'application/xml', 'json' => 'application/json',
                       'png' => 'image/png', 'jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg',
                       'gif' => 'image/gif', 'webp' => 'image/webp', 'svg' => 'image/svg+xml'];
-            header('Content-Type: ' . ($types[$ext] ?? 'application/octet-stream'));
+            if (in_array($ext, ['png', 'jpg', 'jpeg', 'gif', 'webp', 'ico', 'woff2'], true)) {
+                while (ob_get_level() > 0) {
+                    ob_end_clean();
+                }
+            }
+            header('Content-Type: ' . ($types[$ext] ?? 'application/octet-stream') . (in_array($ext, ['xml', 'json', 'svg'], true) ? '; charset=UTF-8' : ''));
+            header('Cache-Control: public, max-age=3600');
             readfile($file);
             exit;
         }

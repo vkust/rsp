@@ -36,7 +36,7 @@ if (!function_exists('app_asset_url')) {
         return $base . '/' . ltrim((string) $rel, '/');
     }
 }
-define('SCHOOL_SCHEDULE_VERSION', '2.4.1');
+define('SCHOOL_SCHEDULE_VERSION', '2.5.0');
 
 class SchoolSchedule {
     private $default_categories = array(
@@ -384,30 +384,8 @@ class SchoolSchedule {
     }
 
     public function enqueue_frontend_assets() {
-        // Подключаем jQuery и jQuery UI (автономное приложение не может полагаться на WP-ядро)
-        wp_enqueue_script(
-            'jquery',
-            'https://code.jquery.com/jquery-3.6.0.min.js',
-            array(),
-            '3.6.0',
-            true
-        );
-        wp_enqueue_script(
-            'jquery-ui',
-            'https://code.jquery.com/ui/1.13.2/jquery-ui.min.js',
-            array('jquery'),
-            '1.13.2',
-            true
-        );
-
-        // Подключаем стили jQuery UI
-        wp_enqueue_style(
-            'jquery-ui-style',
-            'https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css',
-            array(),
-            '1.13.2'
-        );
-
+        // jQuery/jQuery UI больше не нужны: фильтры используют нативные select,
+        // ExcelJS подключается только в момент экспорта.
         wp_enqueue_style(
             'school-schedule',
             app_asset_url('assets/css/schedule.css'),
@@ -416,17 +394,9 @@ class SchoolSchedule {
         );
 
         wp_enqueue_script(
-            'exceljs',
-            'https://cdn.jsdelivr.net/npm/exceljs@4.3.0/dist/exceljs.min.js',
-            array(),
-            '4.3.0',
-            true
-        );
-
-        wp_enqueue_script(
             'school-schedule',
             app_asset_url('assets/js/schedule.js'),
-            array('jquery', 'jquery-ui'),
+            array(),
             SCHOOL_SCHEDULE_VERSION,
             true
         );
