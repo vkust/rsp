@@ -7,7 +7,8 @@
 return [
     // Полное URL приложения (используется для webhook Telegram и генерации ссылок).
     // Например: https://schedule.example.com
-    'site_url' => getenv('SCHEDULE_SITE_URL') ?: 'http://localhost:8080',
+    // Если оставить пустым, URL будет определяться автоматически из текущего HTTP-запроса.
+    'site_url' => getenv('SCHEDULE_SITE_URL') ?: '',
 
     // База данных. Поддерживаются sqlite и mysql.
     'db' => [

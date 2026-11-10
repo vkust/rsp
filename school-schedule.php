@@ -118,6 +118,7 @@ class SchoolSchedule {
         add_action('admin_post_activate_schedule', [$this, 'activate_schedule_file']);
         add_action('admin_post_delete_schedule', [$this, 'delete_schedule_file']);
         add_action('admin_post_save_schedule_settings', [$this, 'handle_settings_save']);
+        add_action('admin_post_save_site_settings', [$this, 'handle_save_site_settings']);
         add_action('admin_post_save_marquee_settings', [$this, 'handle_save_marquee_settings']);
         add_action('admin_post_manage_webhook', [$this, 'handle_webhook_management']);
         add_action('admin_post_save_bot_code', [$this, 'handle_bot_code_save']);
@@ -241,6 +242,16 @@ class SchoolSchedule {
             'manage_options',
             'school-schedule',
             [$this, 'render_admin_page']
+        );
+
+        // Добавляем подменю для настроек сайта (URL, HTTPS, сертификаты)
+        add_submenu_page(
+            'school-schedule',
+            'Настройки сайта',
+            'Настройки сайта',
+            'manage_options',
+            'schedule-site-settings',
+            [$this, 'render_site_settings_page']
         );
 
         // Добавляем подменю для настроек Telegram бота
@@ -712,6 +723,82 @@ class SchoolSchedule {
         exit;
     }
 
+    public function handle_save_site_settings() {
+        if (!current_user_can('manage_options')) {
+            wp_die('У вас нет прав для выполнения этого действия.');
+        }
+
+        check_admin_referer('site_settings', 'site_settings_nonce');
+
+        $site_url = isset($_POST['site_url']) ? esc_url_raw(trim($_POST['site_url'])) : '';
+        $use_https = isset($_POST['use_https']) ? 'on' : 'off';
+        $ssl_cert = isset($_POST['ssl_cert_path']) ? sanitize_text_field($_POST['ssl_cert_path']) : '';
+        $ssl_key = isset($_POST['ssl_key_path']) ? sanitize_text_field($_POST['ssl_key_path']) : '';
+
+        // Если URL задан без схемы — добавляем http/https в зависимости от галочки HTTPS
+        if ($site_url !== '' && !preg_match('#^https?://#i', $site_url)) {
+            $site_url = ($use_https === 'on' ? 'https://' : 'http://') . $site_url;
+        }
+
+        update_option('schedule_site_url', $site_url);
+        update_option('schedule_use_https', $use_https);
+        update_option('schedule_ssl_cert_path', $ssl_cert);
+        update_option('schedule_ssl_key_path', $ssl_key);
+
+        // Пытаемся обновить config.php, если он доступен для записи
+        $this->update_config_file([
+            'site_url' => $site_url,
+        ]);
+
+        wp_redirect(add_query_arg(
+            ['page' => 'schedule-site-settings', 'settings-updated' => 'true'],
+            admin_url('admin.php')
+        ));
+        exit;
+    }
+
+    /**
+     * Обновляет значения в config.php, сохраняя остальные параметры.
+     */
+    private function update_config_file(array $updates) {
+        $config_path = APP_ROOT . '/config.php';
+        if (!file_exists($config_path) || !is_writable($config_path)) {
+            return false;
+        }
+
+        $config = @include $config_path;
+        if (!is_array($config)) {
+            return false;
+        }
+
+        foreach ($updates as $key => $value) {
+            if (strpos($key, '.') !== false) {
+                $segments = explode('.', $key);
+                $ref = &$config;
+                foreach ($segments as $segment) {
+                    if (!isset($ref[$segment])) {
+                        $ref[$segment] = [];
+                    }
+                    $ref = &$ref[$segment];
+                }
+                $ref = $value;
+                unset($ref);
+            } else {
+                $config[$key] = $value;
+            }
+        }
+
+        $export = var_export($config, true);
+        $code = "<?php\n"
+            . "/**\n"
+            . " * Конфигурация автономного приложения «Расписание занятий».\n"
+            . " * Обновлено из админки " . date('Y-m-d H:i:s') . " UTC.\n"
+            . " */\n\n"
+            . "return " . $export . ";\n";
+
+        return @file_put_contents($config_path, $code) !== false;
+    }
+
     public function activate_schedule_file() {
         if (!current_user_can('manage_options')) {
             wp_die('У вас нет прав для выполнения этого действия.');
@@ -1159,6 +1246,23 @@ class SchoolSchedule {
 
         // Подключаем шаблон страницы статистики
         include SCHOOL_SCHEDULE_PATH . 'templates/bot-stats.php';
+    }
+
+    public function render_site_settings_page() {
+        if (!current_user_can('manage_options')) {
+            return;
+        }
+
+        // Значения по умолчанию
+        $site_url = get_option('schedule_site_url', App_Config::get('site_url', ''));
+        $use_https = get_option('schedule_use_https', 'off');
+        $ssl_cert = get_option('schedule_ssl_cert_path', '');
+        $ssl_key = get_option('schedule_ssl_key_path', '');
+
+        // Если URL пустой — показываем текущий автоопределенный
+        $effective_url = $site_url ?: App_Config::site_url();
+
+        include SCHOOL_SCHEDULE_PATH . 'templates/site-settings.php';
     }
 
     public function render_bot_settings_page() {

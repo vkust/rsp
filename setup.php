@@ -202,13 +202,24 @@ $getEx = function ($path, $default = null) use ($existing) {
 };
 
 /* --- URL приложения --- */
-$scheme = 'http';
-$defUrl = $getEx('site_url', $scheme . '://localhost:8080');
-while (true) {
-    $siteUrl = prompt('Полный URL приложения (для Telegram webhook и ссылок)', $defUrl);
-    if (preg_match('#^https?://#i', $siteUrl)) break;
-    bad('URL должен начинаться с http:// или https://');
-    $defUrl = '';
+$defUrl = $getEx('site_url', '');
+if ($NON_INTERACTIVE) {
+    $siteUrl = $defUrl;
+    if ($siteUrl === '') {
+        info('URL приложения не задан — будет определяться автоматически из запроса.');
+    } else {
+        ok("URL приложения: {$siteUrl}");
+    }
+} else {
+    $siteUrl = prompt('Полный URL приложения (Enter — автоопределение из запроса)', $defUrl);
+    $siteUrl = trim($siteUrl);
+    if ($siteUrl !== '' && !preg_match('#^https?://#i', $siteUrl)) {
+        bad('URL должен начинаться с http:// или https://, либо быть пустым.');
+        $siteUrl = '';
+    }
+    if ($siteUrl === '') {
+        info('URL приложения будет определяться автоматически из текущего HTTP-запроса.');
+    }
 }
 $siteUrl = rtrim($siteUrl, '/');
 
