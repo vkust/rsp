@@ -73,7 +73,7 @@ class App_Updater
     public function __construct($root = null)
     {
         $this->root = rtrim($root ?: APP_ROOT, '/\\');
-        $config = function_exists('App_Config') ? App_Config::get('updates', []) : [];
+        $config = class_exists('App_Config') ? App_Config::get('updates', []) : [];
         if (is_array($config)) {
             $this->repo = $config['repo'] ?? $this->repo;
             $this->branch = $config['branch'] ?? $this->branch;
