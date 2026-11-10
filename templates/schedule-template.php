@@ -239,6 +239,9 @@ if ($show_class_groups && !empty($schedule['classes'])) {
 
                 foreach ($filters as $key => $filter): ?>
                     <div class="filter-group">
+                        <label class="filter-label" for="<?php echo esc_attr($key); ?>Filter">
+                            <?php echo esc_html($filter['label']); ?>
+                        </label>
                         <select id="<?php echo esc_attr($key); ?>Filter" class="filter-select">
                             <?php
                             $plural_endings = [
