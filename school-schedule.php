@@ -1556,6 +1556,10 @@ class SchoolSchedule {
         }
         check_admin_referer('run_update', 'updates_nonce');
 
+        // Старое состояние проверки после обновления уже неактуально.
+        delete_option('schedule_update_check');
+        delete_option('schedule_update_checked_at');
+
         try {
             $updater = $this->get_updater();
             $updater->startWorker('update', [
@@ -1580,6 +1584,10 @@ class SchoolSchedule {
 
         $backup_id = isset($_POST['backup_id']) ? sanitize_text_field($_POST['backup_id']) : '';
         $restore_db = isset($_POST['restore_db']);
+
+        // Старое состояние проверки после отката уже неактуально.
+        delete_option('schedule_update_check');
+        delete_option('schedule_update_checked_at');
 
         try {
             $updater = $this->get_updater();
