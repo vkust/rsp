@@ -441,6 +441,15 @@ sudo systemctl restart rsp-schedule   # если установлено как s
 - `data/uploads/`;
 - при необходимости — `logs/`.
 
+## Разработка
+
+После изменений в `assets/css/schedule.css`, `assets/css/schedule-template.css`
+или `assets/js/schedule.js` пересоберите фронтенд-бандлы:
+
+```bash
+php tools/build-assets.php
+```
+
 ## Лицензия
 
 MIT (наследует лицензию исходного плагина).

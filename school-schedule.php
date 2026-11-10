@@ -36,7 +36,7 @@ if (!function_exists('app_asset_url')) {
         return $base . '/' . ltrim((string) $rel, '/');
     }
 }
-define('SCHOOL_SCHEDULE_VERSION', '2.5.3');
+define('SCHOOL_SCHEDULE_VERSION', '2.5.4');
 
 class SchoolSchedule {
     private $default_categories = array(
@@ -384,52 +384,22 @@ class SchoolSchedule {
     }
 
     public function enqueue_frontend_assets() {
-        // jQuery и jQuery UI нужны для оформления фильтров (selectmenu).
-        // Лежат локально, чтобы не зависеть от внешнего CDN.
-        wp_enqueue_script(
-            'jquery',
-            app_asset_url('assets/vendor/jquery-3.6.0.min.js'),
-            array(),
-            filemtime(SCHOOL_SCHEDULE_PATH . 'assets/vendor/jquery-3.6.0.min.js'),
-            true
-        );
-        wp_enqueue_script(
-            'jquery-ui',
-            app_asset_url('assets/vendor/jquery-ui/jquery-ui.min.js'),
-            array('jquery'),
-            filemtime(SCHOOL_SCHEDULE_PATH . 'assets/vendor/jquery-ui/jquery-ui.min.js'),
-            true
-        );
-
-        wp_enqueue_style(
-            'jquery-ui-style',
-            app_asset_url('assets/vendor/jquery-ui/jquery-ui.min.css'),
-            array(),
-            filemtime(SCHOOL_SCHEDULE_PATH . 'assets/vendor/jquery-ui/jquery-ui.min.css')
-        );
-
+        // Единые локальные бандлы: jQuery + jQuery UI + schedule.js и
+        // jQuery UI CSS + schedule.css + schedule-template.css.
+        // Так встроенный PHP-сервер обрабатывает 2 запроса вместо 5–6.
         wp_enqueue_style(
             'school-schedule',
-            app_asset_url('assets/css/schedule.css'),
+            app_asset_url('assets/dist/app.min.css'),
             array(),
-            SCHOOL_SCHEDULE_VERSION
+            filemtime(SCHOOL_SCHEDULE_PATH . 'assets/dist/app.min.css')
         );
 
-        // ExcelJS загружается только при экспорте (см. assets/js/schedule.js).
         wp_enqueue_script(
             'school-schedule',
-            app_asset_url('assets/js/schedule.js'),
-            array('jquery', 'jquery-ui'),
-            SCHOOL_SCHEDULE_VERSION,
+            app_asset_url('assets/dist/app.min.js'),
+            array(),
+            filemtime(SCHOOL_SCHEDULE_PATH . 'assets/dist/app.min.js'),
             true
-        );
-
-        // Добавляем стили для шаблона
-        wp_enqueue_style(
-            'school-schedule-template',
-            app_asset_url('assets/css/schedule-template.css'),
-            [],
-            filemtime(SCHOOL_SCHEDULE_PATH . 'assets/css/schedule-template.css')
         );
     }
 
