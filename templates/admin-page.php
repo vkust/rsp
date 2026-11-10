@@ -192,6 +192,8 @@
         $hidden_group_names = [];
     }
     $hidden_group_names = array_map('strval', $hidden_group_names);
+    $display_enabled = get_option('schedule_show_class_groups') === 'on';
+    $groups_configured = $group_selection_configured || !empty($hidden_group_names);
 
     $classes_with_groups = [];
     $all_group_names = [];
@@ -247,6 +249,12 @@
                         (например, «1 группа»). Для обычной страницы и панелей настройка общая.
                     </p>
                 </div>
+
+                <?php if (!$display_enabled && $groups_configured): ?>
+                    <div class="notice notice-warning">
+                        <p>Группы настроены, но их показ выключен. Включите переключатель выше и сохраните настройки.</p>
+                    </div>
+                <?php endif; ?>
 
                 <?php if (!empty($classes_with_groups)): ?>
                     <input type="hidden" name="groups_selection_present" value="1">

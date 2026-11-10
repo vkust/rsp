@@ -617,6 +617,10 @@ input:checked + .slider:before {
     border-left-color: #dc3232;
 }
 
+.notice-warning {
+    border-left-color: #dba617;
+}
+
 /* Стили для формы */
 #test-notification-form {
     display: flex;
