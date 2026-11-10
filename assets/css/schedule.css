@@ -805,11 +805,6 @@ body {
     white-space: normal;
 }
 
-.group-badge::before {
-    content: "гр. ";
-    font-weight: 500;
-}
-
 .room-info {
     padding-top: 0.1rem;
     border-top: 1px solid var(--gray-200);

@@ -40,12 +40,24 @@ if ($group_selection_configured) {
     $visible_group_ids = array_map('strval', $visible_group_ids);
 }
 
+$hidden_group_names = get_option('schedule_hidden_group_names', []);
+$hidden_group_names_map = [];
+if (is_array($hidden_group_names)) {
+    foreach ($hidden_group_names as $hidden_group_name) {
+        $hidden_group_names_map[mb_strtolower(trim((string) $hidden_group_name))] = true;
+    }
+}
+
 $group_names = [];
 if ($show_class_groups && !empty($schedule['classes'])) {
     foreach ($schedule['classes'] as $class) {
         foreach (($class['groups'] ?? []) as $groupId => $group) {
             // «Весь класс» — это не подгруппа, её не показываем.
             if (empty($group['name']) || !empty($group['entireclass'])) {
+                continue;
+            }
+            // Группа скрыта у всех классов по названию.
+            if (isset($hidden_group_names_map[mb_strtolower(trim($group['name']))])) {
                 continue;
             }
             // Если список групп настроен, показываем только отмеченные.

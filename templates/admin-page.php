@@ -187,13 +187,21 @@
     }
     $visible_group_ids = array_map('strval', $visible_group_ids);
 
+    $hidden_group_names = get_option('schedule_hidden_group_names', []);
+    if (!is_array($hidden_group_names)) {
+        $hidden_group_names = [];
+    }
+    $hidden_group_names = array_map('strval', $hidden_group_names);
+
     $classes_with_groups = [];
+    $all_group_names = [];
     if (!empty($schedule['classes'])) {
         foreach ($schedule['classes'] as $class_id => $class) {
             $subgroups = [];
             foreach (($class['groups'] ?? []) as $group_id => $group) {
                 if (empty($group['entireclass']) && !empty($group['name'])) {
                     $subgroups[$group_id] = $group;
+                    $all_group_names[trim($group['name'])] = trim($group['name']);
                 }
             }
             if (!empty($subgroups)) {
@@ -206,75 +214,112 @@
         uasort($classes_with_groups, function ($a, $b) {
             return strcmp($a['name'], $b['name']);
         });
+        ksort($all_group_names, SORT_NATURAL | SORT_FLAG_CASE);
     }
     ?>
 
     <div class="card">
-        <h2>Отображение расписания</h2>
-        <form method="POST" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
-            <?php wp_nonce_field('display_settings', 'display_nonce'); ?>
-            <input type="hidden" name="action" value="save_display_settings">
+        <div class="card-header">
+            <h2 class="card-title">
+                <button type="button" class="toggle-card" aria-expanded="false">
+                    Отображение групп классов
+                    <span class="toggle-icon">▼</span>
+                </button>
+            </h2>
+        </div>
+        <div class="card-content" style="display: none;">
+            <form method="POST" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                <?php wp_nonce_field('display_settings', 'display_nonce'); ?>
+                <input type="hidden" name="action" value="save_display_settings">
 
-            <div class="setting-row">
-                <label class="switch-label">
-                    <span>Показывать группы классов в карточках уроков</span>
-                    <label class="switch">
-                        <input type="checkbox"
-                               name="show_class_groups"
-                               <?php checked(get_option('schedule_show_class_groups'), 'on'); ?>>
-                        <span class="slider round"></span>
+                <div class="setting-row">
+                    <label class="switch-label">
+                        <span>Показывать группы классов в карточках уроков</span>
+                        <label class="switch">
+                            <input type="checkbox"
+                                   name="show_class_groups"
+                                   <?php checked(get_option('schedule_show_class_groups'), 'on'); ?>>
+                            <span class="slider round"></span>
+                        </label>
                     </label>
-                </label>
-                <p class="description">
-                    Если в XML-файле есть подгруппы классов, они будут показаны рядом с классом
-                    (например, «гр. 1 группа»). Для обычной страницы и панелей настройка общая.
-                </p>
-            </div>
-
-            <?php if (!empty($classes_with_groups)): ?>
-                <input type="hidden" name="groups_selection_present" value="1">
-                <div class="groups-selection-header">
-                    <h3>Какие группы показывать</h3>
-                    <div class="groups-selection-actions">
-                        <button type="button" class="button" data-groups-action="all">Выбрать все</button>
-                        <button type="button" class="button" data-groups-action="none">Снять все</button>
-                    </div>
+                    <p class="description">
+                        Если в XML-файле есть подгруппы классов, они будут показаны рядом с классом
+                        (например, «1 группа»). Для обычной страницы и панелей настройка общая.
+                    </p>
                 </div>
 
-                <div class="groups-selection">
-                    <?php foreach ($classes_with_groups as $class): ?>
-                        <div class="class-groups-item">
-                            <div class="class-groups-title"><?php echo esc_html($class['name']); ?></div>
-                            <div class="class-groups-list">
-                                <?php foreach ($class['groups'] as $group_id => $group): ?>
-                                    <?php
-                                    $is_checked = !$group_selection_configured
-                                        || in_array((string) $group_id, $visible_group_ids, true);
-                                    ?>
-                                    <label class="group-checkbox">
-                                        <input type="checkbox"
-                                               name="visible_class_groups[]"
-                                               value="<?php echo esc_attr($group_id); ?>"
-                                               <?php checked($is_checked); ?>>
-                                        <span><?php echo esc_html($group['name']); ?></span>
-                                    </label>
-                                <?php endforeach; ?>
+                <?php if (!empty($classes_with_groups)): ?>
+                    <input type="hidden" name="groups_selection_present" value="1">
+                    <div class="groups-selection-header">
+                        <h3>Какие группы показывать</h3>
+                        <div class="groups-selection-actions">
+                            <button type="button" class="button" data-groups-action="all">Выбрать все</button>
+                            <button type="button" class="button" data-groups-action="none">Снять все</button>
+                        </div>
+                    </div>
+
+                    <div class="groups-selection">
+                        <?php foreach ($classes_with_groups as $class): ?>
+                            <div class="class-groups-item">
+                                <div class="class-groups-title"><?php echo esc_html($class['name']); ?></div>
+                                <div class="class-groups-list">
+                                    <?php foreach ($class['groups'] as $group_id => $group): ?>
+                                        <?php
+                                        $is_checked = !$group_selection_configured
+                                            || in_array((string) $group_id, $visible_group_ids, true);
+                                        ?>
+                                        <label class="group-checkbox">
+                                            <input type="checkbox"
+                                                   name="visible_class_groups[]"
+                                                   value="<?php echo esc_attr($group_id); ?>"
+                                                   <?php checked($is_checked); ?>>
+                                            <span><?php echo esc_html($group['name']); ?></span>
+                                        </label>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <p class="description">
+                        Отметьте группы, которые нужно показывать. Если снять все галочки,
+                        группы не будут отображаться даже при включённом переключателе.
+                    </p>
+
+                    <?php if (!empty($all_group_names)): ?>
+                        <input type="hidden" name="group_names_selection_present" value="1">
+                        <div class="groups-selection-header">
+                            <h3>Скрыть группы у всех классов</h3>
+                            <div class="groups-selection-actions">
+                                <button type="button" class="button" data-group-names-action="none">Показать все</button>
+                                <button type="button" class="button" data-group-names-action="all">Скрыть все</button>
                             </div>
                         </div>
-                    <?php endforeach; ?>
-                </div>
-                <p class="description">
-                    Отметьте группы, которые нужно показывать. Если снять все галочки,
-                    группы не будут отображаться даже при включённом переключателе.
-                </p>
-            <?php else: ?>
-                <p class="description">В загруженном XML нет подгрупп классов.</p>
-            <?php endif; ?>
+                        <div class="group-names-selection">
+                            <?php foreach ($all_group_names as $group_name): ?>
+                                <label class="group-checkbox">
+                                    <input type="checkbox"
+                                           name="hidden_group_names[]"
+                                           value="<?php echo esc_attr($group_name); ?>"
+                                           <?php checked(in_array($group_name, $hidden_group_names, true)); ?>>
+                                    <span><?php echo esc_html($group_name); ?></span>
+                                </label>
+                            <?php endforeach; ?>
+                        </div>
+                        <p class="description">
+                            Отмеченные группы будут скрыты у всех классов. Это работает вместе
+                            с выбором групп выше: скрытая группа не появится, даже если она отмечена
+                            в списке класса.
+                        </p>
+                    <?php endif; ?>
+                <?php else: ?>
+                    <p class="description">В загруженном XML нет подгрупп классов.</p>
+                <?php endif; ?>
 
-            <div class="submit-wrapper">
-                <button type="submit" class="button button-primary">Сохранить настройки</button>
-            </div>
-        </form>
+                <div class="submit-wrapper">
+                    <button type="submit" class="button button-primary">Сохранить настройки</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <div class="card">

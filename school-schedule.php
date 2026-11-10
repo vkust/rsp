@@ -36,7 +36,7 @@ if (!function_exists('app_asset_url')) {
         return $base . '/' . ltrim((string) $rel, '/');
     }
 }
-define('SCHOOL_SCHEDULE_VERSION', '2.3.1');
+define('SCHOOL_SCHEDULE_VERSION', '2.4.0');
 
 class SchoolSchedule {
     private $default_categories = array(
@@ -1103,6 +1103,20 @@ class SchoolSchedule {
                 }
             }
             update_option('schedule_visible_class_groups', array_values(array_unique($groups)));
+        }
+
+        // Группы, скрытые у всех классов (по названию).
+        if (isset($_POST['group_names_selection_present'])) {
+            $hidden_names = [];
+            if (isset($_POST['hidden_group_names']) && is_array($_POST['hidden_group_names'])) {
+                foreach ($_POST['hidden_group_names'] as $group_name) {
+                    $group_name = sanitize_text_field($group_name);
+                    if ($group_name !== '') {
+                        $hidden_names[] = $group_name;
+                    }
+                }
+            }
+            update_option('schedule_hidden_group_names', array_values(array_unique($hidden_names)));
         }
 
         wp_redirect(add_query_arg(

@@ -74,10 +74,32 @@
         });
     }
 
+    function initGroupNameSelection() {
+        var buttons = document.querySelectorAll('[data-group-names-action]');
+
+        Array.prototype.forEach.call(buttons, function (button) {
+            button.addEventListener('click', function () {
+                var form = button.closest('form');
+                var action = button.getAttribute('data-group-names-action');
+                var checkboxes = form
+                    ? form.querySelectorAll('input[name="hidden_group_names[]"]')
+                    : [];
+
+                Array.prototype.forEach.call(checkboxes, function (checkbox) {
+                    checkbox.checked = action === 'all';
+                });
+            });
+        });
+    }
+
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initGroupSelection);
+        document.addEventListener('DOMContentLoaded', function () {
+            initGroupSelection();
+            initGroupNameSelection();
+        });
     } else {
         initGroupSelection();
+        initGroupNameSelection();
     }
 })();
 

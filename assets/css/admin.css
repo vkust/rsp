@@ -171,6 +171,16 @@
     margin: 0;
 }
 
+.group-names-selection {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem 1.4rem;
+    padding: 0.8rem 0.9rem;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
 .subject-item {
     display: grid;
     grid-template-columns: 2fr;
