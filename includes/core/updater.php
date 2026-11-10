@@ -860,11 +860,6 @@ class App_Updater
         }
 
         $cacheBust = '?t=' . time();
-        $base = 'https://raw.githubusercontent.com/' . $this->repo . '/' . $this->branch;
-        $version = trim($this->httpGet($base . '/VERSION' . $cacheBust));
-        if ($version === '') {
-            throw new RuntimeException('Не удалось прочитать VERSION из репозитория.');
-        }
 
         $identifier = null;
         $date = null;
@@ -880,6 +875,15 @@ class App_Updater
             }
         } catch (Throwable $e) {
             $this->appendLog('Не удалось получить SHA коммита: ' . $e->getMessage());
+        }
+
+        // Читаем VERSION по конкретному коммиту, чтобы версия соответствовала
+        // именно тому архиву, который будет скачан (и не зависела от кеша ветки).
+        $versionRef = $identifier !== null ? $identifier : $this->branch;
+        $versionUrl = 'https://raw.githubusercontent.com/' . $this->repo . '/' . $versionRef . '/VERSION' . $cacheBust;
+        $version = trim($this->httpGet($versionUrl));
+        if ($version === '') {
+            throw new RuntimeException('Не удалось прочитать VERSION из репозитория.');
         }
 
         $archive = $identifier !== null
