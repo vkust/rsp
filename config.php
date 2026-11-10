@@ -9,7 +9,7 @@ return [
 
     'db' => [
         'type'   => 'sqlite',
-        'sqlite' => ['path' => '/workspace/data/schedule.sqlite'],
+        'sqlite' => ['path' => __DIR__ . '/data/schedule.sqlite'],
         'mysql'  => [
             'host'    => 'localhost',
             'port'    => '3306',
@@ -21,19 +21,19 @@ return [
         'prefix' => '',
     ],
 
-    'uploads_dir' => '/workspace/data/uploads',
+    'uploads_dir' => __DIR__ . '/data/uploads',
 
     'timezone' => 'Europe/Moscow',
 
     'admin' => [
         'username'       => 'admin',
-        'password_hash'  => '$2y$10$N4qHT/Q65fAIUWa/V5MPEOs8mVAono25qzjGXH5QgDbeN1yQUWaoe',
+        'password_hash'  => '',
         'session_secret' => '51a32e9dc6d13f67629810f647f26dd2bfd034b88ff1cfe70d2d80e4fb9065a8',
     ],
 
     'debug' => [
         'enabled' => false,
         'display' => false,
-        'log'     => '/workspace/logs/app.log',
+        'log'     => __DIR__ . '/logs/app.log',
     ],
 ];

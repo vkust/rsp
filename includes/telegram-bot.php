@@ -20,7 +20,8 @@ class ScheduleTelegramBot {
         global $wpdb;
         $this->db = $wpdb;
         $this->token = get_option('schedule_telegram_bot_token');
-        $this->webhook_url = get_site_url() . '/wp-json/school-schedule/v1/telegram-webhook';
+        $base_url = defined('APP_URL') ? rtrim(APP_URL, '/') : (getenv('SCHEDULE_SITE_URL') ?: 'http://localhost:8080');
+        $this->webhook_url = $base_url . '/telegram-webhook';
         
         // Инициализируем базу данных только при активации плагина
         if (isset($GLOBALS['pagenow']) && $GLOBALS['pagenow'] === 'plugins.php') {
@@ -785,18 +786,24 @@ class ScheduleTelegramBot {
     }
 
     public function get_bot_info() {
+        if (empty($this->token)) {
+            return false;
+        }
         $url = $this->api_url . $this->token . '/getMe';
         $response = wp_remote_get($url);
-        
+
         if (is_wp_error($response)) {
             return false;
         }
-        
+
         $body = json_decode(wp_remote_retrieve_body($response), true);
         return $body['ok'] ? $body['result'] : false;
     }
 
     public function get_webhook_info() {
+        if (empty($this->token)) {
+            return false;
+        }
         try {
             $url = $this->api_url . $this->token . '/getWebhookInfo';
             $response = wp_remote_get($url);
@@ -822,6 +829,9 @@ class ScheduleTelegramBot {
     }
 
     public function test_api_connection() {
+        if (empty($this->token)) {
+            return ['success' => false, 'message' => 'Токен бота не настроен'];
+        }
         $url = $this->api_url . $this->token . '/getMe';
         $response = wp_remote_get($url);
         
@@ -3223,6 +3233,10 @@ class ScheduleTelegramBot {
 
     // Добавляем новый метод в класс ScheduleTelegramBot
     public function set_bot_commands() {
+        if (empty($this->token)) {
+            $this->log("Пропуск регистрации команд бота: токен не задан", 'debug');
+            return false;
+        }
             $commands = [
             [
                 'command' => 'start',
@@ -3582,6 +3596,10 @@ class ScheduleTelegramBot {
     // Обновляем метод для отправки запросов к API
     private function send_telegram_request($method, $params = [], $attempts = 0) {
         try {
+            if (empty($this->token)) {
+                $this->log("Пропуск запроса {$method}: токен Telegram не задан", 'debug');
+                return false;
+            }
             $this->respect_rate_limit();
 
             $url = $this->api_url . $this->token . '/' . $method;

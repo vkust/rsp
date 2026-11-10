@@ -22,6 +22,7 @@ class App_Database
 
     private $type;
     private static $instance = null;
+    private $pending_after_ddl = [];
 
     public function __construct($config = null)
     {

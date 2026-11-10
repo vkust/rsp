@@ -895,6 +895,17 @@ function check_admin_referer($action = -1, $query_arg = '_wpnonce')
     return $result;
 }
 }
+if (!function_exists('check_ajax_referer')) {
+function check_ajax_referer($action = -1, $query_arg = '_wpnonce', $die = true)
+{
+    $nonce = $_REQUEST[$query_arg] ?? '';
+    $result = wp_verify_nonce($nonce, $action);
+    if (!$result && $die) {
+        wp_die('Просроченная защита ссылки. Пожалуйста, обновите страницу и повторите попытку.', 403);
+    }
+    return $result;
+}
+}
 if (!function_exists('current_user_can')) {
 function current_user_can($capability, ...$args)
 {

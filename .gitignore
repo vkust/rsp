@@ -1,3 +1,10 @@
 logs/
 *.log
 data/schedule.sqlite
+data/uploads/
+config.php
+cookies.txt
+test-*.php
+set-*.php
+save-*.php
+enable-php-exts.ps1

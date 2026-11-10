@@ -89,9 +89,11 @@ class SchoolSchedule {
         
         // Инициализируем объекты
         try {
-            $bot = new ScheduleTelegramBot();
-            new ScheduleRestAPI($bot);
-            new ScheduleNotificationScheduler($bot);
+            $bot = $this->bot ?? null;
+            if ($bot instanceof ScheduleTelegramBot) {
+                new ScheduleRestAPI($bot);
+                new ScheduleNotificationScheduler($bot);
+            }
         } catch (Exception $e) {
             error_log('School Schedule Plugin Initialization Error: ' . $e->getMessage());
         }
@@ -355,11 +357,22 @@ class SchoolSchedule {
     }
 
     public function enqueue_frontend_assets() {
-        // Подключаем jQuery UI
-        wp_enqueue_script('jquery');
-        wp_enqueue_script('jquery-ui-core');
-        wp_enqueue_script('jquery-ui-selectmenu');
-        
+        // Подключаем jQuery и jQuery UI (автономное приложение не может полагаться на WP-ядро)
+        wp_enqueue_script(
+            'jquery',
+            'https://code.jquery.com/jquery-3.6.0.min.js',
+            array(),
+            '3.6.0',
+            true
+        );
+        wp_enqueue_script(
+            'jquery-ui',
+            'https://code.jquery.com/ui/1.13.2/jquery-ui.min.js',
+            array('jquery'),
+            '1.13.2',
+            true
+        );
+
         // Подключаем стили jQuery UI
         wp_enqueue_style(
             'jquery-ui-style',
@@ -386,7 +399,7 @@ class SchoolSchedule {
         wp_enqueue_script(
             'school-schedule',
             app_asset_url('assets/js/schedule.js'),
-            array('jquery', 'jquery-ui-core', 'jquery-ui-selectmenu'),
+            array('jquery', 'jquery-ui'),
             SCHOOL_SCHEDULE_VERSION,
             true
         );

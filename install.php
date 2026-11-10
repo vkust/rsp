@@ -92,6 +92,19 @@ if (!wp_next_scheduled('schedule_next_day_notification')) {
 }
 echo "Зарегистрированы задачи планировщика (выполняются через cron.php).\n";
 
+// Устанавливаем категории предметов по умолчанию (аналог активации плагина)
+$default_categories = [
+    'main' => ['name' => 'Основные предметы', 'visible' => true],
+    'extracurricular' => ['name' => 'Внеурочная деятельность', 'visible' => true],
+    'elective' => ['name' => 'Элективный курс', 'visible' => true],
+    'additional' => ['name' => 'Дополнительные занятия', 'visible' => true],
+    'consultation' => ['name' => 'Консультации', 'visible' => true],
+];
+if (!get_option('schedule_categories')) {
+    update_option('schedule_categories', $default_categories);
+    echo "Установлены категории предметов по умолчанию.\n";
+}
+
 // Проверка пароля администратора
 $hash = (string) App_Config::get('admin.password_hash', '');
 if ($hash === '') {
