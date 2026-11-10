@@ -344,6 +344,11 @@ $configCode = "<?php\n"
     . "        'bind' => '" . $q($serverBind) . "',\n"
     . "        'port' => " . (int) $serverPort . ",\n"
     . "    ],\n\n"
+    . "    'updates' => [\n"
+    . "        'repo' => 'vkust/rsp',\n"
+    . "        'branch' => 'main',\n"
+    . "        'keep_backups' => 10,\n"
+    . "    ],\n\n"
     . "    'db' => [\n"
     . "        'type'   => '" . $q($dbType) . "',\n"
     . "        'sqlite' => ['path' => '" . $q($sqlitePath) . "'],\n"
@@ -429,6 +434,23 @@ foreach (['bootstrap.php', 'public/index.php', 'school-schedule.php', 'cron.php'
 }
 if ($missing) {
     echo "\n" . c('Внимание: отсутствуют обязательные файлы. Установка продолжена, но приложение может работать некорректно.', '1;33') . "\n";
+}
+
+/* --- Начальное состояние системы обновлений ---------------------------- */
+$updatesDir = APP_ROOT . '/.updates';
+if (!is_dir($updatesDir)) {
+    @mkdir($updatesDir, 0775, true);
+}
+$updatesCurrent = $updatesDir . '/current.json';
+if (is_dir($updatesDir) && !is_file($updatesCurrent)) {
+    $versionFile = APP_ROOT . '/VERSION';
+    $appVersion = is_file($versionFile) ? trim((string) file_get_contents($versionFile)) : '0.0.0';
+    @file_put_contents($updatesCurrent, json_encode([
+        'version' => $appVersion,
+        'identifier' => null,
+        'source' => 'install',
+        'installed_at' => date('c'),
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n");
 }
 
 echo "\n" . c('Установка завершена успешно!', '1;32') . "\n\n";

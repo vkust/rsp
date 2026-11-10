@@ -16,6 +16,13 @@ return [
         'port' => (int) (getenv('SCHEDULE_PORT') ?: 8080),
     ],
 
+    // Система обновлений: откуда брать версии и сколько снимков хранить.
+    'updates' => [
+        'repo' => getenv('SCHEDULE_UPDATE_REPO') ?: 'vkust/rsp',
+        'branch' => getenv('SCHEDULE_UPDATE_BRANCH') ?: 'main',
+        'keep_backups' => 10,
+    ],
+
     // База данных. Поддерживаются sqlite и mysql.
     'db' => [
         'type'     => getenv('SCHEDULE_DB_TYPE') ?: 'sqlite',   // sqlite | mysql

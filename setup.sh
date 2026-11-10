@@ -155,16 +155,16 @@ install_php() {
     case "$DETECTED_PM" in
         apt)
             $SUDO apt-get update
-            $SUDO apt-get install -y php-cli php-sqlite3 php-curl php-xml php-mbstring php-json git unzip
+            $SUDO apt-get install -y php-cli php-sqlite3 php-curl php-xml php-mbstring php-json git unzip rsync
             ;;
         dnf)
-            $SUDO dnf install -y php-cli php-pdo php-sqlite3 php-curl php-xml php-mbstring php-json git unzip
+            $SUDO dnf install -y php-cli php-pdo php-sqlite3 php-curl php-xml php-mbstring php-json git unzip rsync
             ;;
         yum)
-            $SUDO yum install -y php-cli php-pdo php-sqlite3 php-curl php-xml php-mbstring php-json git unzip
+            $SUDO yum install -y php-cli php-pdo php-sqlite3 php-curl php-xml php-mbstring php-json git unzip rsync
             ;;
         apk)
-            $SUDO apk add php82 php82-pdo php82-pdo_sqlite php82-curl php82-xml php82-mbstring php82-json php82-openssl php82-zip git unzip curl
+            $SUDO apk add php82 php82-pdo php82-pdo_sqlite php82-curl php82-xml php82-mbstring php82-json php82-openssl php82-zip git unzip curl rsync
             # Alpine не создаёт симлинк php по умолчанию
             if [ ! -e /usr/bin/php ] && [ -e /usr/bin/php82 ]; then
                 $SUDO ln -sf /usr/bin/php82 /usr/bin/php

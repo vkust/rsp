@@ -113,6 +113,22 @@ if ($hash === '') {
     echo "   2) скопируйте полученный хеш в config.php => admin.password_hash\n";
 }
 
+$updatesDir = APP_ROOT . '/.updates';
+if (!is_dir($updatesDir)) {
+    @mkdir($updatesDir, 0775, true);
+}
+$updatesCurrent = $updatesDir . '/current.json';
+if (is_dir($updatesDir) && !is_file($updatesCurrent)) {
+    $versionFile = APP_ROOT . '/VERSION';
+    $appVersion = is_file($versionFile) ? trim((string) file_get_contents($versionFile)) : '0.0.0';
+    @file_put_contents($updatesCurrent, json_encode([
+        'version' => $appVersion,
+        'identifier' => null,
+        'source' => 'install',
+        'installed_at' => date('c'),
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n");
+}
+
 echo "\nУстановка завершена.\n";
 if ($isNewConfig) {
     echo "Отредактируйте config.php (site_url, доступы к БД, токен бота задаётся в админке),\n";

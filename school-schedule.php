@@ -36,7 +36,7 @@ if (!function_exists('app_asset_url')) {
         return $base . '/' . ltrim((string) $rel, '/');
     }
 }
-define('SCHOOL_SCHEDULE_VERSION', '2.0.0');
+define('SCHOOL_SCHEDULE_VERSION', '2.1.0');
 
 class SchoolSchedule {
     private $default_categories = array(
@@ -121,6 +121,9 @@ class SchoolSchedule {
         add_action('admin_post_save_site_settings', [$this, 'handle_save_site_settings']);
         add_action('admin_post_save_server_settings', [$this, 'handle_save_server_settings']);
         add_action('admin_post_change_admin_password', [$this, 'handle_change_admin_password']);
+        add_action('admin_post_check_updates', [$this, 'handle_check_updates']);
+        add_action('admin_post_run_update', [$this, 'handle_run_update']);
+        add_action('admin_post_run_rollback', [$this, 'handle_run_rollback']);
         add_action('admin_post_save_marquee_settings', [$this, 'handle_save_marquee_settings']);
         add_action('admin_post_manage_webhook', [$this, 'handle_webhook_management']);
         add_action('admin_post_save_bot_code', [$this, 'handle_bot_code_save']);
@@ -254,6 +257,16 @@ class SchoolSchedule {
             'manage_options',
             'schedule-site-settings',
             [$this, 'render_site_settings_page']
+        );
+
+        // Обновления и откат версий
+        add_submenu_page(
+            'school-schedule',
+            'Обновления',
+            'Обновления',
+            'manage_options',
+            'schedule-updates',
+            [$this, 'render_updates_page']
         );
 
         // Добавляем подменю для настроек Telegram бота
@@ -431,6 +444,7 @@ class SchoolSchedule {
             'toplevel_page_school-schedule',
             'расписание_page_schedule-telegram-settings',
             'расписание_page_schedule-site-settings',
+            'расписание_page_schedule-updates',
         ])) {
             return;
         }
@@ -1470,6 +1484,118 @@ class SchoolSchedule {
         $admin_username = (string) App_Config::get('admin.username', 'admin');
 
         include SCHOOL_SCHEDULE_PATH . 'templates/site-settings.php';
+    }
+
+    /**
+     * Загружает класс системы обновления (с резервной копией в .updates/lib).
+     */
+    private function get_updater() {
+        $primary = APP_ROOT . '/includes/core/updater.php';
+        $fallback = APP_ROOT . '/.updates/lib/updater.php';
+
+        // Управляющая копия в .updates/lib обновляется вместе с приложением и
+        // переживает откат к версии, где этого класса ещё не было.
+        if (is_file($fallback)) {
+            require_once $fallback;
+        } elseif (is_file($primary)) {
+            require_once $primary;
+        }
+        if (!class_exists('App_Updater')) {
+            throw new RuntimeException('Класс App_Updater не найден.');
+        }
+        return new App_Updater(APP_ROOT);
+    }
+
+    public function render_updates_page() {
+        if (!current_user_can('manage_options')) {
+            return;
+        }
+
+        $updater = $this->get_updater();
+        $current = $updater->currentInfo();
+        $status = $updater->status();
+        $backups = $updater->backups();
+        $check = get_option('schedule_update_check', null);
+        $checked_at = get_option('schedule_update_checked_at', null);
+        $error = get_option('schedule_update_error', '');
+        if (!is_string($error)) {
+            $error = '';
+        }
+        if ($error !== '') {
+            delete_option('schedule_update_error');
+        }
+
+        include SCHOOL_SCHEDULE_PATH . 'templates/updates.php';
+    }
+
+    public function handle_check_updates() {
+        if (!current_user_can('manage_options')) {
+            wp_die('У вас нет прав для выполнения этого действия.');
+        }
+        check_admin_referer('check_updates', 'updates_nonce');
+
+        try {
+            $updater = $this->get_updater();
+            $check = $updater->check();
+            update_option('schedule_update_check', $check);
+            update_option('schedule_update_checked_at', date('c'));
+        } catch (Throwable $e) {
+            update_option('schedule_update_error', $e->getMessage());
+        }
+
+        wp_redirect(add_query_arg(
+            ['page' => 'schedule-updates', 'checked' => '1'],
+            admin_url('admin.php')
+        ));
+        exit;
+    }
+
+    public function handle_run_update() {
+        if (!current_user_can('manage_options')) {
+            wp_die('У вас нет прав для выполнения этого действия.');
+        }
+        check_admin_referer('run_update', 'updates_nonce');
+
+        try {
+            $updater = $this->get_updater();
+            $updater->startWorker('update', [
+                'force' => isset($_POST['force']),
+            ]);
+        } catch (Throwable $e) {
+            update_option('schedule_update_error', $e->getMessage());
+        }
+
+        wp_redirect(add_query_arg(
+            ['page' => 'schedule-updates', 'update-started' => '1'],
+            admin_url('admin.php')
+        ));
+        exit;
+    }
+
+    public function handle_run_rollback() {
+        if (!current_user_can('manage_options')) {
+            wp_die('У вас нет прав для выполнения этого действия.');
+        }
+        check_admin_referer('run_rollback', 'updates_nonce');
+
+        $backup_id = isset($_POST['backup_id']) ? sanitize_text_field($_POST['backup_id']) : '';
+        $restore_db = isset($_POST['restore_db']);
+
+        try {
+            $updater = $this->get_updater();
+            $updater->startWorker('rollback', [
+                'id' => $backup_id,
+                'restore_db' => $restore_db,
+            ]);
+        } catch (Throwable $e) {
+            update_option('schedule_update_error', $e->getMessage());
+        }
+
+        wp_redirect(add_query_arg(
+            ['page' => 'schedule-updates', 'rollback-started' => '1'],
+            admin_url('admin.php')
+        ));
+        exit;
     }
 
     public function render_bot_settings_page() {

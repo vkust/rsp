@@ -2,6 +2,7 @@ logs/
 *.log
 data/schedule.sqlite
 data/uploads/
+.updates/
 config.php
 cookies.txt
 test-*.php

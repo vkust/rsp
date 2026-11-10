@@ -19,8 +19,9 @@
 - приём сообщений бота через webhook;
 - планировщик уведомлений (аналог WP-Cron) с запуском через системный `cron`;
 - админ-панель: загрузка XML, настройки сайта, смена пароля, порт сервера,
-  настройки Telegram, статистика;
+  настройки Telegram, статистика, обновления;
 - смена порта и пароля администратора прямо из админки;
+- обновление и откат версий со снимками кода и БД;
 - HTTPS через reverse proxy (nginx/Caddy/Traefik).
 
 ## Требования
@@ -29,6 +30,7 @@
 - расширения: `pdo`, `pdo_sqlite` или `pdo_mysql`, `curl`, `xml`, `mbstring`,
   `json`;
 - для установки одной командой: `git` + `unzip` либо `wget`/`curl` + `unzip`;
+- для обновлений: `unzip` (или расширение PHP `zip`), желательно `rsync`;
 - для продакшена: nginx/Apache + PHP-FPM либо встроенный сервер PHP;
 - для уведомлений: системный `cron` (необязательно, есть ленивый запуск при
   HTTP-запросах).
@@ -139,6 +141,7 @@ php install.php --hash-password "новый_пароль"
 | Раздел | Адрес |
 |---|---|
 | Настройки сайта | `/admin?page=schedule-site-settings` |
+| Обновления | `/admin?page=schedule-updates` |
 | Telegram-бот | `/admin?page=schedule-telegram-settings` |
 | Статистика бота | `/admin?page=schedule-telegram-stats` |
 
@@ -156,6 +159,38 @@ php install.php --hash-password "новый_пароль"
 
 Если systemd недоступен, после смены порта сервер нужно перезапустить вручную.
 Если используется reverse proxy, не забудьте обновить upstream.
+
+### Обновления и откат версий
+
+На странице **«Обновления»** (`/admin?page=schedule-updates`) можно:
+
+- посмотреть установленную версию и коммит;
+- проверить наличие новой версии на GitHub;
+- обновить приложение;
+- откатиться к любому сохранённому снимку.
+
+Перед каждым обновлением и откатом автоматически создаётся снимок в
+`.updates/backups/`: код приложения, `config.php` и резервная копия БД
+(SQLite или MySQL). Хранятся последние `updates.keep_backups` снимков
+(по умолчанию 10).
+
+То же самое доступно из консоли:
+
+```bash
+php update.php version
+php update.php check
+php update.php update
+php update.php update --force
+php update.php list
+php update.php rollback              # последний снимок, с восстановлением БД
+php update.php rollback <id>         # конкретный снимок
+php update.php rollback <id> --no-restore-db   # только код
+php update.php status
+```
+
+Обновление берётся из последнего GitHub Release, если он опубликован; иначе —
+из ветки `main` по SHA коммита. Версия приложения хранится в файле `VERSION`,
+состояние установки — в `.updates/current.json`.
 
 ## XML-расписание
 
@@ -222,6 +257,9 @@ php cron.php
 | `site_url` | `SCHEDULE_SITE_URL` | пусто | Полный URL; пусто — автоопределение из запроса |
 | `server.bind` | `SCHEDULE_BIND` | `0.0.0.0` | Адрес привязки сервера |
 | `server.port` | `SCHEDULE_PORT` | `8080` | Порт сервера |
+| `updates.repo` | `SCHEDULE_UPDATE_REPO` | `vkust/rsp` | GitHub-репозиторий обновлений |
+| `updates.branch` | `SCHEDULE_UPDATE_BRANCH` | `main` | Ветка для обновлений без релизов |
+| `updates.keep_backups` | — | `10` | Сколько снимков хранить |
 | `db.type` | `SCHEDULE_DB_TYPE` | `sqlite` | `sqlite` или `mysql` |
 | `db.sqlite.path` | — | `data/schedule.sqlite` | Путь к SQLite-базе |
 | `db.mysql.*` | `SCHEDULE_DB_HOST/PORT/NAME/USER/PASS` | `localhost:3306`, `schedule` | Параметры MySQL |
@@ -264,11 +302,14 @@ php install.php --uninstall            # удалить таблицы прил�
 ```text
 ├── public/index.php           — точка входа (фронт-контроллер)
 ├── bootstrap.php              — загрузка ядра (аналог wp-load.php)
+├── VERSION                    — текущая версия приложения
 ├── config.php                 — создаётся установщиком (не в git)
 ├── config.sample.php          — шаблон конфигурации
 ├── setup.sh                   — установщик одной командой + запуск сервера
 ├── setup.php                  — мастер настройки (config, БД, пароль)
 ├── install.php                — низкоуровневые CLI-команды
+├── update.php                 — CLI обновления/отката
+├── update-worker.php          — фоновая задача для админки
 ├── cron.php                   — запуск задач планировщика
 ├── cron-task.sh               — обёртка cron с логированием
 ├── school-schedule.php        — основной модуль приложения
@@ -278,6 +319,7 @@ php install.php --uninstall            # удалить таблицы прил�
 │   │   ├── config.php         — App_Config
 │   │   ├── database.php       — PDO-обёртка с API $wpdb
 │   │   ├── router.php         — маршрутизация и админ-оболочка
+│   │   ├── updater.php        — снимки, обновление, откат
 │   │   └── schema.php         — схема БД и миграции
 │   ├── compat/wp-shim.php     — совместимость с WP-функциями
 │   ├── parser.php             — парсер XML-расписания
@@ -288,7 +330,8 @@ php install.php --uninstall            # удалить таблицы прил�
 ├── templates/                 — шаблоны страниц и админки
 ├── assets/                    — CSS/JS (раздаются по /assets/*)
 ├── data/                      — SQLite и uploads/ (создаётся автоматически)
-└── logs/                      — app.log, cron.log, telegram-bot.log;
+├── .updates/                  — снимки, статус и current.json (создаётся автоматически)
+└── logs/                      — app.log, cron.log, telegram-bot.log, updater.log;
                                  server.log — при запуске через nohup
 ```
 
@@ -344,15 +387,43 @@ server {
 php -S 0.0.0.0:8080 -t public public/index.php
 ```
 
-## Обновление
+## Обновление и откат
+
+### Из админки
+
+Откройте **«Обновления»** (`/admin?page=schedule-updates`), нажмите
+«Проверить обновления», затем «Обновить». Задача выполняется в фоне, страница
+показывает журнал. Перед обновлением автоматически создаётся снимок.
+
+Для отката выберите нужный снимок в таблице и нажмите «Откатить». По умолчанию
+восстанавливаются и код, и база данных; галочку «БД» можно снять.
+
+### Из консоли
+
+```bash
+cd /path/to/rsp
+
+php update.php check
+php update.php update
+php update.php list
+php update.php rollback              # последний снимок, с БД
+php update.php rollback <id>         # конкретный снимок
+php update.php rollback <id> --no-restore-db
+php update.php status
+```
+
+Снимки лежат в `.updates/backups/`, журнал — в `logs/updater.log`.
+`config.php`, `data/` и `logs/` при обновлении не перезаписываются.
+
+### Вручную через git
+
+Если приложение развёрнуто из git-клона:
 
 ```bash
 cd rsp
 git pull
 sudo systemctl restart rsp-schedule   # если установлено как systemd-сервис
 ```
-
-`config.php`, `data/` и `logs/` при обновлении не перезаписываются.
 
 ## Резервное копирование
 
