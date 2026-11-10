@@ -332,6 +332,10 @@ if ($serverPort < 1 || $serverPort > 65535) {
     $serverPort = 8080;
 }
 $serverBind = (string) $getEx('server.bind', getenv('SCHEDULE_BIND') ?: '0.0.0.0');
+$updateProxy = (string) $getEx(
+    'updates.proxy',
+    getenv('SCHEDULE_UPDATE_PROXY') ?: (getenv('HTTPS_PROXY') ?: (getenv('https_proxy') ?: ''))
+);
 
 $configCode = "<?php\n"
     . "/**\n"
@@ -348,6 +352,7 @@ $configCode = "<?php\n"
     . "        'repo' => 'vkust/rsp',\n"
     . "        'branch' => 'main',\n"
     . "        'keep_backups' => 10,\n"
+    . "        'proxy' => '" . $q($updateProxy) . "',\n"
     . "    ],\n\n"
     . "    'db' => [\n"
     . "        'type'   => '" . $q($dbType) . "',\n"

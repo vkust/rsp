@@ -21,6 +21,8 @@ return [
         'repo' => getenv('SCHEDULE_UPDATE_REPO') ?: 'vkust/rsp',
         'branch' => getenv('SCHEDULE_UPDATE_BRANCH') ?: 'main',
         'keep_backups' => 10,
+        // Прокси для исходящих запросов к GitHub, например http://proxy:3128
+        'proxy' => getenv('SCHEDULE_UPDATE_PROXY') ?: '',
     ],
 
     // База данных. Поддерживаются sqlite и mysql.

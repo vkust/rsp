@@ -46,6 +46,9 @@ class App_Updater
     /** @var int */
     private $keepBackups = 10;
 
+    /** @var string */
+    private $proxy = '';
+
     /** @var resource|null */
     private $lockHandle = null;
 
@@ -75,6 +78,7 @@ class App_Updater
             $this->repo = $config['repo'] ?? $this->repo;
             $this->branch = $config['branch'] ?? $this->branch;
             $this->keepBackups = max(1, (int) ($config['keep_backups'] ?? $this->keepBackups));
+            $this->proxy = (string) ($config['proxy'] ?? '');
         }
 
         $this->stateDir = $this->root . '/.updates';
@@ -916,6 +920,28 @@ class App_Updater
         }
     }
 
+    private function applyProxy($ch)
+    {
+        $proxy = $this->proxyUrl();
+        if ($proxy !== '') {
+            curl_setopt($ch, CURLOPT_PROXY, $proxy);
+        }
+    }
+
+    private function proxyUrl()
+    {
+        if ($this->proxy !== '') {
+            return $this->proxy;
+        }
+        foreach (['HTTPS_PROXY', 'https_proxy', 'HTTP_PROXY', 'http_proxy'] as $key) {
+            $value = getenv($key);
+            if ($value !== false && $value !== '') {
+                return $value;
+            }
+        }
+        return '';
+    }
+
     private function httpGet($url)
     {
         if (function_exists('curl_init')) {
@@ -930,6 +956,7 @@ class App_Updater
                 CURLOPT_SSL_VERIFYPEER => true,
                 CURLOPT_SSL_VERIFYHOST => 2,
             ]);
+            $this->applyProxy($ch);
             $body = curl_exec($ch);
             $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
             $error = curl_error($ch);
@@ -943,13 +970,17 @@ class App_Updater
             return (string) $body;
         }
 
-        $context = stream_context_create([
-            'http' => [
-                'timeout' => 30,
-                'user_agent' => 'rsp-updater/1.0',
-                'follow_location' => 1,
-            ],
-        ]);
+        $http = [
+            'timeout' => 30,
+            'user_agent' => 'rsp-updater/1.0',
+            'follow_location' => 1,
+        ];
+        $proxy = $this->proxyUrl();
+        if ($proxy !== '') {
+            $http['proxy'] = $proxy;
+            $http['request_fulluri'] = true;
+        }
+        $context = stream_context_create(['http' => $http]);
         $body = @file_get_contents($url, false, $context);
         if ($body === false) {
             throw new RuntimeException('Не удалось загрузить ' . $url);
@@ -982,6 +1013,7 @@ class App_Updater
             CURLOPT_SSL_VERIFYPEER => true,
             CURLOPT_SSL_VERIFYHOST => 2,
         ]);
+        $this->applyProxy($ch);
         $ok = curl_exec($ch);
         $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $error = curl_error($ch);
@@ -1080,6 +1112,7 @@ class App_Updater
         if ($code !== 0) {
             throw new RuntimeException('Не удалось запустить сервис: ' . implode(' ', $output));
         }
+        $this->waitForHttp();
         return true;
     }
 
@@ -1092,6 +1125,7 @@ class App_Updater
         if ($code !== 0) {
             throw new RuntimeException('Не удалось перезапустить сервис: ' . implode(' ', $output));
         }
+        $this->waitForHttp();
         return true;
     }
 
@@ -1108,6 +1142,27 @@ class App_Updater
             'nohup sh -c "sleep 2; systemctl restart rsp-schedule" >/dev/null 2>&1 &'
         );
         return true;
+    }
+
+    /**
+     * Небольшая пауза после запуска сервиса, чтобы встроенный PHP-сервер
+     * успел открыть порт.
+     */
+    private function waitForHttp($timeoutSeconds = 6)
+    {
+        $port = (int) App_Config::get('server.port', 8080);
+        $deadline = microtime(true) + max(1, (int) $timeoutSeconds);
+        do {
+            $fp = @fsockopen('127.0.0.1', $port, $errno, $errstr, 0.3);
+            if ($fp) {
+                fclose($fp);
+                return true;
+            }
+            usleep(200000);
+        } while (microtime(true) < $deadline);
+
+        $this->appendLog('Сервис запущен, но порт ' . $port . ' пока не отвечает.');
+        return false;
     }
 
     private function phpCli()

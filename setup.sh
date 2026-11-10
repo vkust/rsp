@@ -282,6 +282,16 @@ start_server() {
         warn "Порт ${port} уже занят."
     fi
 
+    # Пробрасываем proxy-переменные в systemd-сервис (если они заданы в окружении).
+    proxy_env=""
+    for proxy_var in HTTP_PROXY HTTPS_PROXY NO_PROXY http_proxy https_proxy no_proxy; do
+        eval "proxy_val=\${$proxy_var}"
+        if [ -n "$proxy_val" ]; then
+            proxy_env="${proxy_env}Environment=${proxy_var}=${proxy_val}
+"
+        fi
+    done
+
     # Предпочитаем systemd
     if command -v systemctl >/dev/null 2>&1 && [ -d /etc/systemd/system ]; then
         service_file="/etc/systemd/system/rsp-schedule.service"
@@ -299,7 +309,7 @@ ExecStart=${PHP_BIN} -S ${bind}:${port} -t public public/index.php
 Restart=always
 RestartSec=5
 Environment=SCHEDULE_SITE_URL=http://localhost:${port}
-
+${proxy_env}
 [Install]
 WantedBy=multi-user.target
 EOF

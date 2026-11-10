@@ -260,6 +260,7 @@ php cron.php
 | `updates.repo` | `SCHEDULE_UPDATE_REPO` | `vkust/rsp` | GitHub-репозиторий обновлений |
 | `updates.branch` | `SCHEDULE_UPDATE_BRANCH` | `main` | Ветка для обновлений без релизов |
 | `updates.keep_backups` | — | `10` | Сколько снимков хранить |
+| `updates.proxy` | `SCHEDULE_UPDATE_PROXY` | пусто | Прокси для запросов к GitHub |
 | `db.type` | `SCHEDULE_DB_TYPE` | `sqlite` | `sqlite` или `mysql` |
 | `db.sqlite.path` | — | `data/schedule.sqlite` | Путь к SQLite-базе |
 | `db.mysql.*` | `SCHEDULE_DB_HOST/PORT/NAME/USER/PASS` | `localhost:3306`, `schedule` | Параметры MySQL |
