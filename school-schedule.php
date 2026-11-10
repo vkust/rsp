@@ -995,7 +995,12 @@ class SchoolSchedule {
             . " */\n\n"
             . "return " . $export . ";\n";
 
-        return @file_put_contents($config_path, $code) !== false;
+        $written = @file_put_contents($config_path, $code) !== false;
+        if ($written && function_exists('opcache_invalidate')) {
+            @opcache_invalidate($config_path, true);
+        }
+
+        return $written;
     }
 
     public function activate_schedule_file() {
