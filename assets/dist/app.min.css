@@ -2328,6 +2328,40 @@ body {
     }
 }
 
+@media (max-width: 768px) {
+    .schedule-container {
+        overflow-x: hidden;
+    }
+
+    .filters-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .view-controls {
+        width: 100%;
+        flex-wrap: wrap !important;
+        justify-content: center;
+    }
+
+    .view-controls .btn {
+        flex: 0 0 auto !important;
+        min-width: 44px !important;
+        max-width: none !important;
+        padding: 0.6rem;
+    }
+
+    .time-status-wrapper {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    .time-status-large {
+        max-width: 100%;
+        white-space: normal !important;
+        text-align: center;
+    }
+}
+
 
 /* ==== assets/css/schedule-template.css ==== */
 /* Стили для чистого шаблона расписания */
