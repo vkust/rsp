@@ -35,6 +35,12 @@ class App_Router
             return;
         }
 
+        // Стабильная публичная ссылка на текущий активный XML-файл.
+        if ($uri === '/schedule.xml' || $uri === '/api/schedule.xml' || $uri === '/raspisanie.xml') {
+            self::serve_active_schedule_xml();
+            return;
+        }
+
         // Webhook Telegram (аналог REST-маршрута /wp-json/school-schedule/v1/telegram-webhook)
         if ($uri === '/wp-json/school-schedule/v1/telegram-webhook' || $uri === '/telegram-webhook') {
             self::handle_telegram_webhook();
@@ -475,6 +481,108 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;b
             exit;
         }
         http_response_code(404);
+    }
+
+    /**
+     * Определяет активный XML-файл расписания.
+     * Возвращает только файлы внутри каталога uploads/schedules.
+     */
+    private static function active_schedule_file()
+    {
+        $uploads = wp_upload_dir();
+        $dir = rtrim($uploads['basedir'], '/\\') . '/schedules';
+        $base = realpath($dir);
+
+        $active = get_option('schedule_active_file');
+        if ($active && is_file($active)) {
+            $real = realpath($active);
+            if ($real && $base && strpos($real, $base . DIRECTORY_SEPARATOR) === 0) {
+                return $real;
+            }
+        }
+
+        // Fallback: самый свежий XML в каталоге расписаний.
+        $files = glob($dir . '/*.xml') ?: [];
+        if (!$files) {
+            return null;
+        }
+        usort($files, function ($a, $b) {
+            $ta = filemtime($a) ?: 0;
+            $tb = filemtime($b) ?: 0;
+            if ($ta === $tb) {
+                return strcmp($b, $a);
+            }
+            return $tb <=> $ta;
+        });
+        return $files[0];
+    }
+
+    /**
+     * Публичная ссылка /schedule.xml: всегда отдаёт XML активного расписания.
+     */
+    private static function serve_active_schedule_xml()
+    {
+        header('Access-Control-Allow-Origin: *');
+        header('Access-Control-Allow-Methods: GET, HEAD, OPTIONS');
+        header('Access-Control-Allow-Headers: If-None-Match, If-Modified-Since');
+        header('X-Content-Type-Options: nosniff');
+
+        $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+        if ($method === 'OPTIONS') {
+            while (ob_get_level() > 0) {
+                ob_end_clean();
+            }
+            http_response_code(204);
+            exit;
+        }
+
+        $file = self::active_schedule_file();
+        if (!$file) {
+            http_response_code(404);
+            header('Content-Type: text/plain; charset=UTF-8');
+            echo 'Активный XML-файл расписания не найден.';
+            exit;
+        }
+
+        $mtime = filemtime($file) ?: time();
+        $etag = '"' . md5_file($file) . '"';
+
+        header('Content-Type: application/xml');
+        header('Content-Disposition: inline; filename="' . basename($file) . '"');
+        header('ETag: ' . $etag);
+        header('Last-Modified: ' . gmdate('D, d M Y H:i:s', $mtime) . ' GMT');
+        header('Cache-Control: no-cache, must-revalidate');
+
+        $ifNoneMatch = trim((string) ($_SERVER['HTTP_IF_NONE_MATCH'] ?? ''));
+        if ($ifNoneMatch !== '' && $ifNoneMatch === $etag) {
+            while (ob_get_level() > 0) {
+                ob_end_clean();
+            }
+            http_response_code(304);
+            exit;
+        }
+
+        $ifModifiedSince = trim((string) ($_SERVER['HTTP_IF_MODIFIED_SINCE'] ?? ''));
+        if ($ifModifiedSince !== '') {
+            $since = strtotime($ifModifiedSince);
+            if ($since !== false && $mtime <= $since) {
+                while (ob_get_level() > 0) {
+                    ob_end_clean();
+                }
+                http_response_code(304);
+                exit;
+            }
+        }
+
+        if ($method === 'HEAD') {
+            while (ob_get_level() > 0) {
+                ob_end_clean();
+            }
+            exit;
+        }
+
+        readfile($file);
+        exit;
     }
 
     private static function serve_upload($rel)

@@ -210,6 +210,39 @@ php update.php status
 `teachers`, `classrooms`, `classes`, `lessons`, `cards`; группы классов — при
 наличии `groups`).
 
+## XML для внешних приложений
+
+Активный XML-файл расписания доступен по постоянной публичной ссылке:
+
+```text
+https://ваш-домен/schedule.xml
+```
+
+Алиас:
+
+```text
+https://ваш-домен/api/schedule.xml
+```
+
+Ссылка всегда отдаёт текущий активный файл — при загрузке новой версии
+расписания адрес менять не нужно.
+
+Особенности:
+
+- `Content-Type: application/xml`;
+- CORS разрешён (`Access-Control-Allow-Origin: *`);
+- поддержка `HEAD` и `OPTIONS`;
+- `ETag` и `Last-Modified` — клиент может получать `304 Not Modified`;
+- `Cache-Control: no-cache, must-revalidate` — данные всегда проверяются на
+  актуальность;
+- сжатие gzip при поддержке клиентом.
+
+Пример получения:
+
+```bash
+curl -O https://ваш-домен/schedule.xml
+```
+
 ## Telegram-бот
 
 1. Создайте бота у [@BotFather](https://t.me/BotFather) и получите токен.
@@ -348,6 +381,7 @@ php install.php --uninstall            # удалить таблицы прил�
 |---|---|---|
 | `/`, `/schedule`, `/raspisanie` | GET | Обычное расписание |
 | `/panels` | GET | Расписание для панелей |
+| `/schedule.xml`, `/api/schedule.xml` | GET/HEAD | XML активного файла расписания |
 | `/telegram` | GET | Страница подписки Telegram |
 | `/admin`, `/admin/...` | GET | Админка (нужна сессия) |
 | `/admin/admin-post.php` | POST | Обработчики форм админки |

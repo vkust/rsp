@@ -638,7 +638,18 @@
                         <a class="button" href="<?php echo esc_url(App_Config::site_url('panels')); ?>" target="_blank" rel="noopener">Открыть</a>
                     </td>
                 </tr>
+                <tr>
+                    <td><strong>Текущее расписание (XML)</strong></td>
+                    <td><code><?php echo esc_html(App_Config::site_url('schedule.xml')); ?></code></td>
+                    <td>
+                        <a class="button" href="<?php echo esc_url(App_Config::site_url('schedule.xml')); ?>" target="_blank" rel="noopener">Открыть</a>
+                    </td>
+                </tr>
             </tbody>
         </table>
+        <p class="description">
+            Ссылка <code>/schedule.xml</code> всегда отдаёт XML активного файла расписания.
+            Её можно использовать во внешних приложениях — ссылка не меняется при загрузке новой версии.
+        </p>
     </div>
 </div> 
