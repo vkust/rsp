@@ -2323,6 +2323,19 @@ body {
     }
 }
 
+@media (max-width: 1024px) {
+    .view-controls .btn span {
+        display: none !important;
+    }
+
+    .view-controls .btn {
+        flex: 0 0 auto !important;
+        min-width: 44px !important;
+        max-width: none !important;
+        padding: 0.6rem;
+    }
+}
+
 @media (max-width: 768px) {
     .schedule-container {
         overflow-x: hidden;
@@ -2355,7 +2368,7 @@ body {
 
     .time-status-wrapper {
         width: 100% !important;
-        max-width: 100% !important;
+        max-width: calc(100vw - 2rem) !important;
     }
 
     .time-status-large {
