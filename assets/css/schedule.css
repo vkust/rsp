@@ -2324,15 +2324,32 @@ body {
 }
 
 @media (max-width: 1024px) {
+    .view-controls {
+        display: flex !important;
+    }
+
     .view-controls .btn span {
         display: none !important;
     }
 
     .view-controls .btn {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
         flex: 0 0 auto !important;
+        width: auto !important;
         min-width: 44px !important;
         max-width: none !important;
         padding: 0.6rem;
+    }
+
+    .view-controls #toggleView {
+        width: auto !important;
+    }
+
+    .view-controls .btn .icon,
+    .view-controls .btn svg {
+        margin: 0 !important;
     }
 
     .schedule-qr {
