@@ -2375,8 +2375,8 @@ body {
     }
 
     .time-status-wrapper {
-        width: calc(100% - 1rem) !important;
-        max-width: calc(100vw - 3rem) !important;
+        width: calc(100vw - 4rem) !important;
+        max-width: calc(100vw - 4rem) !important;
         margin-left: auto;
         margin-right: auto;
     }
