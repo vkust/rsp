@@ -36,7 +36,7 @@ if (!function_exists('app_asset_url')) {
         return $base . '/' . ltrim((string) $rel, '/');
     }
 }
-define('SCHOOL_SCHEDULE_VERSION', '2.7.11');
+define('SCHOOL_SCHEDULE_VERSION', '2.8.0');
 
 class SchoolSchedule {
     private $default_categories = array(
@@ -119,6 +119,7 @@ class SchoolSchedule {
         add_action('admin_post_delete_schedule', [$this, 'delete_schedule_file']);
         add_action('admin_post_save_schedule_settings', [$this, 'handle_settings_save']);
         add_action('admin_post_save_site_settings', [$this, 'handle_save_site_settings']);
+        add_action('admin_post_save_favicon', [$this, 'handle_save_favicon']);
         add_action('admin_post_save_server_settings', [$this, 'handle_save_server_settings']);
         add_action('admin_post_change_admin_password', [$this, 'handle_change_admin_password']);
         add_action('admin_post_check_updates', [$this, 'handle_check_updates']);
@@ -749,6 +750,108 @@ class SchoolSchedule {
             admin_url('admin.php')
         ));
         exit;
+    }
+
+    /**
+     * Загрузка/удаление фавикона.
+     */
+    public function handle_save_favicon() {
+        if (!current_user_can('manage_options')) {
+            wp_die('У вас нет прав для выполнения этого действия.');
+        }
+
+        check_admin_referer('favicon_settings', 'favicon_nonce');
+
+        $action = isset($_POST['favicon_action']) ? sanitize_key($_POST['favicon_action']) : 'upload';
+        $uploads = wp_upload_dir();
+        $dir = rtrim($uploads['basedir'], '/\\') . '/favicon';
+
+        $redirect = function ($args) {
+            wp_redirect(add_query_arg(
+                array_merge(['page' => 'schedule-site-settings'], $args),
+                admin_url('admin.php')
+            ));
+            exit;
+        };
+
+        $deleteCurrent = function () use ($dir) {
+            $old = get_option('schedule_favicon', null);
+            if (is_string($old) && strpos($old, 'favicon/') === 0) {
+                $path = $dir . '/' . basename($old);
+                if (is_file($path)) {
+                    @unlink($path);
+                }
+            }
+        };
+
+        if ($action === 'delete') {
+            $deleteCurrent();
+            update_option('schedule_favicon', '');
+            $redirect(['settings-updated' => 'favicon-deleted']);
+        }
+
+        if ($action === 'default') {
+            $deleteCurrent();
+            delete_option('schedule_favicon');
+            $redirect(['settings-updated' => 'favicon-default']);
+        }
+
+        if (empty($_FILES['favicon_file']) || $_FILES['favicon_file']['error'] !== UPLOAD_ERR_OK) {
+            $redirect(['settings-error' => 'Не удалось загрузить файл фавикона.']);
+        }
+
+        $file = $_FILES['favicon_file'];
+        if ((int) $file['size'] > 2 * 1024 * 1024) {
+            $redirect(['settings-error' => 'Фавикон не должен превышать 2 МБ.']);
+        }
+
+        $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        $allowed = ['ico', 'png', 'svg', 'jpg', 'jpeg', 'webp', 'gif'];
+        if (!in_array($ext, $allowed, true)) {
+            $redirect(['settings-error' => 'Допустимые форматы: ICO, PNG, SVG, JPG, WEBP, GIF.']);
+        }
+
+        $tmp = $file['tmp_name'];
+        if ($ext === 'svg') {
+            if (@simplexml_load_file($tmp) === false) {
+                $redirect(['settings-error' => 'Файл SVG повреждён или не является XML-изображением.']);
+            }
+        } else {
+            $mime = '';
+            if (function_exists('finfo_open')) {
+                $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                if ($finfo) {
+                    $mime = (string) finfo_file($finfo, $tmp);
+                    finfo_close($finfo);
+                }
+            }
+            $mimeMap = [
+                'ico'  => ['image/x-icon', 'image/vnd.microsoft.icon'],
+                'png'  => ['image/png'],
+                'jpg'  => ['image/jpeg'],
+                'jpeg' => ['image/jpeg'],
+                'webp' => ['image/webp'],
+                'gif'  => ['image/gif'],
+            ];
+            if ($mime !== '' && !in_array($mime, $mimeMap[$ext] ?? [], true)) {
+                $redirect(['settings-error' => 'Содержимое файла не соответствует формату .' . $ext . '.']);
+            }
+        }
+
+        if (!wp_mkdir_p($dir)) {
+            $redirect(['settings-error' => 'Не удалось создать каталог для фавикона.']);
+        }
+
+        $filename = 'favicon-' . date('YmdHis') . '-' . bin2hex(random_bytes(4)) . '.' . $ext;
+        $target = $dir . '/' . $filename;
+        $moved = is_uploaded_file($tmp) ? move_uploaded_file($tmp, $target) : @rename($tmp, $target);
+        if (!$moved) {
+            $redirect(['settings-error' => 'Не удалось сохранить файл фавикона.']);
+        }
+
+        $deleteCurrent();
+        update_option('schedule_favicon', 'favicon/' . $filename);
+        $redirect(['settings-updated' => 'favicon']);
     }
 
     /**
@@ -1495,6 +1598,7 @@ class SchoolSchedule {
 
         $server_port = (int) App_Config::get('server.port', get_option('schedule_server_port', 8080));
         $admin_username = (string) App_Config::get('admin.username', 'admin');
+        $favicon_url = app_favicon_url();
 
         include SCHOOL_SCHEDULE_PATH . 'templates/site-settings.php';
     }

@@ -30,6 +30,12 @@ if ($updated === 'port' || $updated === 'port-manual') {
                     Пароль администратора изменён.
                 <?php elseif ($updated === 'password-db'): ?>
                     Пароль изменён и сохранён в базе. Файл config.php обновить не удалось — проверьте права.
+                <?php elseif ($updated === 'favicon'): ?>
+                    Фавикон загружен.
+                <?php elseif ($updated === 'favicon-deleted'): ?>
+                    Фавикон удалён.
+                <?php elseif ($updated === 'favicon-default'): ?>
+                    Восстановлен стандартный фавикон.
                 <?php else: ?>
                     Настройки сохранены.
                 <?php endif; ?>
@@ -94,6 +100,64 @@ if ($updated === 'port' || $updated === 'port-manual') {
 
         <?php submit_button('Сохранить настройки'); ?>
     </form>
+
+    <h2>Фавикон</h2>
+    <div class="card" style="max-width:100%;">
+        <table class="form-table">
+            <tr>
+                <th scope="row">Текущий фавикон</th>
+                <td>
+                    <?php if (!empty($favicon_url)): ?>
+                        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+                            <img src="<?php echo esc_url($favicon_url); ?>" alt="Фавикон" style="width:64px;height:64px;object-fit:contain;background:#f6f7f7;border:1px solid #dcdcde;border-radius:8px;padding:6px;">
+                            <code><?php echo esc_html($favicon_url); ?></code>
+                        </div>
+                    <?php else: ?>
+                        <p>Фавикон не задан.</p>
+                    <?php endif; ?>
+                </td>
+            </tr>
+        </table>
+
+        <form method="POST" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" enctype="multipart/form-data">
+            <?php wp_nonce_field('favicon_settings', 'favicon_nonce'); ?>
+            <input type="hidden" name="action" value="save_favicon">
+            <input type="hidden" name="favicon_action" value="upload">
+
+            <table class="form-table">
+                <tr>
+                    <th scope="row"><label for="favicon_file">Загрузить фавикон</label></th>
+                    <td>
+                        <input type="file" id="favicon_file" name="favicon_file" accept=".ico,.png,.svg,.jpg,.jpeg,.webp,.gif" required>
+                        <p class="description">
+                            Поддерживаются ICO, PNG, SVG, JPG, WEBP и GIF. Максимальный размер — 2 МБ.<br>
+                            Рекомендуется квадратное изображение, например 64×64 или 128×128.
+                        </p>
+                    </td>
+                </tr>
+            </table>
+
+            <p class="submit">
+                <button type="submit" class="button button-primary">Загрузить фавикон</button>
+            </p>
+        </form>
+
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <form method="POST" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" onsubmit="return confirm('Удалить текущий фавикон?');">
+                <?php wp_nonce_field('favicon_settings', 'favicon_nonce'); ?>
+                <input type="hidden" name="action" value="save_favicon">
+                <input type="hidden" name="favicon_action" value="delete">
+                <button type="submit" class="button">Удалить фавикон</button>
+            </form>
+
+            <form method="POST" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                <?php wp_nonce_field('favicon_settings', 'favicon_nonce'); ?>
+                <input type="hidden" name="action" value="save_favicon">
+                <input type="hidden" name="favicon_action" value="default">
+                <button type="submit" class="button">Вернуть стандартный</button>
+            </form>
+        </div>
+    </div>
 
     <h2>Сервер</h2>
     <form method="POST" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">

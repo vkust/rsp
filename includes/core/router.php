@@ -214,6 +214,7 @@ label { font-size:14px; }
 .form-table td { padding:10px 0; }
 code { background:#f0f0f1; padding:2px 5px; border-radius:3px; }
 </style>
+<?php app_print_favicon(); ?>
 <?php app_print_enqueue_styles(); ?>
 </head>
 <body>
@@ -271,6 +272,7 @@ code { background:#f0f0f1; padding:2px 5px; border-radius:3px; }
 <html lang="ru"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Вход — Расписание</title>
+<?php app_print_favicon(); ?>
 <style>
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f0f0f1;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}
 .login-box{background:#fff;padding:32px;border:1px solid #c3c4c7;border-radius:6px;width:340px}
@@ -596,8 +598,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;b
         if ($file && strpos($file, realpath($base)) === 0 && is_file($file)) {
             $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
             $types = ['xml' => 'application/xml', 'json' => 'application/json',
-                      'png' => 'image/png', 'jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg',
-                      'gif' => 'image/gif', 'webp' => 'image/webp', 'svg' => 'image/svg+xml'];
+                      'ico' => 'image/x-icon', 'png' => 'image/png', 'jpg' => 'image/jpeg',
+                      'jpeg' => 'image/jpeg', 'gif' => 'image/gif', 'webp' => 'image/webp',
+                      'svg' => 'image/svg+xml'];
             if (in_array($ext, ['png', 'jpg', 'jpeg', 'gif', 'webp', 'ico', 'woff2'], true)) {
                 while (ob_get_level() > 0) {
                     ob_end_clean();

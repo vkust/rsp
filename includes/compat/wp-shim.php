@@ -1067,10 +1067,65 @@ function get_bloginfo($show = '')
 }
 }
 
+if (!function_exists('app_favicon_url')) {
+function app_favicon_url()
+{
+    $value = get_option('schedule_favicon', null);
+
+    // null — настройка ещё не задавалась, используем стандартный фавикон.
+    if ($value === null) {
+        $default = APP_ROOT . '/assets/img/favicon.png';
+        return is_file($default) ? app_asset_url('assets/img/favicon.png') : '';
+    }
+
+    // Пустая строка — фавикон явно удалён.
+    if ($value === '') {
+        return '';
+    }
+
+    $value = (string) $value;
+    if (preg_match('#^https?://#i', $value)) {
+        return $value;
+    }
+
+    $uploads = wp_upload_dir();
+    return rtrim($uploads['baseurl'], '/') . '/' . ltrim($value, '/');
+}
+}
+
+if (!function_exists('app_print_favicon')) {
+function app_print_favicon()
+{
+    $url = app_favicon_url();
+    if ($url === '') {
+        return;
+    }
+
+    $path = parse_url($url, PHP_URL_PATH) ?: '';
+    $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+    $types = [
+        'ico'  => 'image/x-icon',
+        'png'  => 'image/png',
+        'svg'  => 'image/svg+xml',
+        'jpg'  => 'image/jpeg',
+        'jpeg' => 'image/jpeg',
+        'webp' => 'image/webp',
+        'gif'  => 'image/gif',
+    ];
+    $type = $types[$ext] ?? '';
+
+    echo '<link rel="icon" href="' . esc_url($url) . '"' . ($type ? ' type="' . $type . '"' : '') . '>' . "\n";
+    if ($ext !== 'svg') {
+        echo '<link rel="shortcut icon" href="' . esc_url($url) . '"' . ($type ? ' type="' . $type . '"' : '') . '>' . "\n";
+    }
+}
+}
+
 if (!function_exists('wp_head')) {
 function wp_head()
 {
     do_action('wp_head');
+    app_print_favicon();
     app_print_enqueue_styles();
     app_print_enqueue_scripts(false);
 }
