@@ -2242,7 +2242,7 @@ body {
 /* Время и текущий период — строго по центру шапки */
 .controls-header {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 600px) minmax(0, 1fr);
     align-items: center;
     gap: 1rem;
 }
@@ -2261,7 +2261,7 @@ body {
     align-items: stretch;
     justify-content: center;
     gap: 0.5rem;
-    width: auto;
+    width: 100%;
     max-width: 600px;
     min-width: 0;
     margin: 0;
@@ -2362,6 +2362,12 @@ body {
         max-width: 100%;
         white-space: normal !important;
         text-align: center;
+    }
+
+    .time-status-large .status-text {
+        white-space: normal !important;
+        overflow: visible !important;
+        text-overflow: clip !important;
     }
 }
 
