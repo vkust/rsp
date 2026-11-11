@@ -233,8 +233,10 @@ https://ваш-домен/api/schedule.xml
 - CORS разрешён (`Access-Control-Allow-Origin: *`);
 - поддержка `HEAD` и `OPTIONS`;
 - `ETag` и `Last-Modified` — клиент может получать `304 Not Modified`;
-- `Cache-Control: no-cache, must-revalidate` — данные всегда проверяются на
-  актуальность;
+- `Cache-Control: no-store, no-cache, must-revalidate` — данные не кешируются
+  и всегда запрашиваются заново;
+- заголовки `X-Schedule-File` и `X-Schedule-Md5` помогают проверить, какой
+  именно файл отдан;
 - сжатие gzip при поддержке клиентом.
 
 Пример получения:
