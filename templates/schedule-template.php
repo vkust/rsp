@@ -191,6 +191,13 @@ if ($show_class_groups && !empty($schedule['classes'])) {
 
                 <!-- Кнопки управления справа -->
                 <div class="view-controls">
+                    <button id="todayFilter" class="btn btn-secondary animated-btn" title="Показать расписание на сегодня">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <rect x="3" y="5" width="18" height="16" rx="2"/>
+                            <path d="M16 3v4M8 3v4M3 10h18" stroke-linecap="round"/>
+                        </svg>
+                        <span>Сегодня</span>
+                    </button>
                     <button id="resetFilters" class="btn btn-secondary animated-btn">
                         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                             <path class="filter-line-1" d="M3 6h18" stroke-linecap="round"/>
