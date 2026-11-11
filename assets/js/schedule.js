@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     let isVertical = localStorage.getItem('scheduleView') !== 'horizontal';
+    let keepDayFilter = false;
 
     // Добавляем функцию updateScrollVisibility в глобальную область видимости
     function updateScrollVisibility() {
@@ -297,7 +298,11 @@ document.addEventListener('DOMContentLoaded', function() {
             jQuery(dayFilter).selectmenu('refresh');
         }
 
+        // Не даём updateFilterOptions сбросить выбранный день,
+        // даже если на сегодня нет уроков.
+        keepDayFilter = true;
         filterAll();
+        keepDayFilter = false;
     }
 
     // Функция обновления опций фильтров
@@ -357,8 +362,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
 
-            // Если текущее значение больше недоступно, сбрасываем фильтр
-            if (currentValue && !availableValues[filterName].has(currentValue)) {
+            // Если текущее значение больше недоступно, сбрасываем фильтр.
+            // Исключение: день, выбранный кнопкой «Сегодня».
+            if (currentValue && !availableValues[filterName].has(currentValue)
+                && !(filterName === 'day' && keepDayFilter)) {
                 select.value = '';
             }
 
