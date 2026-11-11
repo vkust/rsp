@@ -2334,6 +2334,10 @@ body {
         max-width: none !important;
         padding: 0.6rem;
     }
+
+    .schedule-qr {
+        display: none !important;
+    }
 }
 
 @media (max-width: 768px) {
@@ -2391,6 +2395,18 @@ body {
         white-space: normal !important;
         overflow: visible !important;
         text-overflow: clip !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .time-status-wrapper {
+        width: calc(100vw - 6rem) !important;
+        max-width: calc(100vw - 6rem) !important;
+    }
+
+    .time-status-large {
+        font-size: 0.8rem;
+        padding: 0.3rem 0.5rem;
     }
 }
 
