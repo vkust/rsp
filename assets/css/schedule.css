@@ -2341,6 +2341,14 @@ body {
         overflow-x: hidden;
     }
 
+    .schedule-controls {
+        width: calc(100vw - 2rem) !important;
+        max-width: calc(100vw - 2rem) !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+        box-sizing: border-box;
+    }
+
     .filters-grid {
         grid-template-columns: 1fr !important;
     }
