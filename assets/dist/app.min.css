@@ -2248,6 +2248,86 @@ body {
     }
 }
 
+/* Время и текущий период — строго по центру шапки */
+.controls-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 1rem;
+}
+
+.header-content {
+    grid-column: 1;
+    justify-self: start;
+    min-width: 0;
+}
+
+.time-status-wrapper {
+    grid-column: 2;
+    justify-self: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: auto;
+    max-width: 600px;
+    min-width: 0;
+    margin: 0;
+    flex: none;
+}
+
+.time-container {
+    width: auto;
+    min-width: 0;
+    margin: 0;
+    flex: none;
+    justify-content: center;
+}
+
+.period-container {
+    display: flex;
+    justify-content: center;
+    width: auto;
+    min-width: 0;
+    flex: none;
+    background: transparent;
+}
+
+.time-status-large {
+    width: auto;
+}
+
+.view-controls {
+    grid-column: 3;
+    justify-self: end;
+}
+
+@media (max-width: 1200px) {
+    .controls-header {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .header-content,
+    .time-status-wrapper,
+    .view-controls {
+        grid-column: 1;
+    }
+
+    .header-content {
+        justify-self: stretch;
+    }
+
+    .time-status-wrapper {
+        justify-self: center;
+        width: 100%;
+    }
+
+    .view-controls {
+        justify-self: center;
+    }
+}
+
 
 /* ==== assets/css/schedule-template.css ==== */
 /* Стили для чистого шаблона расписания */
