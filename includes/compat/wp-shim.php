@@ -1075,7 +1075,9 @@ function app_favicon_url()
     // null — настройка ещё не задавалась, используем стандартный фавикон.
     if ($value === null) {
         $default = APP_ROOT . '/assets/img/favicon.png';
-        return is_file($default) ? app_asset_url('assets/img/favicon.png') : '';
+        return is_file($default)
+            ? app_asset_url('assets/img/favicon.png') . '?ver=' . filemtime($default)
+            : '';
     }
 
     // Пустая строка — фавикон явно удалён.
