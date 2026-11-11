@@ -2258,7 +2258,7 @@ body {
     justify-self: center;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: stretch;
     justify-content: center;
     gap: 0.5rem;
     width: auto;
@@ -2269,7 +2269,8 @@ body {
 }
 
 .time-container {
-    width: auto;
+    order: 0 !important;
+    width: 100%;
     min-width: 0;
     margin: 0;
     flex: none;
@@ -2277,16 +2278,19 @@ body {
 }
 
 .period-container {
-    display: flex;
-    justify-content: center;
-    width: auto;
+    order: 1 !important;
+    display: block;
+    width: 100%;
     min-width: 0;
     flex: none;
     background: transparent;
 }
 
 .time-status-large {
-    width: auto;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .view-controls {
@@ -2328,6 +2332,10 @@ body {
         grid-template-columns: 1fr !important;
     }
 
+    .schedule-qr {
+        display: none !important;
+    }
+
     .view-controls {
         width: 100%;
         flex-wrap: wrap !important;
@@ -2339,6 +2347,10 @@ body {
         min-width: 44px !important;
         max-width: none !important;
         padding: 0.6rem;
+    }
+
+    .view-controls .btn span {
+        display: none !important;
     }
 
     .time-status-wrapper {
