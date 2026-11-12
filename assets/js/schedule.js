@@ -195,6 +195,120 @@ document.addEventListener('DOMContentLoaded', function() {
         hideEmptyDays();
         initStickyScheduleHeader();
         initFloatingButtons();
+        initStickyFirstColumn();
+    }
+
+    let stickyFirstColumn = null;
+    let stickyFirstColumnLabel = null;
+    let firstColumnTicking = false;
+
+    /**
+     * Оставляет текст первого столбца видимым при вертикальной прокрутке.
+     * Горизонтально текст не закрепляется: при прокрутке вправо он уходит
+     * вместе с колонками.
+     */
+    function initStickyFirstColumn() {
+        const table = document.querySelector('.schedule-table');
+        const body = document.querySelector('.schedule-table-body');
+        if (!table || !body) {
+            return;
+        }
+
+        const container = document.createElement('div');
+        container.className = 'schedule-first-column-sticky';
+        container.setAttribute('aria-hidden', 'true');
+
+        const label = document.createElement('div');
+        label.className = 'schedule-first-column-sticky-label';
+        container.appendChild(label);
+        document.body.appendChild(container);
+
+        stickyFirstColumn = container;
+        stickyFirstColumnLabel = label;
+
+        window.addEventListener('scroll', requestStickyFirstColumnUpdate, { passive: true });
+        body.addEventListener('scroll', requestStickyFirstColumnUpdate, { passive: true });
+        window.addEventListener('resize', debounce(requestStickyFirstColumnUpdate, 150));
+
+        updateStickyFirstColumn();
+    }
+
+    function requestStickyFirstColumnUpdate() {
+        if (firstColumnTicking) {
+            return;
+        }
+        firstColumnTicking = true;
+        window.setTimeout(function() {
+            firstColumnTicking = false;
+            updateStickyFirstColumn();
+        }, 16);
+    }
+
+    function hideStickyFirstColumn() {
+        if (stickyFirstColumn) {
+            stickyFirstColumn.classList.remove('is-visible');
+        }
+    }
+
+    function updateStickyFirstColumn() {
+        if (!stickyFirstColumn || !stickyFirstColumnLabel) {
+            return;
+        }
+
+        const table = document.querySelector('.schedule-table');
+        const body = document.querySelector('.schedule-table-body');
+        const header = document.querySelector('.schedule-sticky-header');
+
+        if (!table || !body || !header || !header.classList.contains('is-visible')) {
+            hideStickyFirstColumn();
+            return;
+        }
+
+        const headerHeight = header.getBoundingClientRect().height;
+        const bodyRect = body.getBoundingClientRect();
+        const rows = table.querySelectorAll('tbody tr');
+        let activeRow = null;
+
+        for (let i = 0; i < rows.length; i++) {
+            const rect = rows[i].getBoundingClientRect();
+            if (rect.top <= headerHeight && rect.bottom > headerHeight) {
+                activeRow = rows[i];
+                break;
+            }
+        }
+
+        if (!activeRow || !activeRow.cells[0]) {
+            hideStickyFirstColumn();
+            return;
+        }
+
+        const cell = activeRow.cells[0];
+        const cellRect = cell.getBoundingClientRect();
+
+        // Первый столбец полностью ушёл влево — не показываем наложение.
+        if (body.scrollLeft >= cellRect.width || cellRect.width <= 0) {
+            hideStickyFirstColumn();
+            return;
+        }
+
+        const cellHtml = cell.innerHTML;
+        if (stickyFirstColumnLabel.dataset.source !== cellHtml) {
+            stickyFirstColumnLabel.innerHTML = cellHtml;
+            stickyFirstColumnLabel.querySelectorAll('[id]').forEach(function(element) {
+                element.removeAttribute('id');
+            });
+            stickyFirstColumnLabel.dataset.source = cellHtml;
+        }
+
+        stickyFirstColumn.classList.add('is-visible');
+        stickyFirstColumn.style.left = bodyRect.left + 'px';
+        stickyFirstColumn.style.width = bodyRect.width + 'px';
+        stickyFirstColumn.style.top = headerHeight + 'px';
+        stickyFirstColumnLabel.style.left = (-body.scrollLeft) + 'px';
+        stickyFirstColumnLabel.style.width = cellRect.width + 'px';
+
+        const labelHeight = stickyFirstColumnLabel.offsetHeight || 44;
+        stickyFirstColumn.style.height = labelHeight + 'px';
     }
 
     /**
@@ -488,6 +602,7 @@ document.addEventListener('DOMContentLoaded', function() {
         hideEmptyDays(); // Вызываем после фильтрации
         refreshStickyScheduleHeader();
         updateStickyScheduleHeader();
+        requestStickyFirstColumnUpdate();
     }
 
     // Быстрый фильтр «Сегодня»

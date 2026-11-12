@@ -3418,3 +3418,37 @@ body.free-rooms-open {
         transform: translateX(-50%);
     }
 }
+/* Закреплённый текст первого столбца при вертикальной прокрутке */
+.schedule-first-column-sticky {
+    position: fixed;
+    z-index: 890;
+    display: none;
+    overflow: hidden;
+    pointer-events: none;
+    background: transparent;
+}
+
+.schedule-first-column-sticky.is-visible {
+    display: block;
+}
+
+.schedule-first-column-sticky-label {
+    position: absolute;
+    top: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    overflow: hidden;
+    background: var(--gray-50);
+    border-right: 1px solid var(--gray-200);
+    border-bottom: 1px solid var(--gray-200);
+    color: var(--gray-800);
+    font-weight: 600;
+    text-align: center;
+}
+
+.schedule-first-column-sticky-label .day-header,
+.schedule-first-column-sticky-label .period-header {
+    padding: 0.4rem 0.5rem;
+}
