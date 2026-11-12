@@ -686,3 +686,35 @@ input:checked + .slider:before {
     }
 }
   
+/* Свободные кабинеты: исключения */
+.free-rooms-exclude-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0.75rem 0;
+}
+
+.free-rooms-exclude-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 0.3rem 0.9rem;
+    max-height: 320px;
+    padding: 0.6rem 0.75rem;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid #dcdcde;
+    border-radius: 4px;
+}
+
+.free-rooms-exclude-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.15rem 0;
+    color: #3c434a;
+    font-size: 13px;
+}
+
+.free-rooms-exclude-item input {
+    margin: 0;
+}

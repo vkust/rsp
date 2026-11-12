@@ -156,3 +156,16 @@
         });
     });
 })(window.jQuery);
+
+/* Свободные кабинеты: массовый выбор исключений */
+(function ($) {
+    $(function () {
+        $('#freeRoomsSelectAll').on('click', function () {
+            $('input[name="free_rooms_excluded[]"]').prop('checked', true);
+        });
+
+        $('#freeRoomsClearAll').on('click', function () {
+            $('input[name="free_rooms_excluded[]"]').prop('checked', false);
+        });
+    });
+})(window.jQuery);

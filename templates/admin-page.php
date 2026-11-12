@@ -180,6 +180,59 @@
     <?php endif; ?>
 
     <?php
+    $free_rooms_excluded = get_option('schedule_free_rooms_excluded', []);
+    if (!is_array($free_rooms_excluded)) {
+        $free_rooms_excluded = [];
+    }
+    $free_rooms_excluded = array_map('strval', $free_rooms_excluded);
+    ?>
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <button type="button" class="toggle-card" aria-expanded="false">
+                    Свободные кабинеты
+                    <span class="toggle-icon">▼</span>
+                </button>
+            </h2>
+        </div>
+        <div class="card-content" style="display: none;">
+            <form method="POST" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                <?php wp_nonce_field('free_rooms_settings', 'free_rooms_nonce'); ?>
+                <input type="hidden" name="action" value="save_free_rooms_settings">
+
+                <p class="description">
+                    Отметьте кабинеты, которые не нужно учитывать в списке свободных
+                    и в сетке занятости. Неотмеченные кабинеты показываются как обычно.
+                </p>
+
+                <?php if (!empty($schedule['classrooms'])): ?>
+                    <div class="free-rooms-exclude-actions">
+                        <button type="button" class="button" id="freeRoomsSelectAll">Отметить все</button>
+                        <button type="button" class="button" id="freeRoomsClearAll">Снять все</button>
+                    </div>
+                    <div class="free-rooms-exclude-grid">
+                        <?php foreach ($schedule['classrooms'] as $room_id => $room): ?>
+                            <label class="free-rooms-exclude-item">
+                                <input type="checkbox"
+                                       name="free_rooms_excluded[]"
+                                       value="<?php echo esc_attr($room_id); ?>"
+                                       <?php checked(in_array((string) $room_id, $free_rooms_excluded, true)); ?>>
+                                <span><?php echo esc_html($room['name']); ?></span>
+                            </label>
+                        <?php endforeach; ?>
+                    </div>
+                <?php else: ?>
+                    <p>Загрузите расписание, чтобы выбрать кабинеты.</p>
+                <?php endif; ?>
+
+                <div class="submit-wrapper">
+                    <button type="submit" class="button button-primary">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <?php
     $visible_group_ids = get_option('schedule_visible_class_groups', null);
     $group_selection_configured = is_array($visible_group_ids);
     if (!$group_selection_configured) {

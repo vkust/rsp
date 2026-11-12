@@ -71,16 +71,27 @@ if ($show_class_groups && !empty($schedule['classes'])) {
 
 // Данные для модальных окон «Свободные кабинеты» и «Сетка кабинетов».
 $free_rooms_data = null;
+$free_rooms_excluded = get_option('schedule_free_rooms_excluded', []);
+if (!is_array($free_rooms_excluded)) {
+    $free_rooms_excluded = [];
+}
+$free_rooms_excluded = array_flip(array_map('strval', $free_rooms_excluded));
+
 if (!empty($schedule['classrooms']) && !empty($schedule['periods']) && !empty($schedule['days'])) {
     $free_rooms_rooms = [];
     $free_rooms_room_shorts = [];
     foreach ($schedule['classrooms'] as $room_id => $room) {
-        $free_rooms_rooms[(string) $room_id] = (string) $room['name'];
+        $room_id = (string) $room_id;
+        if (isset($free_rooms_excluded[$room_id])) {
+            continue;
+        }
+
+        $free_rooms_rooms[$room_id] = (string) $room['name'];
         $short = trim((string) ($room['short'] ?? ''));
         if ($short === '' || in_array($short, ['*', '-', '—', '?'], true)) {
             $short = (string) $room['name'];
         }
-        $free_rooms_room_shorts[(string) $room_id] = $short;
+        $free_rooms_room_shorts[$room_id] = $short;
     }
 
     $free_rooms_days = [];
@@ -143,6 +154,11 @@ if (!empty($schedule['classrooms']) && !empty($schedule['periods']) && !empty($s
         $room_ids = array_filter(array_map('trim', explode(',', (string) ($lesson['classroomId'] ?? ''))));
 
         foreach ($room_ids as $room_id) {
+            $room_id = (string) $room_id;
+            if (isset($free_rooms_excluded[$room_id])) {
+                continue;
+            }
+
             // Кабинет может отсутствовать в справочнике — показываем его ID.
             if (!isset($free_rooms_rooms[$room_id])) {
                 $free_rooms_rooms[$room_id] = $room_id;
@@ -185,13 +201,15 @@ if (!empty($schedule['classrooms']) && !empty($schedule['periods']) && !empty($s
     }
     unset($free_rooms_day, $free_rooms_period, $free_rooms_cell);
 
-    $free_rooms_data = [
-        'rooms' => $free_rooms_rooms,
-        'roomShorts' => $free_rooms_room_shorts,
-        'days' => $free_rooms_days,
-        'periods' => $free_rooms_periods,
-        'occupied' => $free_rooms_occupied,
-    ];
+    if (!empty($free_rooms_rooms)) {
+        $free_rooms_data = [
+            'rooms' => $free_rooms_rooms,
+            'roomShorts' => $free_rooms_room_shorts,
+            'days' => $free_rooms_days,
+            'periods' => $free_rooms_periods,
+            'occupied' => $free_rooms_occupied,
+        ];
+    }
 }
 ?>
 
