@@ -3306,6 +3306,7 @@ body.free-rooms-open {
         top: 1rem;
         max-height: calc(100vh - 2rem);
         margin: 0;
+        overflow-x: hidden;
         overflow-y: auto;
     }
 
@@ -3374,7 +3375,9 @@ body.free-rooms-open {
 
     .schedule-container:is(.layout-sidebar-right, .layout-sidebar-left) .view-controls .btn {
         width: 100%;
+        min-width: 0;
         justify-content: center;
+        white-space: normal;
     }
 
     .schedule-container:is(.layout-sidebar-right, .layout-sidebar-left) #todayFilter,
