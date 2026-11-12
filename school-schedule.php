@@ -36,7 +36,7 @@ if (!function_exists('app_asset_url')) {
         return $base . '/' . ltrim((string) $rel, '/');
     }
 }
-define('SCHOOL_SCHEDULE_VERSION', '2.9.0');
+define('SCHOOL_SCHEDULE_VERSION', '2.10.0');
 
 class SchoolSchedule {
     private $default_categories = array(
@@ -538,6 +538,244 @@ class SchoolSchedule {
         include SCHOOL_SCHEDULE_PATH . 'templates/schedule-template.php';
 
         return ob_get_clean();
+    }
+
+    /**
+     * Публичная страница «Свободные кабинеты»: сетка кабинетов по урокам.
+     */
+    public function render_free_rooms($atts = []) {
+        require_once SCHOOL_SCHEDULE_PATH . 'includes/parser.php';
+
+        $upload_dir = wp_upload_dir();
+        $schedule_dir = $upload_dir['basedir'] . '/schedules';
+
+        $schedule = [];
+        $error = '';
+        $active_file = get_option('schedule_active_file');
+
+        if (!$active_file || !file_exists($active_file)) {
+            $files = glob($schedule_dir . '/*.xml');
+            if (!empty($files)) {
+                $active_file = end($files);
+            } else {
+                $active_file = null;
+            }
+        }
+
+        if ($active_file && file_exists($active_file)) {
+            try {
+                $parser = new ScheduleParser();
+                $result = $parser->parse($active_file);
+                $schedule = $result['schedule'] ?? [];
+            } catch (Exception $e) {
+                $error = 'Ошибка при загрузке расписания: ' . $e->getMessage();
+            }
+        } else {
+            $error = 'Файл расписания не найден.';
+            $active_file = null;
+        }
+
+        $free_rooms = $this->build_free_rooms_grid($schedule);
+
+        ob_start();
+        include SCHOOL_SCHEDULE_PATH . 'templates/free-rooms-template.php';
+        return ob_get_clean();
+    }
+
+    /**
+     * Готовит данные для сетки свободных кабинетов.
+     *
+     * Занятость считается по lessons_all — то есть по всем урокам,
+     * включая категории, скрытые в обычном расписании.
+     */
+    private function build_free_rooms_grid($schedule) {
+        $rooms = [];
+        foreach (($schedule['classrooms'] ?? []) as $room_id => $room) {
+            $id = (string) $room_id;
+            $name = trim((string) ($room['name'] ?? ''));
+            $rooms[$id] = [
+                'id' => $id,
+                'name' => $name !== '' ? $name : $id,
+            ];
+        }
+
+        $days = [];
+        foreach (($schedule['days'] ?? []) as $day_id => $day) {
+            $id = (string) $day_id;
+            $days[$id] = [
+                'id' => $id,
+                'name' => (string) ($day['name'] ?? ''),
+                'short' => (string) ($day['short'] ?? ''),
+                'order' => (int) ($day['order'] ?? 0),
+                'has_lessons' => false,
+            ];
+        }
+        uasort($days, function ($a, $b) {
+            return $a['order'] <=> $b['order'];
+        });
+
+        $periods = [];
+        foreach (($schedule['periods'] ?? []) as $period_id => $period) {
+            $id = (string) $period_id;
+            $periods[$id] = [
+                'id' => $id,
+                'name' => (string) ($period['name'] ?? ''),
+                'start' => (string) ($period['starttime'] ?? ''),
+                'end' => (string) ($period['endtime'] ?? ''),
+                'order' => (int) ($period['order'] ?? 0),
+            ];
+        }
+        uasort($periods, function ($a, $b) {
+            return $a['order'] <=> $b['order'];
+        });
+
+        $classes = $schedule['classes'] ?? [];
+        $subjects = $schedule['subjects'] ?? [];
+        $lessons = $schedule['lessons_all'] ?? ($schedule['lessons'] ?? []);
+
+        $occupied = [];
+        $used_periods = [];
+
+        foreach ($lessons as $lesson) {
+            $day_id = (string) ($lesson['dayId'] ?? '');
+            $period_id = (string) ($lesson['periodId'] ?? '');
+            if ($day_id === '' || $period_id === '' || !isset($periods[$period_id])) {
+                continue;
+            }
+
+            $used_periods[$period_id] = true;
+            if (isset($days[$day_id])) {
+                $days[$day_id]['has_lessons'] = true;
+            }
+
+            $class_names = [];
+            foreach ((array) ($lesson['classIds'] ?? []) as $class_id) {
+                $class = $classes[(string) $class_id] ?? null;
+                if (!$class) {
+                    continue;
+                }
+                $short = trim((string) ($class['short'] ?? ''));
+                $name = trim((string) ($class['name'] ?? ''));
+                $label = $short !== '' ? $short : $name;
+                if ($label !== '') {
+                    $class_names[$label] = true;
+                }
+            }
+
+            $subject_name = trim((string) ($subjects[(string) ($lesson['subjectId'] ?? '')]['name'] ?? ''));
+            $room_ids = array_filter(array_map('trim', explode(',', (string) ($lesson['classroomId'] ?? ''))));
+
+            foreach ($room_ids as $room_id) {
+                if (!isset($rooms[$room_id])) {
+                    $rooms[$room_id] = [
+                        'id' => $room_id,
+                        'name' => $room_id,
+                    ];
+                }
+
+                if (!isset($occupied[$day_id][$period_id][$room_id])) {
+                    $occupied[$day_id][$period_id][$room_id] = [
+                        'classes' => [],
+                        'subjects' => [],
+                    ];
+                }
+
+                foreach (array_keys($class_names) as $class_name) {
+                    $occupied[$day_id][$period_id][$room_id]['classes'][$class_name] = true;
+                }
+                if ($subject_name !== '') {
+                    $occupied[$day_id][$period_id][$room_id]['subjects'][$subject_name] = true;
+                }
+            }
+        }
+
+        foreach ($occupied as &$day_cells) {
+            foreach ($day_cells as &$period_cells) {
+                foreach ($period_cells as &$cell) {
+                    $cell['classes'] = array_keys($cell['classes']);
+                    $cell['subjects'] = array_keys($cell['subjects']);
+                }
+            }
+        }
+        unset($day_cells, $period_cells, $cell);
+
+        uasort($rooms, function ($a, $b) {
+            return strnatcasecmp($a['name'], $b['name']);
+        });
+
+        // Показываем уроки, которые вообще встречаются в расписании.
+        $display_periods = [];
+        foreach ($periods as $period_id => $period) {
+            if (empty($used_periods) || isset($used_periods[$period_id])) {
+                $display_periods[$period_id] = $period;
+            }
+        }
+        if (empty($display_periods)) {
+            $display_periods = $periods;
+        }
+
+        $today = (int) current_time('N');
+        $default_day = '';
+
+        if (isset($days[(string) $today]) && !empty($days[(string) $today]['has_lessons'])) {
+            $default_day = (string) $today;
+        } else {
+            $with_lessons = array_filter($days, function ($day) {
+                return !empty($day['has_lessons']);
+            });
+            $candidates = !empty($with_lessons) ? $with_lessons : $days;
+            $best = '';
+            $best_distance = PHP_INT_MAX;
+
+            foreach ($candidates as $day_id => $day) {
+                $order = (int) $day['order'];
+                if ($order <= 0) {
+                    continue;
+                }
+                $distance = ($order - $today + 7) % 7;
+                if ($distance < $best_distance) {
+                    $best_distance = $distance;
+                    $best = (string) $day_id;
+                }
+            }
+
+            $default_day = $best !== ''
+                ? $best
+                : (string) array_key_first($days);
+        }
+
+        $room_count = count($rooms);
+        $free_counts = [];
+        $room_free_counts = [];
+
+        foreach ($days as $day_id => $day) {
+            foreach ($display_periods as $period_id => $period) {
+                $busy = isset($occupied[$day_id][$period_id])
+                    ? count($occupied[$day_id][$period_id])
+                    : 0;
+                $free_counts[$day_id][$period_id] = max(0, $room_count - $busy);
+            }
+
+            foreach ($rooms as $room_id => $room) {
+                $free = 0;
+                foreach ($display_periods as $period_id => $period) {
+                    if (empty($occupied[$day_id][$period_id][$room_id])) {
+                        $free++;
+                    }
+                }
+                $room_free_counts[$day_id][$room_id] = $free;
+            }
+        }
+
+        return [
+            'rooms' => array_values($rooms),
+            'days' => array_values($days),
+            'periods' => array_values($display_periods),
+            'occupied' => $occupied,
+            'free_counts' => $free_counts,
+            'room_free_counts' => $room_free_counts,
+            'default_day' => $default_day,
+        ];
     }
 
     public function handle_file_upload() {

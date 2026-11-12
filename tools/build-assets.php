@@ -27,12 +27,14 @@ $jsFiles = [
     'assets/vendor/jquery-3.6.0.min.js',
     'assets/vendor/jquery-ui/jquery-ui.min.js',
     'assets/js/schedule.js',
+    'assets/js/free-rooms.js',
 ];
 
 $cssFiles = [
     'assets/vendor/jquery-ui/jquery-ui.min.css',
     'assets/css/schedule.css',
     'assets/css/schedule-template.css',
+    'assets/css/free-rooms.css',
 ];
 
 $js = '';

@@ -2437,6 +2437,10 @@ body {
 /* Свободные кабинеты                                                  */
 /* ================================================================== */
 
+a.btn {
+    text-decoration: none;
+}
+
 body.free-rooms-open {
     overflow: hidden;
 }
@@ -2594,17 +2598,37 @@ body.free-rooms-open {
     color: var(--gray-500);
 }
 
-.free-rooms-hint {
+.free-rooms-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 0.75rem;
     padding: 0.75rem 1.25rem 1rem;
     margin-top: auto;
     border-top: 1px solid var(--gray-200);
     background: var(--gray-50);
+}
+
+.free-rooms-hint {
     color: var(--gray-500);
     font-size: 0.8rem;
 }
 
 .free-rooms-hint:empty {
     display: none;
+}
+
+.free-rooms-grid-link {
+    color: var(--primary-dark);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.free-rooms-grid-link:hover {
+    text-decoration: underline;
 }
 
 @media (max-width: 640px) {
@@ -2629,7 +2653,7 @@ body.free-rooms-open {
 
     .free-rooms-summary,
     .free-rooms-list,
-    .free-rooms-hint {
+    .free-rooms-footer {
         padding-left: 1rem;
         padding-right: 1rem;
     }
