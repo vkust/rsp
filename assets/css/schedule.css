@@ -2441,14 +2441,6 @@ a.btn {
     text-decoration: none;
 }
 
-.btn-icon-only {
-    justify-content: center;
-}
-
-.btn-icon-only svg {
-    margin-right: 0;
-}
-
 body.free-rooms-open {
     overflow: hidden;
 }
@@ -2627,16 +2619,17 @@ body.free-rooms-open {
     display: none;
 }
 
-.free-rooms-grid-link {
-    color: var(--primary-dark);
-    font-size: 0.8rem;
+.free-rooms-grid-btn {
+    margin-left: auto;
+    padding: 0.6rem 1rem;
     font-weight: 600;
-    text-decoration: none;
-    white-space: nowrap;
+    box-shadow: var(--shadow-sm);
 }
 
-.free-rooms-grid-link:hover {
-    text-decoration: underline;
+.free-rooms-grid-btn .icon {
+    width: 18px;
+    height: 18px;
+    margin-right: 0.45rem;
 }
 
 @media (max-width: 640px) {
@@ -2664,5 +2657,416 @@ body.free-rooms-open {
     .free-rooms-footer {
         padding-left: 1rem;
         padding-right: 1rem;
+    }
+}
+
+
+/* ================================================================== */
+/* Модальное окно «Сетка свободных кабинетов»                          */
+/* ================================================================== */
+
+.rooms-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 10050;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.rooms-modal.is-open {
+    display: flex;
+}
+
+.rooms-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(2px);
+}
+
+.rooms-modal-dialog {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    width: min(1180px, 96vw);
+    max-height: min(92vh, 920px);
+    background: #fff;
+    border-radius: 1rem;
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+    animation: freeRoomsIn 0.18s ease-out;
+}
+
+.rooms-modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.25rem 0.75rem;
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.rooms-modal-header h3 {
+    margin: 0;
+    color: var(--gray-800);
+    font-size: 1.15rem;
+    font-weight: 600;
+}
+
+.rooms-modal-subtitle {
+    margin: 0.2rem 0 0;
+    color: var(--gray-500);
+    font-size: 0.82rem;
+}
+
+.rooms-modal-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem 0.9rem;
+    padding: 0.7rem 1.25rem;
+    border-bottom: 1px solid var(--gray-200);
+    background: var(--gray-50);
+}
+
+.rooms-days {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    min-width: 0;
+}
+
+.rooms-day-tab {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.35rem;
+    padding: 0.45rem 0.8rem;
+    border: 1px solid var(--gray-200);
+    border-radius: 0.5rem;
+    background: #fff;
+    color: var(--gray-600);
+    font: inherit;
+    font-size: 0.85rem;
+    line-height: 1.2;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.rooms-day-tab:hover {
+    background: var(--gray-50);
+}
+
+.rooms-day-tab.is-active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+}
+
+.rooms-day-tab:focus-visible {
+    outline: 2px solid var(--primary-dark);
+    outline-offset: 2px;
+}
+
+.rooms-day-full {
+    display: inline;
+}
+
+.rooms-day-short {
+    display: none;
+}
+
+.rooms-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    color: var(--gray-500);
+    font-size: 0.78rem;
+}
+
+.rooms-legend span::before {
+    content: "";
+    display: inline-block;
+    width: 0.7rem;
+    height: 0.7rem;
+    margin-right: 0.35rem;
+    border-radius: 0.2rem;
+    vertical-align: -0.05rem;
+}
+
+.rooms-legend .legend-free::before {
+    background: #dcfce7;
+    border: 1px solid #86efac;
+}
+
+.rooms-legend .legend-busy::before {
+    background: #fee2e2;
+    border: 1px solid #fca5a5;
+}
+
+.rooms-grid-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+}
+
+.rooms-grid {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.8rem;
+}
+
+.rooms-grid th,
+.rooms-grid td {
+    padding: 0.4rem 0.45rem;
+    border-right: 1px solid var(--gray-100);
+    border-bottom: 1px solid var(--gray-100);
+    text-align: center;
+    vertical-align: middle;
+}
+
+.rooms-grid tr:last-child th,
+.rooms-grid tr:last-child td {
+    border-bottom: none;
+}
+
+.rooms-grid th:last-child,
+.rooms-grid td:last-child {
+    border-right: none;
+}
+
+.rooms-grid thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--gray-50);
+    color: var(--gray-600);
+    font-weight: 600;
+}
+
+.rooms-grid-corner {
+    left: 0;
+    z-index: 3 !important;
+    min-width: 7rem;
+    text-align: left;
+}
+
+.rooms-grid-room {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    min-width: 7rem;
+    background: #fff;
+    color: var(--gray-700);
+    font-weight: 600;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.rooms-grid tbody tr:hover .rooms-grid-room {
+    background: var(--gray-50);
+}
+
+.rooms-grid-period {
+    display: block;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.rooms-grid-time {
+    display: block;
+    margin-top: 0.08rem;
+    color: var(--gray-400);
+    font-size: 0.68rem;
+    font-weight: 400;
+    white-space: nowrap;
+}
+
+.rooms-grid-free {
+    display: block;
+    margin-top: 0.15rem;
+    color: #15803d;
+    font-size: 0.68rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.rooms-cell {
+    min-width: 4rem;
+    font-size: 0.72rem;
+}
+
+.rooms-cell.is-free {
+    background: #f0fdf4;
+    color: #16a34a;
+}
+
+.rooms-cell.is-busy {
+    background: #fef2f2;
+    color: #b91c1c;
+    font-weight: 500;
+}
+
+.rooms-cell-mark {
+    font-weight: 700;
+    opacity: 0.55;
+}
+
+.rooms-cell-text {
+    display: block;
+    max-width: 6.5rem;
+    margin: 0 auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.rooms-cell.is-current {
+    outline: 2px solid var(--primary);
+    outline-offset: -2px;
+}
+
+.rooms-grid thead th.is-current {
+    background: #dbeafe;
+    color: var(--primary-dark);
+}
+
+.rooms-grid thead th.is-current .rooms-grid-free {
+    color: var(--primary-dark);
+}
+
+.room-name-full {
+    display: inline;
+}
+
+.room-name-short {
+    display: none;
+}
+
+.rooms-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.55rem 1.25rem;
+    border-top: 1px solid var(--gray-200);
+    color: var(--gray-400);
+    font-size: 0.72rem;
+}
+
+@media (max-width: 1024px) {
+    .room-name-full {
+        display: none;
+    }
+
+    .room-name-short {
+        display: inline;
+    }
+
+    .rooms-grid-corner,
+    .rooms-grid-room {
+        min-width: 5.25rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .free-rooms-footer {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .free-rooms-grid-btn {
+        order: 1;
+        width: 100%;
+        margin-left: 0;
+        justify-content: center;
+    }
+
+    .free-rooms-hint {
+        order: 2;
+    }
+
+    .rooms-modal {
+        padding: 0;
+        align-items: stretch;
+    }
+
+    .rooms-modal-dialog {
+        width: 100%;
+        height: 100%;
+        max-height: 100%;
+        border-radius: 0;
+    }
+
+    .rooms-modal-header {
+        padding: max(0.75rem, env(safe-area-inset-top)) 0.9rem 0.6rem;
+    }
+
+    .rooms-modal-header h3 {
+        font-size: 1rem;
+    }
+
+    .rooms-modal-toolbar {
+        gap: 0.5rem;
+        padding: 0.5rem 0.9rem;
+    }
+
+    .rooms-day-full {
+        display: none;
+    }
+
+    .rooms-day-short {
+        display: inline;
+    }
+
+    .rooms-day-tab {
+        padding: 0.4rem 0.65rem;
+        font-size: 0.85rem;
+    }
+
+    .rooms-legend {
+        font-size: 0.72rem;
+    }
+
+    .rooms-grid {
+        font-size: 0.72rem;
+    }
+
+    .rooms-grid th,
+    .rooms-grid td {
+        padding: 0.32rem 0.28rem;
+    }
+
+    .rooms-grid-corner,
+    .rooms-grid-room {
+        min-width: 4.5rem;
+        font-size: 0.72rem;
+    }
+
+    .rooms-cell {
+        min-width: 3.25rem;
+    }
+
+    .rooms-cell-text {
+        max-width: 4.5rem;
+    }
+
+    .rooms-grid-time {
+        font-size: 0.64rem;
+    }
+
+    .rooms-grid-free {
+        font-size: 0.64rem;
+    }
+
+    .rooms-modal-footer {
+        display: none;
     }
 }

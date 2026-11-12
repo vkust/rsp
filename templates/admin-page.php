@@ -639,13 +639,6 @@
                     </td>
                 </tr>
                 <tr>
-                    <td><strong>Свободные кабинеты (сетка)</strong></td>
-                    <td><code><?php echo esc_html(App_Config::site_url('free-rooms')); ?></code></td>
-                    <td>
-                        <a class="button" href="<?php echo esc_url(App_Config::site_url('free-rooms')); ?>" target="_blank" rel="noopener">Открыть</a>
-                    </td>
-                </tr>
-                <tr>
                     <td><strong>Текущее расписание (XML)</strong></td>
                     <td><code><?php echo esc_html(App_Config::site_url('schedule.xml')); ?></code></td>
                     <td>

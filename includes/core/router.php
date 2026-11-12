@@ -61,13 +61,6 @@ class App_Router
             return;
         }
 
-        // Сетка свободных кабинетов
-        if ($uri === '/free-rooms' || $uri === '/cabinets') {
-            $GLOBALS['wp_app']['is_admin'] = false;
-            self::render_free_rooms();
-            return;
-        }
-
         // Telegram-страница подписки (аналог шорткода telegram_schedule)
         if ($uri === '/telegram') {
             $GLOBALS['wp_app']['is_admin'] = false;
@@ -435,29 +428,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;b
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Расписание — панели</title>
-    <?php wp_head(); ?>
-    <style>body{margin:0;background:#fff;font-family:-apple-system,"Segoe UI",Roboto,sans-serif}</style>
-</head>
-<body <?php body_class('schedule-page'); ?>>
-    <div class="schedule-content"><?php echo $content; ?></div>
-    <?php wp_footer(); ?>
-</body>
-</html><?php
-    }
-
-    private static function render_free_rooms()
-    {
-        do_action('wp_enqueue_scripts');
-        $plugin = self::instance();
-        $content = method_exists($plugin, 'render_free_rooms')
-            ? $plugin->render_free_rooms([])
-            : '<p>Раздел недоступен.</p>';
-        ?><!DOCTYPE html>
-<html <?php language_attributes(); ?>>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Свободные кабинеты — сетка</title>
     <?php wp_head(); ?>
     <style>body{margin:0;background:#fff;font-family:-apple-system,"Segoe UI",Roboto,sans-serif}</style>
 </head>

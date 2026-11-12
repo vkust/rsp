@@ -69,18 +69,22 @@ if ($show_class_groups && !empty($schedule['classes'])) {
     }
 }
 
-// Данные для модального окна «Свободные кабинеты».
+// Данные для модальных окон «Свободные кабинеты» и «Сетка кабинетов».
 $free_rooms_data = null;
 if (!empty($schedule['classrooms']) && !empty($schedule['periods']) && !empty($schedule['days'])) {
     $free_rooms_rooms = [];
+    $free_rooms_room_shorts = [];
     foreach ($schedule['classrooms'] as $room_id => $room) {
-        $free_rooms_rooms[(string) $room_id] = $room['name'];
+        $free_rooms_rooms[(string) $room_id] = (string) $room['name'];
+        $short = trim((string) ($room['short'] ?? ''));
+        $free_rooms_room_shorts[(string) $room_id] = $short !== '' ? $short : (string) $room['name'];
     }
 
     $free_rooms_days = [];
     foreach ($schedule['days'] as $day_id => $day) {
         $free_rooms_days[(string) $day_id] = [
             'name' => $day['name'],
+            'short' => $day['short'] ?? '',
             'order' => (int) ($day['order'] ?? 0),
         ];
     }
@@ -104,14 +108,60 @@ if (!empty($schedule['classrooms']) && !empty($schedule['periods']) && !empty($s
         if ($day_id === '' || $period_id === '') {
             continue;
         }
+
+        $class_labels = [];
+        foreach ((array) ($lesson['classIds'] ?? []) as $class_id) {
+            $class = $schedule['classes'][(string) $class_id] ?? null;
+            if (!$class) {
+                continue;
+            }
+            $short = trim((string) ($class['short'] ?? ''));
+            $name = trim((string) ($class['name'] ?? ''));
+            $label = $short !== '' ? $short : $name;
+            if ($label !== '') {
+                $class_labels[$label] = true;
+            }
+        }
+
+        $subject_name = trim((string) ($schedule['subjects'][(string) ($lesson['subjectId'] ?? '')]['name'] ?? ''));
         $room_ids = array_filter(array_map('trim', explode(',', (string) ($lesson['classroomId'] ?? ''))));
+
         foreach ($room_ids as $room_id) {
-            $free_rooms_occupied[$day_id][$period_id][$room_id] = true;
+            // Кабинет может отсутствовать в справочнике — показываем его ID.
+            if (!isset($free_rooms_rooms[$room_id])) {
+                $free_rooms_rooms[$room_id] = $room_id;
+                $free_rooms_room_shorts[$room_id] = $room_id;
+            }
+
+            if (!isset($free_rooms_occupied[$day_id][$period_id][$room_id])) {
+                $free_rooms_occupied[$day_id][$period_id][$room_id] = [
+                    'classes' => [],
+                    'subjects' => [],
+                ];
+            }
+
+            foreach (array_keys($class_labels) as $label) {
+                $free_rooms_occupied[$day_id][$period_id][$room_id]['classes'][$label] = true;
+            }
+            if ($subject_name !== '') {
+                $free_rooms_occupied[$day_id][$period_id][$room_id]['subjects'][$subject_name] = true;
+            }
         }
     }
 
+    foreach ($free_rooms_occupied as &$free_rooms_day) {
+        foreach ($free_rooms_day as &$free_rooms_period) {
+            foreach ($free_rooms_period as &$free_rooms_cell) {
+                $free_rooms_cell['classes'] = array_keys($free_rooms_cell['classes']);
+                $free_rooms_cell['subjects'] = array_keys($free_rooms_cell['subjects']);
+            }
+        }
+    }
+    unset($free_rooms_day, $free_rooms_period, $free_rooms_cell);
+
     $free_rooms_data = [
         'rooms' => $free_rooms_rooms,
+        'roomShorts' => $free_rooms_room_shorts,
         'days' => $free_rooms_days,
         'periods' => $free_rooms_periods,
         'occupied' => $free_rooms_occupied,
@@ -265,18 +315,6 @@ if (!empty($schedule['classrooms']) && !empty($schedule['periods']) && !empty($s
                             </svg>
                             <span>Свободные кабинеты</span>
                         </button>
-                        <a id="freeRoomsGridBtn"
-                           class="btn btn-secondary animated-btn btn-icon-only"
-                           href="<?php echo esc_url(App_Config::site_url('free-rooms')); ?>"
-                           title="Сетка свободных кабинетов"
-                           aria-label="Сетка свободных кабинетов">
-                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                <rect x="3" y="3" width="7" height="7" rx="1"/>
-                                <rect x="14" y="3" width="7" height="7" rx="1"/>
-                                <rect x="3" y="14" width="7" height="7" rx="1"/>
-                                <rect x="14" y="14" width="7" height="7" rx="1"/>
-                            </svg>
-                        </a>
                     <?php endif; ?>
                     <button id="resetFilters" class="btn btn-secondary animated-btn">
                         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -554,10 +592,44 @@ if (!empty($schedule['classrooms']) && !empty($schedule['periods']) && !empty($s
                 <div class="free-rooms-list" id="freeRoomsList"></div>
                 <div class="free-rooms-footer">
                     <span class="free-rooms-hint" id="freeRoomsHint"></span>
-                    <a class="free-rooms-grid-link"
-                       href="<?php echo esc_url(App_Config::site_url('free-rooms')); ?>">
-                        Сетка на день →
-                    </a>
+                    <button type="button" id="freeRoomsGridBtn" class="btn btn-primary free-rooms-grid-btn">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <rect x="3" y="3" width="7" height="7" rx="1"/>
+                            <rect x="14" y="3" width="7" height="7" rx="1"/>
+                            <rect x="3" y="14" width="7" height="7" rx="1"/>
+                            <rect x="14" y="14" width="7" height="7" rx="1"/>
+                        </svg>
+                        <span>Открыть сетку</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="freeRoomsGridModal" class="rooms-modal" aria-hidden="true">
+            <div class="rooms-modal-backdrop" data-rooms-grid-close></div>
+            <div class="rooms-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="roomsGridTitle">
+                <div class="rooms-modal-header">
+                    <div>
+                        <h3 id="roomsGridTitle">Сетка свободных кабинетов</h3>
+                        <p class="rooms-modal-subtitle" id="roomsGridSubtitle"></p>
+                    </div>
+                    <button type="button" class="free-rooms-close" data-rooms-grid-close aria-label="Закрыть">×</button>
+                </div>
+
+                <div class="rooms-modal-toolbar">
+                    <div class="rooms-days" id="roomsGridDays" role="tablist" aria-label="День недели"></div>
+                    <div class="rooms-legend">
+                        <span class="legend-free">Свободен</span>
+                        <span class="legend-busy">Занят</span>
+                    </div>
+                </div>
+
+                <div class="rooms-grid-scroll">
+                    <table class="rooms-grid" id="roomsGrid"></table>
+                </div>
+
+                <div class="rooms-modal-footer">
+                    <span class="rooms-grid-hint">Прокрутите таблицу, чтобы увидеть остальные уроки.</span>
                 </div>
             </div>
         </div>

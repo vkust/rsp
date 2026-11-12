@@ -29,6 +29,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let freeRoomsManual = false;
     let freeRoomsAutoHint = '';
     let freeRoomsModalInitialized = false;
+    let freeRoomsGridInitialized = false;
+    let freeRoomsGridDay = '';
 
     // Добавляем функцию updateScrollVisibility в глобальную область видимости
     function updateScrollVisibility() {
@@ -160,6 +162,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const freeRoomsBtn = document.getElementById('freeRoomsBtn');
         if (freeRoomsBtn && freeRoomsData) {
             freeRoomsBtn.addEventListener('click', openFreeRoomsModal);
+        }
+
+        const freeRoomsGridBtn = document.getElementById('freeRoomsGridBtn');
+        if (freeRoomsGridBtn && freeRoomsData) {
+            freeRoomsGridBtn.addEventListener('click', openFreeRoomsGridModal);
         }
 
         // Запуск начальной инициализации
@@ -598,6 +605,277 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function closeFreeRoomsModal() {
         const modal = document.getElementById('freeRoomsModal');
+        if (!modal) {
+            return;
+        }
+        modal.classList.remove('is-open');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('free-rooms-open');
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Сетка свободных кабинетов (модальное окно)                          */
+    /* ------------------------------------------------------------------ */
+
+    function freeRoomsGridUsedPeriods() {
+        const used = new Set();
+        Object.keys(freeRoomsData.occupied || {}).forEach(dayId => {
+            Object.keys(freeRoomsData.occupied[dayId] || {}).forEach(periodId => {
+                used.add(periodId);
+            });
+        });
+
+        const all = freeRoomsSortedEntries(freeRoomsData.periods, 'order');
+        const filtered = all.filter(([id]) => used.size === 0 || used.has(id));
+        return filtered.length ? filtered : all;
+    }
+
+    function freeRoomsGridSortedRooms() {
+        return Object.keys(freeRoomsData.rooms).sort((a, b) => {
+            return String(freeRoomsData.rooms[a]).localeCompare(
+                String(freeRoomsData.rooms[b]),
+                'ru',
+                { numeric: true, sensitivity: 'base' }
+            );
+        });
+    }
+
+    function freeRoomsGridRoomData(roomId) {
+        const name = String(freeRoomsData.rooms[roomId] ?? roomId);
+        const short = String(
+            (freeRoomsData.roomShorts && freeRoomsData.roomShorts[roomId]) || name
+        );
+        return { name, short };
+    }
+
+    function renderFreeRoomsGridTabs() {
+        const wrap = document.getElementById('roomsGridDays');
+        if (!wrap) {
+            return;
+        }
+
+        wrap.textContent = '';
+
+        freeRoomsSortedEntries(freeRoomsData.days, 'order').forEach(([dayId, day]) => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'rooms-day-tab' + (dayId === freeRoomsGridDay ? ' is-active' : '');
+            button.dataset.dayTab = dayId;
+            button.setAttribute('role', 'tab');
+            button.setAttribute('aria-selected', dayId === freeRoomsGridDay ? 'true' : 'false');
+            button.tabIndex = dayId === freeRoomsGridDay ? 0 : -1;
+
+            const full = document.createElement('span');
+            full.className = 'rooms-day-full';
+            full.textContent = day.name;
+
+            const short = document.createElement('span');
+            short.className = 'rooms-day-short';
+            short.textContent = day.short || day.name;
+
+            button.appendChild(full);
+            button.appendChild(short);
+            button.addEventListener('click', () => selectFreeRoomsGridDay(dayId));
+
+            wrap.appendChild(button);
+        });
+    }
+
+    function renderFreeRoomsGrid(dayId) {
+        const table = document.getElementById('roomsGrid');
+        const subtitle = document.getElementById('roomsGridSubtitle');
+        if (!table) {
+            return;
+        }
+
+        const day = freeRoomsData.days[dayId] || { name: '—' };
+        const periods = freeRoomsGridUsedPeriods();
+        const rooms = freeRoomsGridSortedRooms();
+        const occupied = freeRoomsData.occupied[dayId] || {};
+        const todayId = String(new Date().getDay());
+        const currentPeriod = dayId === todayId ? freeRoomsPeriodInfo().id : '';
+
+        table.textContent = '';
+        table.setAttribute('aria-label', 'Занятость кабинетов: ' + day.name);
+
+        const thead = document.createElement('thead');
+        const headRow = document.createElement('tr');
+
+        const corner = document.createElement('th');
+        corner.className = 'rooms-grid-corner';
+        corner.scope = 'col';
+        corner.textContent = 'Кабинет';
+        headRow.appendChild(corner);
+
+        periods.forEach(([periodId, period]) => {
+            const busy = Object.keys(occupied[periodId] || {}).length;
+            const free = Math.max(0, rooms.length - busy);
+
+            const th = document.createElement('th');
+            th.className = 'rooms-grid-period-head' + (periodId === currentPeriod ? ' is-current' : '');
+            th.dataset.period = periodId;
+            th.dataset.start = period.start || '';
+            th.dataset.end = period.end || '';
+            th.scope = 'col';
+
+            const name = document.createElement('span');
+            name.className = 'rooms-grid-period';
+            name.textContent = period.name + ' урок';
+            th.appendChild(name);
+
+            if (period.start && period.end) {
+                const time = document.createElement('span');
+                time.className = 'rooms-grid-time';
+                time.textContent = period.start + '–' + period.end;
+                th.appendChild(time);
+            }
+
+            const freeCount = document.createElement('span');
+            freeCount.className = 'rooms-grid-free';
+            freeCount.textContent = 'свободно ' + free;
+            th.appendChild(freeCount);
+
+            headRow.appendChild(th);
+        });
+
+        thead.appendChild(headRow);
+        table.appendChild(thead);
+
+        const tbody = document.createElement('tbody');
+
+        rooms.forEach(roomId => {
+            const room = freeRoomsGridRoomData(roomId);
+            const row = document.createElement('tr');
+
+            const roomCell = document.createElement('th');
+            roomCell.className = 'rooms-grid-room';
+            roomCell.scope = 'row';
+
+            const full = document.createElement('span');
+            full.className = 'room-name-full';
+            full.textContent = room.name;
+
+            const short = document.createElement('span');
+            short.className = 'room-name-short';
+            short.textContent = room.short;
+
+            roomCell.appendChild(full);
+            roomCell.appendChild(short);
+            row.appendChild(roomCell);
+
+            periods.forEach(([periodId]) => {
+                const lesson = occupied[periodId] ? occupied[periodId][roomId] : null;
+                const cell = document.createElement('td');
+                cell.dataset.period = periodId;
+                cell.className = 'rooms-cell ' + (lesson ? 'is-busy' : 'is-free');
+                if (periodId === currentPeriod) {
+                    cell.classList.add('is-current');
+                }
+
+                if (lesson) {
+                    const classes = Array.isArray(lesson.classes) ? lesson.classes : [];
+                    const subjects = Array.isArray(lesson.subjects) ? lesson.subjects : [];
+                    const label = classes.length ? classes.join(', ') : 'Занят';
+                    const titleParts = [];
+                    if (subjects.length) {
+                        titleParts.push(subjects.join(', '));
+                    }
+                    if (classes.length) {
+                        titleParts.push(classes.join(', '));
+                    }
+                    cell.title = 'Занят: ' + (titleParts.length ? titleParts.join(' · ') : label);
+
+                    const text = document.createElement('span');
+                    text.className = 'rooms-cell-text';
+                    text.textContent = label;
+                    cell.appendChild(text);
+                } else {
+                    cell.title = 'Свободен';
+
+                    const mark = document.createElement('span');
+                    mark.className = 'rooms-cell-mark';
+                    mark.setAttribute('aria-label', 'Свободен');
+                    mark.textContent = '✓';
+                    cell.appendChild(mark);
+                }
+
+                row.appendChild(cell);
+            });
+
+            tbody.appendChild(row);
+        });
+
+        table.appendChild(tbody);
+
+        if (subtitle) {
+            subtitle.textContent = dayId === todayId
+                ? day.name + ' · текущий урок подсвечен'
+                : day.name;
+        }
+    }
+
+    function selectFreeRoomsGridDay(dayId) {
+        freeRoomsGridDay = dayId;
+        renderFreeRoomsGridTabs();
+        renderFreeRoomsGrid(dayId);
+    }
+
+    function initFreeRoomsGridModal() {
+        const modal = document.getElementById('freeRoomsGridModal');
+        if (!modal || freeRoomsGridInitialized) {
+            return;
+        }
+        freeRoomsGridInitialized = true;
+
+        modal.querySelectorAll('[data-rooms-grid-close]').forEach(el => {
+            el.addEventListener('click', closeFreeRoomsGridModal);
+        });
+
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape' && modal.classList.contains('is-open')) {
+                closeFreeRoomsGridModal();
+            }
+        });
+    }
+
+    function openFreeRoomsGridModal() {
+        if (!freeRoomsData) {
+            return;
+        }
+
+        const modal = document.getElementById('freeRoomsGridModal');
+        if (!modal) {
+            return;
+        }
+
+        initFreeRoomsGridModal();
+
+        const daySelect = document.getElementById('freeRoomsDay');
+        const selectedDay = daySelect ? daySelect.value : '';
+        let dayId = selectedDay && freeRoomsData.days[selectedDay]
+            ? selectedDay
+            : freeRoomsDefaultDay();
+
+        if (!dayId || !freeRoomsData.days[dayId]) {
+            dayId = freeRoomsSortedEntries(freeRoomsData.days, 'order')[0]?.[0] || '';
+        }
+
+        closeFreeRoomsModal();
+
+        modal.classList.add('is-open');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('free-rooms-open');
+
+        selectFreeRoomsGridDay(dayId);
+
+        const closeBtn = modal.querySelector('.free-rooms-close');
+        if (closeBtn) {
+            closeBtn.focus();
+        }
+    }
+
+    function closeFreeRoomsGridModal() {
+        const modal = document.getElementById('freeRoomsGridModal');
         if (!modal) {
             return;
         }
