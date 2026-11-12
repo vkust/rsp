@@ -3264,6 +3264,7 @@ body.free-rooms-open {
     min-width: 0;
     border-collapse: collapse;
     background: #fff;
+    will-change: transform;
 }
 
 .schedule-table thead th {

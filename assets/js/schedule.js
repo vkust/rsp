@@ -232,9 +232,21 @@ document.addEventListener('DOMContentLoaded', function() {
             refreshStickyScheduleHeader();
             requestStickyScheduleHeaderUpdate();
         }, { once: true });
-        body.addEventListener('scroll', requestStickyScheduleHeaderUpdate, { passive: true });
+        body.addEventListener('scroll', syncStickyScheduleHeaderScroll, { passive: true });
 
         updateStickyScheduleHeader();
+    }
+
+    /**
+     * Горизонтальная синхронизация должна выполняться сразу в обработчике
+     * scroll, без таймера, иначе закреплённая шапка визуально «догоняет».
+     */
+    function syncStickyScheduleHeaderScroll() {
+        if (!stickyScheduleHeaderVisible || !stickyScheduleHeaderTable || !stickyScheduleHeaderBody) {
+            return;
+        }
+
+        stickyScheduleHeaderTable.style.transform = 'translateX(' + (-stickyScheduleHeaderBody.scrollLeft) + 'px)';
     }
 
     let stickyScheduleHeader = null;
