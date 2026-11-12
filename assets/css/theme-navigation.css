@@ -129,40 +129,116 @@ body.theme-navigation textarea {
 }
 
 body.theme-navigation .schedule-container {
-    padding: 1.25rem;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 1rem;
+    align-items: stretch;
+    max-width: 1900px;
+    min-height: 100vh;
+    margin: 0 auto;
+    padding: 1rem;
+    box-sizing: border-box;
+}
+
+body.theme-navigation .notifications {
+    grid-column: 1 / -1;
 }
 
 /* ------------------------------------------------------------------ */
-/* Верхняя панель                                                      */
+/* Правая панель управления                                            */
 /* ------------------------------------------------------------------ */
 
 body.theme-navigation .schedule-controls {
+    grid-column: 2;
+    grid-row: 1;
+    position: sticky;
+    top: 1rem;
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 2rem);
+    max-height: calc(100vh - 2rem);
+    margin: 0;
+    padding: 0.8rem;
     background: var(--nav-surface);
     border: 1px solid var(--nav-line);
     border-radius: 6px;
     box-shadow: none;
-    padding: 0.85rem 1rem;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+body.theme-navigation .controls-header {
+    display: contents;
 }
 
 body.theme-navigation .schedule-title {
     color: var(--nav-ink);
-    font-size: 1.35rem;
+    font-size: 1.15rem;
     font-weight: 700;
     letter-spacing: -0.02em;
-    line-height: 1.15;
+    line-height: 1.2;
 }
 
 body.theme-navigation .header-content {
-    border-left: 4px solid var(--nav-cobalt);
-    padding-left: 0.85rem;
+    order: 1;
+    flex: 0 0 auto;
+    padding: 0 0 0.6rem;
+    border: none;
+    border-bottom: 1px solid var(--nav-line);
+}
+
+body.theme-navigation .header-main-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+body.theme-navigation .schedule-banner {
+    max-width: 100%;
+    max-height: 96px;
+    overflow: hidden;
+}
+
+body.theme-navigation .schedule-banner img,
+body.theme-navigation .schedule-banner svg {
+    max-width: 100%;
+    max-height: 96px;
+    object-fit: contain;
+}
+
+body.theme-navigation .schedule-qr {
+    width: 64px !important;
+    height: 64px !important;
+    align-self: flex-start;
+}
+
+body.theme-navigation .schedule-qr .qr-code {
+    width: 100%;
+    height: 100%;
 }
 
 body.theme-navigation .time-status-wrapper {
+    order: 2;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.6rem;
+    width: 100%;
+    margin: 0.6rem 0;
+    padding: 0.5rem 0.65rem;
     background: var(--nav-ink);
     border: 1px solid #263a47;
-    border-radius: 6px;
-    padding: 0.7rem 1rem 0.8rem;
-    box-shadow: 0 12px 28px rgba(20, 33, 43, 0.14);
+    border-radius: 4px;
+    box-shadow: none;
+    box-sizing: border-box;
+}
+
+body.theme-navigation .time-container {
+    flex: 0 0 auto;
+    width: auto;
+    padding: 0;
+    margin: 0;
+    justify-content: flex-start;
 }
 
 body.theme-navigation .current-time-large {
@@ -172,29 +248,48 @@ body.theme-navigation .current-time-large {
 body.theme-navigation .time-main-large {
     color: #ffffff;
     font-family: "IBM Plex Mono", "Cascadia Mono", "DejaVu Sans Mono", monospace;
-    font-size: 3.6rem;
+    font-size: 1.5rem;
     font-weight: 500;
-    letter-spacing: -0.06em;
+    letter-spacing: -0.04em;
     line-height: 1;
     font-variant-numeric: tabular-nums;
 }
 
 body.theme-navigation .period-container {
-    border-top: 1px solid rgba(255, 255, 255, 0.12);
-    padding-top: 0.45rem;
+    flex: 1 1 auto;
+    min-width: 0;
+    width: auto;
+    padding: 0;
+    border: none;
+    background: transparent;
 }
 
 body.theme-navigation .time-status-large {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.35rem;
+    width: 100%;
+    min-height: 0;
+    padding: 0;
     background: transparent !important;
     border: none;
     color: #e9f1ee;
-    padding: 0.2rem 0 0;
-    font-size: 0.95rem;
-    justify-content: center;
+    font-size: 0.76rem;
+    line-height: 1.25;
+    text-align: left;
 }
 
 body.theme-navigation .time-status-large .time-icon {
+    width: 14px;
+    height: 14px;
     color: var(--nav-signal);
+}
+
+body.theme-navigation .time-status-large .status-text {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
 }
 
 body.theme-navigation .status-lesson,
@@ -260,7 +355,20 @@ body.theme-navigation .btn .icon {
 /* ------------------------------------------------------------------ */
 
 body.theme-navigation .filters-grid {
-    gap: 0.75rem;
+    order: 3;
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    padding: 0.6rem 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+body.theme-navigation .filter-group {
+    flex: 0 0 auto;
+    width: 100%;
 }
 
 body.theme-navigation .filter-select,
@@ -304,14 +412,79 @@ body.theme-navigation .ui-selectmenu-menu .ui-menu .ui-menu-item-wrapper.ui-stat
 }
 
 /* ------------------------------------------------------------------ */
+/* Кнопки внизу правой панели                                          */
+/* ------------------------------------------------------------------ */
+
+body.theme-navigation .view-controls {
+    order: 4;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.45rem;
+    width: 100%;
+    margin: 0;
+    padding-top: 0.6rem;
+    border-top: 1px solid var(--nav-line);
+    flex: 0 0 auto;
+}
+
+body.theme-navigation .view-controls .btn {
+    width: 100%;
+    min-height: 2.4rem;
+    padding: 0.5rem 0.45rem;
+    justify-content: center;
+    font-size: 0.78rem;
+    white-space: nowrap;
+}
+
+body.theme-navigation .view-controls .btn .icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 0.35rem;
+}
+
+body.theme-navigation #todayFilter,
+body.theme-navigation #freeRoomsBtn,
+body.theme-navigation #exportExcel {
+    grid-column: 1 / -1;
+}
+
+body.theme-navigation #resetFilters {
+    grid-column: 1;
+}
+
+body.theme-navigation #toggleView {
+    grid-column: 2;
+}
+
+/* ------------------------------------------------------------------ */
 /* Таблица расписания                                                  */
 /* ------------------------------------------------------------------ */
 
 body.theme-navigation .schedule-table-wrapper {
+    grid-column: 1;
+    grid-row: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    height: calc(100vh - 2rem);
+    max-height: calc(100vh - 2rem);
+    margin: 0;
     background: var(--nav-surface);
     border: 1px solid var(--nav-line);
     border-radius: 6px;
     box-shadow: none;
+    box-sizing: border-box;
+}
+
+body.theme-navigation .schedule-table-header-scroll {
+    flex: 0 0 auto;
+}
+
+body.theme-navigation .schedule-table-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none;
+    overflow: auto;
 }
 
 body.theme-navigation .schedule-table-wrapper::before,
@@ -625,37 +798,150 @@ body.theme-navigation .room-detail-footer {
 /* ------------------------------------------------------------------ */
 
 @media (max-width: 1200px) {
-    body.theme-navigation .header-content {
-        border-left: none;
-        padding-left: 0;
-        border-bottom: 1px solid var(--nav-line);
-        padding-bottom: 0.6rem;
-    }
-}
-
-@media (max-width: 768px) {
     body.theme-navigation .schedule-container {
-        padding: 0.75rem;
+        display: flex;
+        flex-direction: column;
+        height: 100dvh;
+        min-height: 0;
+        max-width: none;
+        padding: 0.75rem 0.75rem calc(4.6rem + env(safe-area-inset-bottom, 0px));
+        gap: 0.55rem;
+        overflow: hidden;
     }
 
     body.theme-navigation .schedule-controls {
-        padding: 0.7rem;
+        position: static;
+        height: auto;
+        max-height: none;
+        flex: 0 0 auto;
+        overflow: visible;
+        padding: 0.65rem;
     }
 
-    body.theme-navigation .time-main-large {
-        font-size: 2.6rem;
+    body.theme-navigation .controls-header {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
     }
 
-    body.theme-navigation .time-status-wrapper {
-        padding: 0.55rem 0.75rem 0.65rem;
+    body.theme-navigation .header-content {
+        order: 0;
+        padding-bottom: 0;
+        border-bottom: none;
     }
 
-    body.theme-navigation .time-status-large {
-        font-size: 0.85rem;
+    body.theme-navigation .header-main-content {
+        flex-direction: row;
+        align-items: center;
+        gap: 0.6rem;
     }
 
     body.theme-navigation .schedule-title {
-        font-size: 1.15rem;
+        font-size: 1rem;
+    }
+
+    body.theme-navigation .schedule-banner {
+        max-height: 48px;
+    }
+
+    body.theme-navigation .schedule-banner img,
+    body.theme-navigation .schedule-banner svg {
+        max-height: 48px;
+    }
+
+    body.theme-navigation .schedule-qr {
+        display: none;
+    }
+
+    body.theme-navigation .time-status-wrapper {
+        order: 1;
+        margin: 0;
+        width: 100%;
+    }
+
+    body.theme-navigation .time-main-large {
+        font-size: 1.35rem;
+    }
+
+    body.theme-navigation .time-status-large {
+        font-size: 0.72rem;
+    }
+
+    body.theme-navigation .filters-grid {
+        order: 2;
+        flex: 0 0 auto;
+        flex-direction: row;
+        gap: 0.4rem;
+        padding: 0.5rem 0 0;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+    }
+
+    body.theme-navigation .filter-group {
+        flex: 0 0 auto;
+        width: 165px;
+    }
+
+    body.theme-navigation .filter-select,
+    body.theme-navigation .ui-selectmenu-button.ui-button {
+        width: 100% !important;
+        min-height: 2.1rem;
+    }
+
+    body.theme-navigation .view-controls {
+        position: fixed;
+        left: 50%;
+        bottom: calc(0.7rem + env(safe-area-inset-bottom, 0px));
+        transform: translateX(-50%);
+        display: flex;
+        gap: 0.3rem;
+        width: auto;
+        max-width: calc(100vw - 1.5rem);
+        margin: 0;
+        padding: 0.35rem;
+        background: var(--nav-surface);
+        border: 1px solid var(--nav-line);
+        border-radius: 9px;
+        box-shadow: 0 12px 32px rgba(20, 33, 43, 0.2);
+        z-index: 9998;
+        flex: none;
+    }
+
+    body.theme-navigation .view-controls .btn {
+        grid-column: auto !important;
+        width: 44px;
+        min-width: 44px;
+        height: 44px;
+        min-height: 44px;
+        padding: 0;
+        font-size: 0;
+    }
+
+    body.theme-navigation .view-controls .btn span {
+        display: none;
+    }
+
+    body.theme-navigation .view-controls .btn .icon {
+        width: 19px;
+        height: 19px;
+        margin: 0;
+    }
+
+    body.theme-navigation .schedule-table-wrapper {
+        flex: 1 1 auto;
+        min-height: 0;
+        height: auto;
+        max-height: none;
+        margin: 0;
+    }
+
+    body.theme-navigation .schedule-table-body {
+        flex: 1 1 auto;
+        min-height: 0;
+        max-height: none;
+        overflow: auto;
     }
 
     body.theme-navigation .lesson-cell {
@@ -664,12 +950,17 @@ body.theme-navigation .room-detail-footer {
 }
 
 @media (max-width: 480px) {
-    body.theme-navigation .time-main-large {
-        font-size: 2.2rem;
+    body.theme-navigation .schedule-container {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
     }
 
-    body.theme-navigation .schedule-container {
-        padding: 0.5rem;
+    body.theme-navigation .time-main-large {
+        font-size: 1.25rem;
+    }
+
+    body.theme-navigation .filter-group {
+        width: 150px;
     }
 }
 
