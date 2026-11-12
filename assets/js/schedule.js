@@ -1465,7 +1465,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const minutes = String(now.getMinutes()).padStart(2, '0');
         
         // Очищаем предыдущую подсветку
-        document.querySelectorAll('.current-period').forEach(el => {
+        document.querySelectorAll('.schedule-table .current-period').forEach(el => {
             el.classList.remove('current-period');
         });
         
@@ -1536,7 +1536,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const isVertical = localStorage.getItem('scheduleView') === 'vertical';
             
             // Очищаем предыдущие подсветки
-            document.querySelectorAll('.current-period, .current-period-header, .current-break, .current-break-header').forEach(el => {
+            document.querySelectorAll('.schedule-table .current-period, .schedule-table .current-period-header, .schedule-table .current-break, .schedule-table .current-break-header').forEach(el => {
                 el.classList.remove('current-period', 'current-period-header', 'current-break', 'current-break-header');
             });
             
@@ -1590,6 +1590,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         syncStickyScheduleHeaderClasses();
+        requestStickyFirstColumnUpdate();
     }
 
     // Функция для склонения числительных
