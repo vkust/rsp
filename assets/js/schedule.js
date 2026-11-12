@@ -248,10 +248,10 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         stickyHeaderTicking = true;
-        window.requestAnimationFrame(function() {
+        window.setTimeout(function() {
             stickyHeaderTicking = false;
             updateStickyScheduleHeader();
-        });
+        }, 16);
     }
 
     function refreshStickyScheduleHeader() {
