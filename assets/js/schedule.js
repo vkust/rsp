@@ -1485,6 +1485,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Текущее время в минутах
         const currentMinutes = timeToMinutes(`${hours}:${minutes}`);
+        const currentSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
 
         // Определяем текущий статус
         let currentStatus = {
@@ -1505,13 +1506,15 @@ document.addEventListener('DOMContentLoaded', function() {
             })[0];
 
         let prestartActive = false;
+        const firstStartSeconds = firstPeriodEntry ? firstPeriodEntry.start * 60 : null;
         if (
             isSchoolDay &&
             firstPeriodEntry &&
-            currentMinutes >= firstPeriodEntry.start - 60 &&
-            currentMinutes < firstPeriodEntry.start
+            currentSeconds >= firstStartSeconds - 3600 &&
+            currentSeconds < firstStartSeconds
         ) {
-            const remainingMinutes = firstPeriodEntry.start - currentMinutes;
+            const remainingSeconds = firstStartSeconds - currentSeconds;
+            const remainingMinutes = Math.max(1, Math.ceil(remainingSeconds / 60) - 1);
             currentStatus = {
                 type: 'before',
                 text: `До начала занятий ${remainingMinutes} ${declOfNum(remainingMinutes, ['минута', 'минуты', 'минут'])}<br>первый урок в ${firstPeriodEntry.period.start}`

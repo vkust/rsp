@@ -3475,7 +3475,7 @@ body.free-rooms-open {
 
 /* Статус до начала занятий */
 .status-before {
-    background: var(--success);
+    background: var(--warning);
     color: white;
 }
 
