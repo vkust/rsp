@@ -15,6 +15,21 @@ document.addEventListener('DOMContentLoaded', function() {
     let isVertical = localStorage.getItem('scheduleView') !== 'horizontal';
     let keepDayFilter = false;
 
+    // Данные для модального окна «Свободные кабинеты».
+    let freeRoomsData = null;
+    try {
+        const freeRoomsDataEl = document.getElementById('freeRoomsData');
+        if (freeRoomsDataEl) {
+            freeRoomsData = JSON.parse(freeRoomsDataEl.textContent);
+        }
+    } catch (e) {
+        console.error('Не удалось прочитать данные свободных кабинетов:', e);
+        freeRoomsData = null;
+    }
+    let freeRoomsManual = false;
+    let freeRoomsAutoHint = '';
+    let freeRoomsModalInitialized = false;
+
     // Добавляем функцию updateScrollVisibility в глобальную область видимости
     function updateScrollVisibility() {
         const wrapper = document.querySelector('.schedule-table-wrapper');
@@ -139,6 +154,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const todayBtn = document.getElementById('todayFilter');
         if (todayBtn) {
             todayBtn.addEventListener('click', applyTodayFilter);
+        }
+
+        // Свободные кабинеты
+        const freeRoomsBtn = document.getElementById('freeRoomsBtn');
+        if (freeRoomsBtn && freeRoomsData) {
+            freeRoomsBtn.addEventListener('click', openFreeRoomsModal);
         }
 
         // Запуск начальной инициализации
@@ -303,6 +324,286 @@ document.addEventListener('DOMContentLoaded', function() {
         keepDayFilter = true;
         filterAll();
         keepDayFilter = false;
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Свободные кабинеты                                                  */
+    /* ------------------------------------------------------------------ */
+
+    function freeRoomsTimeToMinutes(value) {
+        if (!value) {
+            return null;
+        }
+        const parts = String(value).split(':').map(Number);
+        if (parts.length < 2 || isNaN(parts[0]) || isNaN(parts[1])) {
+            return null;
+        }
+        return parts[0] * 60 + parts[1];
+    }
+
+    function freeRoomsSortedEntries(data, field) {
+        return Object.entries(data).sort((a, b) => {
+            return (Number(a[1][field]) || 0) - (Number(b[1][field]) || 0);
+        });
+    }
+
+    function freeRoomsDaysWithLessons() {
+        return freeRoomsSortedEntries(freeRoomsData.days, 'order')
+            .filter(([id]) => Object.keys(freeRoomsData.occupied[id] || {}).length > 0)
+            .map(([id]) => id);
+    }
+
+    // Ближайший учебный день по кругу: после пятницы идёт понедельник.
+    function freeRoomsNearestDayId(jsDay, candidates) {
+        let bestId = candidates[0] || '';
+        let bestDistance = Infinity;
+
+        candidates.forEach(id => {
+            const order = Number(freeRoomsData.days[id]?.order) || 0;
+            if (!order) {
+                return;
+            }
+            const distance = (order - jsDay + 7) % 7;
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                bestId = id;
+            }
+        });
+
+        return bestId;
+    }
+
+    function freeRoomsDefaultDay() {
+        const jsDay = new Date().getDay();
+        const todayId = String(jsDay);
+        const daysWithLessons = freeRoomsDaysWithLessons();
+
+        // Сегодня будний день и в расписании есть уроки — показываем сегодня.
+        if (
+            jsDay >= 1 && jsDay <= 5 &&
+            freeRoomsData.days[todayId] &&
+            (!daysWithLessons.length || daysWithLessons.includes(todayId))
+        ) {
+            return todayId;
+        }
+
+        const candidates = daysWithLessons.length
+            ? daysWithLessons
+            : freeRoomsSortedEntries(freeRoomsData.days, 'order').map(([id]) => id);
+
+        return freeRoomsNearestDayId(jsDay, candidates);
+    }
+
+    function freeRoomsPeriodInfo() {
+        const periods = freeRoomsSortedEntries(freeRoomsData.periods, 'order');
+        if (!periods.length) {
+            return { id: '', mode: 'first' };
+        }
+
+        const now = new Date();
+        const currentMinutes = now.getHours() * 60 + now.getMinutes();
+        const timed = periods
+            .map(([id, period]) => ({
+                id,
+                start: freeRoomsTimeToMinutes(period.start),
+                end: freeRoomsTimeToMinutes(period.end)
+            }))
+            .filter(p => p.start !== null && p.end !== null);
+
+        if (!timed.length) {
+            return { id: periods[0][0], mode: 'first' };
+        }
+
+        for (let i = 0; i < timed.length; i++) {
+            const period = timed[i];
+            if (currentMinutes >= period.start && currentMinutes <= period.end) {
+                return { id: period.id, mode: 'current' };
+            }
+            if (i < timed.length - 1) {
+                const next = timed[i + 1];
+                if (currentMinutes > period.end && currentMinutes < next.start) {
+                    return { id: next.id, mode: 'next' };
+                }
+            }
+        }
+
+        if (currentMinutes < timed[0].start) {
+            return { id: timed[0].id, mode: 'before' };
+        }
+
+        if (currentMinutes > timed[timed.length - 1].end) {
+            return { id: timed[timed.length - 1].id, mode: 'after' };
+        }
+
+        return { id: timed[0].id, mode: 'first' };
+    }
+
+    function populateFreeRoomsSelectors() {
+        const daySelect = document.getElementById('freeRoomsDay');
+        const periodSelect = document.getElementById('freeRoomsPeriod');
+        if (!daySelect || !periodSelect || daySelect.options.length) {
+            return;
+        }
+
+        freeRoomsSortedEntries(freeRoomsData.days, 'order').forEach(([id, day]) => {
+            const option = document.createElement('option');
+            option.value = id;
+            option.textContent = day.name;
+            daySelect.appendChild(option);
+        });
+
+        freeRoomsSortedEntries(freeRoomsData.periods, 'order').forEach(([id, period]) => {
+            const option = document.createElement('option');
+            option.value = id;
+            option.textContent = period.start && period.end
+                ? `${period.name} урок (${period.start}–${period.end})`
+                : `${period.name} урок`;
+            periodSelect.appendChild(option);
+        });
+    }
+
+    function renderFreeRooms() {
+        const daySelect = document.getElementById('freeRoomsDay');
+        const periodSelect = document.getElementById('freeRoomsPeriod');
+        const summary = document.getElementById('freeRoomsSummary');
+        const list = document.getElementById('freeRoomsList');
+        const hint = document.getElementById('freeRoomsHint');
+        if (!daySelect || !periodSelect || !summary || !list || !hint) {
+            return;
+        }
+
+        const dayId = daySelect.value;
+        const periodId = periodSelect.value;
+        const day = freeRoomsData.days[dayId] || { name: '—' };
+        const period = freeRoomsData.periods[periodId] || { name: '—' };
+        const occupied = (freeRoomsData.occupied[dayId] || {})[periodId] || {};
+
+        const rooms = Object.entries(freeRoomsData.rooms)
+            .sort((a, b) => String(a[1]).localeCompare(String(b[1]), 'ru'));
+        const free = rooms.filter(([id]) => !occupied[id]);
+
+        summary.textContent = `Свободно ${free.length} ${declOfNum(free.length, ['кабинет', 'кабинета', 'кабинетов'])} из ${rooms.length} · ${day.name}, ${period.name} урок`;
+
+        list.innerHTML = '';
+        if (!free.length) {
+            const empty = document.createElement('div');
+            empty.className = 'free-rooms-empty';
+            empty.textContent = 'Все кабинеты заняты';
+            list.appendChild(empty);
+        } else {
+            free.forEach(([id, name]) => {
+                const badge = document.createElement('span');
+                badge.className = 'free-room-badge';
+                badge.textContent = name;
+                badge.title = 'Кабинет ' + name;
+                list.appendChild(badge);
+            });
+        }
+
+        hint.textContent = freeRoomsManual
+            ? 'День и урок выбраны вручную.'
+            : freeRoomsAutoHint;
+    }
+
+    function initFreeRoomsModal() {
+        const modal = document.getElementById('freeRoomsModal');
+        if (!modal || !freeRoomsData) {
+            return;
+        }
+
+        populateFreeRoomsSelectors();
+
+        if (freeRoomsModalInitialized) {
+            return;
+        }
+        freeRoomsModalInitialized = true;
+
+        const daySelect = document.getElementById('freeRoomsDay');
+        const periodSelect = document.getElementById('freeRoomsPeriod');
+        const close = () => closeFreeRoomsModal();
+
+        modal.querySelectorAll('[data-free-rooms-close]').forEach(el => {
+            el.addEventListener('click', close);
+        });
+
+        if (daySelect) {
+            daySelect.addEventListener('change', () => {
+                freeRoomsManual = true;
+                renderFreeRooms();
+            });
+        }
+        if (periodSelect) {
+            periodSelect.addEventListener('change', () => {
+                freeRoomsManual = true;
+                renderFreeRooms();
+            });
+        }
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && modal.classList.contains('is-open')) {
+                closeFreeRoomsModal();
+            }
+        });
+    }
+
+    function openFreeRoomsModal() {
+        if (!freeRoomsData) {
+            return;
+        }
+
+        const modal = document.getElementById('freeRoomsModal');
+        const daySelect = document.getElementById('freeRoomsDay');
+        const periodSelect = document.getElementById('freeRoomsPeriod');
+        if (!modal || !daySelect || !periodSelect) {
+            return;
+        }
+
+        initFreeRoomsModal();
+        populateFreeRoomsSelectors();
+
+        const info = freeRoomsPeriodInfo();
+        const defaultDay = freeRoomsDefaultDay();
+        const jsDay = new Date().getDay();
+        const todayId = String(jsDay);
+        const isToday = defaultDay === todayId;
+
+        freeRoomsManual = false;
+        if (!isToday) {
+            freeRoomsAutoHint = (jsDay < 1 || jsDay > 5)
+                ? 'Сегодня выходной — показан ближайший учебный день.'
+                : 'На сегодня уроков нет — показан ближайший учебный день.';
+        } else if (info.mode === 'next') {
+            freeRoomsAutoHint = 'Сейчас перемена — показан следующий урок.';
+        } else if (info.mode === 'before') {
+            freeRoomsAutoHint = 'Уроки ещё не начались — показан первый урок.';
+        } else if (info.mode === 'after') {
+            freeRoomsAutoHint = 'Уроки на сегодня закончились — показан последний урок.';
+        } else {
+            freeRoomsAutoHint = 'Показан текущий урок.';
+        }
+
+        daySelect.value = defaultDay;
+        periodSelect.value = info.id;
+        renderFreeRooms();
+
+        modal.classList.add('is-open');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('free-rooms-open');
+
+        const closeBtn = modal.querySelector('.free-rooms-close');
+        if (closeBtn) {
+            closeBtn.focus();
+        }
+    }
+
+    function closeFreeRoomsModal() {
+        const modal = document.getElementById('freeRoomsModal');
+        if (!modal) {
+            return;
+        }
+        modal.classList.remove('is-open');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('free-rooms-open');
     }
 
     // Функция обновления опций фильтров

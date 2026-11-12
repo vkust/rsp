@@ -17,6 +17,7 @@ class ScheduleParser {
             'classes' => [],
             'classrooms' => [],
             'lessons' => [],
+            'lessons_all' => [],
             'days' => []
         ];
     }
@@ -243,29 +244,19 @@ class ScheduleParser {
         $categories = get_option('schedule_categories', []);
         $subject_categories = get_option('schedule_subject_categories', []);
 
-        // Сначала создаем массив уроков с проверкой категорий
+        // Сначала собираем ВСЕ уроки без фильтра категорий.
+        // Это нужно для честного расчёта занятости кабинетов.
         $lessons = [];
         foreach ($this->xml->lessons->lesson as $lesson) {
             $id = (string)$lesson['id'];
             $subject_id = (string)$lesson['subjectid'];
-            
-            // Получаем категорию предмета
-            $category = $subject_categories[$subject_id] ?? 'main';
-            
-            // Проверяем видимость категории (если категории вообще не настроены — показываем всё)
-            if ($categories && (!isset($categories[$category]) || empty($categories[$category]['visible']))) {
-                continue; // Пропускаем урок если его категория скрыта
-            }
 
-            // Получаем ID учителей из атрибута teacherids
             $teacherIds = (string)$lesson['teacherids'];
             $teacherIdsArray = $teacherIds ? explode(',', $teacherIds) : [];
-            
-            // Получаем ID классов из атрибута classids
+
             $classIds = (string)$lesson['classids'];
             $classIdsArray = $classIds ? explode(',', $classIds) : [];
-            
-            // Получаем ID групп из атрибута groupids
+
             $groupIds = (string)$lesson['groupids'];
             $groupIdsArray = $groupIds ? explode(',', $groupIds) : [];
 
@@ -293,8 +284,7 @@ class ScheduleParser {
                 continue;
             }
 
-            // Добавляем урок в расписание
-            $this->schedule['lessons'][] = array_merge($lessons[$lessonId], [
+            $lessonData = array_merge($lessons[$lessonId], [
                 'id' => $lessonId,
                 'periodId' => (string)$card['period'],
                 'dayId' => $dayId,
@@ -302,6 +292,18 @@ class ScheduleParser {
                 'weeks' => (string)$card['weeks'],
                 'terms' => (string)$card['terms']
             ]);
+
+            // Полный список — для свободных кабинетов и других служебных задач.
+            $this->schedule['lessons_all'][] = $lessonData;
+
+            // Отображаемый список — с учётом видимости категорий.
+            $subject_id = $lessons[$lessonId]['subjectId'];
+            $category = $subject_categories[$subject_id] ?? 'main';
+            if ($categories && (!isset($categories[$category]) || empty($categories[$category]['visible']))) {
+                continue;
+            }
+
+            $this->schedule['lessons'][] = $lessonData;
         }
     }
 

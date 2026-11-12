@@ -2441,6 +2441,209 @@ body {
 }
 
 
+
+/* ================================================================== */
+/* Свободные кабинеты                                                  */
+/* ================================================================== */
+
+body.free-rooms-open {
+    overflow: hidden;
+}
+
+.free-rooms-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.free-rooms-modal.is-open {
+    display: flex;
+}
+
+.free-rooms-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(2px);
+}
+
+.free-rooms-dialog {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    width: min(560px, 100%);
+    max-height: min(80vh, 720px);
+    background: #fff;
+    border-radius: 1rem;
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+    animation: freeRoomsIn 0.18s ease-out;
+}
+
+@keyframes freeRoomsIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.free-rooms-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.free-rooms-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--gray-800);
+}
+
+.free-rooms-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    border: none;
+    border-radius: 0.5rem;
+    background: transparent;
+    color: var(--gray-500);
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.free-rooms-close:hover {
+    background: var(--gray-100);
+    color: var(--gray-800);
+}
+
+.free-rooms-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem 0;
+}
+
+.free-rooms-controls label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 0;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--gray-500);
+}
+
+.free-rooms-controls select {
+    width: 100%;
+    min-width: 0;
+    padding: 0.5rem 0.65rem;
+    border: 1px solid var(--gray-300);
+    border-radius: 0.5rem;
+    background: #fff;
+    color: var(--gray-800);
+    font-size: 0.9rem;
+    font-family: inherit;
+}
+
+.free-rooms-controls select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.free-rooms-summary {
+    padding: 0.9rem 1.25rem 0.35rem;
+    font-weight: 600;
+    color: var(--gray-700);
+}
+
+.free-rooms-list {
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    gap: 0.5rem;
+    padding: 0.5rem 1.25rem 1rem;
+    overflow-y: auto;
+}
+
+.free-room-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 3.25rem;
+    padding: 0.4rem 0.75rem;
+    border: 1px solid #bbf7d0;
+    border-radius: 0.6rem;
+    background: #ecfdf5;
+    color: #15803d;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.free-rooms-empty {
+    padding: 0.5rem 0;
+    color: var(--gray-500);
+}
+
+.free-rooms-hint {
+    padding: 0.75rem 1.25rem 1rem;
+    margin-top: auto;
+    border-top: 1px solid var(--gray-200);
+    background: var(--gray-50);
+    color: var(--gray-500);
+    font-size: 0.8rem;
+}
+
+.free-rooms-hint:empty {
+    display: none;
+}
+
+@media (max-width: 640px) {
+    .free-rooms-modal {
+        padding: 0;
+        align-items: flex-end;
+    }
+
+    .free-rooms-dialog {
+        width: 100%;
+        max-height: 88vh;
+        border-radius: 1rem 1rem 0 0;
+    }
+
+    .free-rooms-controls {
+        grid-template-columns: 1fr;
+    }
+
+    .free-rooms-header {
+        padding: 0.9rem 1rem;
+    }
+
+    .free-rooms-summary,
+    .free-rooms-list,
+    .free-rooms-hint {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+}
+
 /* ==== assets/css/schedule-template.css ==== */
 /* Стили для чистого шаблона расписания */
 .schedule-page {

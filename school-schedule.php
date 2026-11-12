@@ -36,7 +36,7 @@ if (!function_exists('app_asset_url')) {
         return $base . '/' . ltrim((string) $rel, '/');
     }
 }
-define('SCHOOL_SCHEDULE_VERSION', '2.8.2');
+define('SCHOOL_SCHEDULE_VERSION', '2.9.0');
 
 class SchoolSchedule {
     private $default_categories = array(

@@ -68,9 +68,67 @@ if ($show_class_groups && !empty($schedule['classes'])) {
         }
     }
 }
+
+// Данные для модального окна «Свободные кабинеты».
+$free_rooms_data = null;
+if (!empty($schedule['classrooms']) && !empty($schedule['periods']) && !empty($schedule['days'])) {
+    $free_rooms_rooms = [];
+    foreach ($schedule['classrooms'] as $room_id => $room) {
+        $free_rooms_rooms[(string) $room_id] = $room['name'];
+    }
+
+    $free_rooms_days = [];
+    foreach ($schedule['days'] as $day_id => $day) {
+        $free_rooms_days[(string) $day_id] = [
+            'name' => $day['name'],
+            'order' => (int) ($day['order'] ?? 0),
+        ];
+    }
+
+    $free_rooms_periods = [];
+    foreach ($schedule['periods'] as $period_id => $period) {
+        $free_rooms_periods[(string) $period_id] = [
+            'name' => $period['name'],
+            'start' => $period['starttime'] ?? '',
+            'end' => $period['endtime'] ?? '',
+            'order' => (int) ($period['order'] ?? 0),
+        ];
+    }
+
+    // Занятость считаем по ВСЕМ урокам, включая скрытые категории.
+    $free_rooms_occupied = [];
+    $all_lessons = $schedule['lessons_all'] ?? $schedule['lessons'];
+    foreach ($all_lessons as $lesson) {
+        $day_id = (string) ($lesson['dayId'] ?? '');
+        $period_id = (string) ($lesson['periodId'] ?? '');
+        if ($day_id === '' || $period_id === '') {
+            continue;
+        }
+        $room_ids = array_filter(array_map('trim', explode(',', (string) ($lesson['classroomId'] ?? ''))));
+        foreach ($room_ids as $room_id) {
+            $free_rooms_occupied[$day_id][$period_id][$room_id] = true;
+        }
+    }
+
+    $free_rooms_data = [
+        'rooms' => $free_rooms_rooms,
+        'days' => $free_rooms_days,
+        'periods' => $free_rooms_periods,
+        'occupied' => $free_rooms_occupied,
+    ];
+}
 ?>
 
 <div class="schedule-container<?php echo $atts['is_panel'] ? ' schedule-panels' : ''; ?>">
+    <?php if ($free_rooms_data !== null): ?>
+        <script type="application/json" id="freeRoomsData"><?php
+            echo json_encode(
+                $free_rooms_data,
+                JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
+            );
+        ?></script>
+    <?php endif; ?>
+
     <!-- Сообщения об ошибках и успехе -->
     <?php if ($error || $success): ?>
         <div class="notifications">
@@ -198,6 +256,16 @@ if ($show_class_groups && !empty($schedule['classes'])) {
                         </svg>
                         <span>Сегодня</span>
                     </button>
+                    <?php if ($free_rooms_data !== null): ?>
+                        <button id="freeRoomsBtn" class="btn btn-secondary animated-btn" title="Свободные кабинеты">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M4 21V5a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v16"/>
+                                <path d="M3 21h18" stroke-linecap="round"/>
+                                <path d="M14 12h.01" stroke-linecap="round"/>
+                            </svg>
+                            <span>Свободные кабинеты</span>
+                        </button>
+                    <?php endif; ?>
                     <button id="resetFilters" class="btn btn-secondary animated-btn">
                         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                             <path class="filter-line-1" d="M3 6h18" stroke-linecap="round"/>
@@ -447,6 +515,33 @@ if ($show_class_groups && !empty($schedule['classes'])) {
             </svg>
             <h2>Расписание не загруено</h2>
             <p>Загрузите файл расписания через панель администратора</p>
+        </div>
+    <?php endif; ?>
+
+    <?php if ($free_rooms_data !== null): ?>
+        <div id="freeRoomsModal" class="free-rooms-modal" aria-hidden="true">
+            <div class="free-rooms-backdrop" data-free-rooms-close></div>
+            <div class="free-rooms-dialog" role="dialog" aria-modal="true" aria-labelledby="freeRoomsTitle">
+                <div class="free-rooms-header">
+                    <h3 id="freeRoomsTitle">Свободные кабинеты</h3>
+                    <button type="button" class="free-rooms-close" data-free-rooms-close aria-label="Закрыть">×</button>
+                </div>
+
+                <div class="free-rooms-controls">
+                    <label>
+                        <span>День</span>
+                        <select id="freeRoomsDay"></select>
+                    </label>
+                    <label>
+                        <span>Урок</span>
+                        <select id="freeRoomsPeriod"></select>
+                    </label>
+                </div>
+
+                <div class="free-rooms-summary" id="freeRoomsSummary"></div>
+                <div class="free-rooms-list" id="freeRoomsList"></div>
+                <div class="free-rooms-hint" id="freeRoomsHint"></div>
+            </div>
         </div>
     <?php endif; ?>
 
