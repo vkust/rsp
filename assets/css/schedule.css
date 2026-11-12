@@ -3234,11 +3234,29 @@ body.free-rooms-open {
     top: 0;
     left: 0;
     z-index: 900;
-    display: none;
+    display: block;
     overflow: hidden;
     background: #fff;
     pointer-events: none;
     box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-6px);
+    transition:
+        opacity 160ms ease,
+        transform 160ms ease,
+        visibility 0s linear 160ms;
+    will-change: opacity, transform;
+}
+
+.schedule-sticky-header.is-visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    transition:
+        opacity 160ms ease,
+        transform 160ms ease,
+        visibility 0s linear 0s;
 }
 
 .schedule-sticky-header-table {
@@ -3251,4 +3269,11 @@ body.free-rooms-open {
 .schedule-table thead th {
     background-clip: padding-box;
     box-shadow: inset 0 -1px 0 var(--gray-200);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .schedule-sticky-header {
+        transition: none;
+        transform: none;
+    }
 }
