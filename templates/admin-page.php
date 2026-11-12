@@ -665,6 +665,82 @@
         </div>
     </div>
 
+    <?php
+    $current_layout = get_option('schedule_layout', 'classic');
+    if (!in_array($current_layout, ['classic', 'sidebar-right', 'sidebar-left', 'compact'], true)) {
+        $current_layout = 'classic';
+    }
+    $layout_options = [
+        'classic' => [
+            'name' => 'Классическая',
+            'desc' => 'Часы по центру, кнопки справа, фильтры под шапкой.',
+        ],
+        'sidebar-right' => [
+            'name' => 'Правая панель',
+            'desc' => 'Часы, фильтры и кнопки в правой панели. Для широких экранов.',
+        ],
+        'sidebar-left' => [
+            'name' => 'Левая панель',
+            'desc' => 'Часы, фильтры и кнопки в левой панели. Для широких экранов.',
+        ],
+        'compact' => [
+            'name' => 'Компактная',
+            'desc' => 'Часы и период в одной строке, фильтры в ряд, меньше высоты.',
+        ],
+    ];
+    ?>
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <button type="button" class="toggle-card" aria-expanded="false">
+                    Компоновка страницы
+                    <span class="toggle-icon">▼</span>
+                </button>
+            </h2>
+        </div>
+        <div class="card-content" style="display: none;">
+            <form method="POST" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                <?php wp_nonce_field('layout_settings', 'layout_nonce'); ?>
+                <input type="hidden" name="action" value="save_layout_settings">
+
+                <p class="description">
+                    Расположение часов, фильтров и кнопок. Варианты с боковой панелью
+                    применяются на широких экранах, на мобильных остаётся классическая компоновка.
+                </p>
+
+                <div class="layout-choice-grid">
+                    <?php foreach ($layout_options as $layout_key => $layout): ?>
+                        <label class="layout-choice">
+                            <input type="radio" name="schedule_layout" value="<?php echo esc_attr($layout_key); ?>" <?php checked($current_layout, $layout_key); ?>>
+
+                            <span class="layout-preview lp-<?php echo esc_attr($layout_key); ?>" aria-hidden="true">
+                                <?php if ($layout_key === 'classic'): ?>
+                                    <span class="lp-top"><span class="lp-time"></span><span class="lp-actions"></span></span>
+                                    <span class="lp-filters"><i></i><i></i><i></i><i></i></span>
+                                    <span class="lp-table"></span>
+                                <?php elseif ($layout_key === 'compact'): ?>
+                                    <span class="lp-top lp-top-compact"><span class="lp-time"></span><span class="lp-actions"></span></span>
+                                    <span class="lp-filters lp-filters-inline"><i></i><i></i><i></i><i></i></span>
+                                    <span class="lp-table"></span>
+                                <?php else: ?>
+                                    <span class="lp-table"></span>
+                                    <span class="lp-side"><span class="lp-time"></span><i></i><i></i><i></i></span>
+                                <?php endif; ?>
+                            </span>
+
+                            <span class="layout-choice-name"><?php echo esc_html($layout['name']); ?></span>
+                            <span class="layout-choice-desc"><?php echo esc_html($layout['desc']); ?></span>
+                        </label>
+                    <?php endforeach; ?>
+                </div>
+
+                <div class="submit-wrapper">
+                    <button type="submit" class="button button-primary">Сохранить компоновку</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div class="card">
         <h2>Управление страницами</h2>
         <p>Публичные страницы приложения доступны по постоянным адресам:</p>

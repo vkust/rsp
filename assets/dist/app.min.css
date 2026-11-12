@@ -3287,6 +3287,224 @@ body.free-rooms-open {
         transform: none;
     }
 }
+/* ================================================================== */
+/* Варианты компоновки                                                 */
+/* ================================================================== */
+
+/* Боковые панели — только на широких экранах */
+@media (min-width: 1201px) {
+    .schedule-container:is(.layout-sidebar-right, .layout-sidebar-left) {
+        display: grid;
+        gap: 1rem;
+        align-items: start;
+        max-width: 1900px;
+        margin: 0 auto;
+    }
+
+    .schedule-container.layout-sidebar-right {
+        grid-template-columns: minmax(0, 1fr) 320px;
+    }
+
+    .schedule-container.layout-sidebar-left {
+        grid-template-columns: 320px minmax(0, 1fr);
+    }
+
+    .schedule-container:is(.layout-sidebar-right, .layout-sidebar-left) .schedule-controls {
+        grid-row: 1;
+        position: sticky;
+        top: 1rem;
+        max-height: calc(100vh - 2rem);
+        margin: 0;
+        overflow-y: auto;
+    }
+
+    .layout-sidebar-right .schedule-controls {
+        grid-column: 2;
+    }
+
+    .layout-sidebar-left .schedule-controls {
+        grid-column: 1;
+    }
+
+    .layout-sidebar-right .schedule-table-wrapper {
+        grid-column: 1;
+        grid-row: 1;
+        min-width: 0;
+    }
+
+    .layout-sidebar-left .schedule-table-wrapper {
+        grid-column: 2;
+        grid-row: 1;
+        min-width: 0;
+    }
+
+    .schedule-container:is(.layout-sidebar-right, .layout-sidebar-left) .controls-header {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+
+    .schedule-container:is(.layout-sidebar-right, .layout-sidebar-left) .header-content,
+    .schedule-container:is(.layout-sidebar-right, .layout-sidebar-left) .time-status-wrapper,
+    .schedule-container:is(.layout-sidebar-right, .layout-sidebar-left) .view-controls {
+        width: 100%;
+        max-width: none;
+        justify-self: stretch;
+    }
+
+    .schedule-container:is(.layout-sidebar-right, .layout-sidebar-left) .time-main-large {
+        font-size: 2rem;
+    }
+
+    .schedule-container:is(.layout-sidebar-right, .layout-sidebar-left) .time-status-large {
+        justify-content: flex-start;
+        font-size: 0.82rem;
+    }
+
+    .schedule-container:is(.layout-sidebar-right, .layout-sidebar-left) .filters-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-bottom: 0;
+    }
+
+    .schedule-container:is(.layout-sidebar-right, .layout-sidebar-left) .filter-group,
+    .schedule-container:is(.layout-sidebar-right, .layout-sidebar-left) .filter-select,
+    .schedule-container:is(.layout-sidebar-right, .layout-sidebar-left) .ui-selectmenu-button.ui-button {
+        width: 100% !important;
+    }
+
+    .schedule-container:is(.layout-sidebar-right, .layout-sidebar-left) .view-controls {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+    }
+
+    .schedule-container:is(.layout-sidebar-right, .layout-sidebar-left) .view-controls .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .schedule-container:is(.layout-sidebar-right, .layout-sidebar-left) #todayFilter,
+    .schedule-container:is(.layout-sidebar-right, .layout-sidebar-left) #freeRoomsBtn,
+    .schedule-container:is(.layout-sidebar-right, .layout-sidebar-left) #exportExcel {
+        grid-column: 1 / -1;
+    }
+
+    .schedule-container:is(.layout-sidebar-right, .layout-sidebar-left) #resetFilters {
+        grid-column: 1;
+    }
+
+    .schedule-container:is(.layout-sidebar-right, .layout-sidebar-left) #toggleView {
+        grid-column: 2;
+    }
+}
+
+/* Компактная компоновка */
+.schedule-container.layout-compact .schedule-controls {
+    padding: 0.55rem 0.75rem;
+}
+
+.layout-compact .controls-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+}
+
+.layout-compact .header-content {
+    flex: 0 0 auto;
+    min-width: 0;
+}
+
+.layout-compact .schedule-title {
+    font-size: 1rem;
+}
+
+.layout-compact .time-status-wrapper {
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.4rem;
+    width: auto;
+    max-width: none;
+    margin: 0;
+    padding: 0.25rem 0.5rem;
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: 0.5rem;
+}
+
+.layout-compact .time-container {
+    width: auto;
+    margin: 0;
+    padding: 0;
+    justify-content: flex-start;
+}
+
+.layout-compact .time-main-large {
+    color: var(--gray-800);
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.layout-compact .period-container {
+    width: auto;
+    background: transparent;
+}
+
+.layout-compact .time-status-large {
+    width: auto;
+    min-height: 0;
+    padding: 0;
+    justify-content: flex-start;
+    background: transparent !important;
+    color: var(--gray-700);
+    font-size: 0.78rem;
+}
+
+.layout-compact .time-status-large .time-icon {
+    width: 14px;
+    height: 14px;
+    color: var(--primary);
+}
+
+.layout-compact .status-lesson,
+.layout-compact .status-break,
+.layout-compact .status-none {
+    background: transparent;
+    color: var(--gray-700);
+}
+
+.layout-compact .view-controls {
+    margin-left: auto;
+    flex-wrap: wrap;
+}
+
+.layout-compact .filters-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0.55rem 0 0;
+}
+
+.layout-compact .filter-group {
+    flex: 1 1 160px;
+    min-width: 140px;
+}
+
+@media (max-width: 768px) {
+    .layout-compact .filters-grid {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .layout-compact .filter-group {
+        flex: 0 0 160px;
+    }
+}
 
 /* ==== assets/css/schedule-template.css ==== */
 /* Стили для чистого шаблона расписания */

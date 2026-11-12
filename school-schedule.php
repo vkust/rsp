@@ -36,7 +36,7 @@ if (!function_exists('app_asset_url')) {
         return $base . '/' . ltrim((string) $rel, '/');
     }
 }
-define('SCHOOL_SCHEDULE_VERSION', '2.13.3');
+define('SCHOOL_SCHEDULE_VERSION', '2.14.0');
 
 class SchoolSchedule {
     private $default_categories = array(
@@ -131,6 +131,7 @@ class SchoolSchedule {
         add_action('admin_post_save_bot_code', [$this, 'handle_bot_code_save']);
         add_action('admin_post_save_banner_settings', [$this, 'handle_save_banner_settings']);
         add_action('admin_post_save_free_rooms_settings', [$this, 'handle_save_free_rooms_settings']);
+        add_action('admin_post_save_layout_settings', [$this, 'handle_save_layout_settings']);
         
         // Подключаем стили и скрипты
         add_action('wp_enqueue_scripts', [$this, 'enqueue_frontend_assets']);
@@ -1835,6 +1836,26 @@ class SchoolSchedule {
         }
 
         update_option('schedule_free_rooms_excluded', $excluded);
+
+        $back = wp_get_referer() ?: admin_url('admin.php?page=school-schedule');
+        $back = add_query_arg('settings-updated', 'true', $back);
+        wp_redirect($back);
+        exit;
+    }
+
+    public function handle_save_layout_settings() {
+        if (!current_user_can('manage_options')) {
+            wp_die('Недостаточно прав');
+        }
+
+        check_admin_referer('layout_settings', 'layout_nonce');
+
+        $layout = sanitize_text_field($_POST['schedule_layout'] ?? 'classic');
+        if (!in_array($layout, ['classic', 'sidebar-right', 'sidebar-left', 'compact'], true)) {
+            $layout = 'classic';
+        }
+
+        update_option('schedule_layout', $layout);
 
         $back = wp_get_referer() ?: admin_url('admin.php?page=school-schedule');
         $back = add_query_arg('settings-updated', 'true', $back);

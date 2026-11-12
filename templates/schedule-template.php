@@ -217,7 +217,13 @@ if (!empty($schedule['classrooms']) && !empty($schedule['periods']) && !empty($s
 }
 ?>
 
-<div class="schedule-container<?php echo $atts['is_panel'] ? ' schedule-panels' : ''; ?>">
+<?php
+$schedule_layout = get_option('schedule_layout', 'classic');
+if (!in_array($schedule_layout, ['classic', 'sidebar-right', 'sidebar-left', 'compact'], true)) {
+    $schedule_layout = 'classic';
+}
+?>
+<div class="schedule-container layout-<?php echo esc_attr($schedule_layout); ?><?php echo $atts['is_panel'] ? ' schedule-panels' : ''; ?>">
     <?php if ($free_rooms_data !== null): ?>
         <script type="application/json" id="freeRoomsData"><?php
             echo json_encode(
