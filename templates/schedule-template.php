@@ -219,11 +219,19 @@ if (!empty($schedule['classrooms']) && !empty($schedule['periods']) && !empty($s
 
 <?php
 $schedule_layout = get_option('schedule_layout', 'classic');
-if (!in_array($schedule_layout, ['classic', 'sidebar-right', 'sidebar-left', 'compact'], true)) {
+if (!in_array($schedule_layout, ['classic', 'compact'], true)) {
     $schedule_layout = 'classic';
 }
+
+$schedule_compact_buttons = get_option('schedule_compact_buttons', 'header');
+if (!in_array($schedule_compact_buttons, ['header', 'right', 'left', 'bottom'], true)) {
+    $schedule_compact_buttons = 'header';
+}
+$compact_buttons_class = $schedule_layout === 'compact'
+    ? ' compact-buttons-' . $schedule_compact_buttons
+    : '';
 ?>
-<div class="schedule-container layout-<?php echo esc_attr($schedule_layout); ?><?php echo $atts['is_panel'] ? ' schedule-panels' : ''; ?>">
+<div class="schedule-container layout-<?php echo esc_attr($schedule_layout . $compact_buttons_class); ?><?php echo $atts['is_panel'] ? ' schedule-panels' : ''; ?>">
     <?php if ($free_rooms_data !== null): ?>
         <script type="application/json" id="freeRoomsData"><?php
             echo json_encode(

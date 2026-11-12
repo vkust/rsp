@@ -863,3 +863,33 @@ input:checked + .slider:before {
 .lp-sidebar-left .lp-table {
     order: 1;
 }
+
+/* Кнопки в компактной компоновке */
+.compact-buttons-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0.5rem 0 1rem;
+}
+
+.compact-buttons-choice {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.45rem 0.7rem;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    background: #fff;
+    color: #3c434a;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.compact-buttons-choice:has(input:checked) {
+    border-color: #2271b1;
+    box-shadow: 0 0 0 2px rgba(34, 113, 177, 0.16);
+}
+
+.compact-buttons-choice input {
+    margin: 0;
+}

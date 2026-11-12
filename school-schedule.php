@@ -36,7 +36,7 @@ if (!function_exists('app_asset_url')) {
         return $base . '/' . ltrim((string) $rel, '/');
     }
 }
-define('SCHOOL_SCHEDULE_VERSION', '2.14.2');
+define('SCHOOL_SCHEDULE_VERSION', '2.15.0');
 
 class SchoolSchedule {
     private $default_categories = array(
@@ -1851,11 +1851,17 @@ class SchoolSchedule {
         check_admin_referer('layout_settings', 'layout_nonce');
 
         $layout = sanitize_text_field($_POST['schedule_layout'] ?? 'classic');
-        if (!in_array($layout, ['classic', 'sidebar-right', 'sidebar-left', 'compact'], true)) {
+        if (!in_array($layout, ['classic', 'compact'], true)) {
             $layout = 'classic';
         }
 
+        $compactButtons = sanitize_text_field($_POST['schedule_compact_buttons'] ?? 'header');
+        if (!in_array($compactButtons, ['header', 'right', 'left', 'bottom'], true)) {
+            $compactButtons = 'header';
+        }
+
         update_option('schedule_layout', $layout);
+        update_option('schedule_compact_buttons', $compactButtons);
 
         $back = wp_get_referer() ?: admin_url('admin.php?page=school-schedule');
         $back = add_query_arg('settings-updated', 'true', $back);

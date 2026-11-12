@@ -667,26 +667,28 @@
 
     <?php
     $current_layout = get_option('schedule_layout', 'classic');
-    if (!in_array($current_layout, ['classic', 'sidebar-right', 'sidebar-left', 'compact'], true)) {
+    if (!in_array($current_layout, ['classic', 'compact'], true)) {
         $current_layout = 'classic';
+    }
+    $current_compact_buttons = get_option('schedule_compact_buttons', 'header');
+    if (!in_array($current_compact_buttons, ['header', 'right', 'left', 'bottom'], true)) {
+        $current_compact_buttons = 'header';
     }
     $layout_options = [
         'classic' => [
             'name' => 'Классическая',
             'desc' => 'Часы по центру, кнопки справа, фильтры под шапкой.',
         ],
-        'sidebar-right' => [
-            'name' => 'Правая панель',
-            'desc' => 'Часы, фильтры и кнопки в правой панели. Для широких экранов.',
-        ],
-        'sidebar-left' => [
-            'name' => 'Левая панель',
-            'desc' => 'Часы, фильтры и кнопки в левой панели. Для широких экранов.',
-        ],
         'compact' => [
             'name' => 'Компактная',
             'desc' => 'Часы и период в одной строке, фильтры в ряд, меньше высоты.',
         ],
+    ];
+    $compact_button_options = [
+        'header' => 'В верхнем блоке',
+        'right' => 'Справа',
+        'left' => 'Слева',
+        'bottom' => 'Снизу',
     ];
     ?>
     <div class="card">
@@ -704,8 +706,9 @@
                 <input type="hidden" name="action" value="save_layout_settings">
 
                 <p class="description">
-                    Расположение часов, фильтров и кнопок. Варианты с боковой панелью
-                    применяются на широких экранах, на мобильных остаётся классическая компоновка.
+                    Расположение часов, фильтров и кнопок. Компактная компоновка
+                    уменьшает высоту шапки и фильтров, на мобильных фильтры
+                    располагаются друг под другом.
                 </p>
 
                 <div class="layout-choice-grid">
@@ -718,18 +721,29 @@
                                     <span class="lp-top"><span class="lp-time"></span><span class="lp-actions"></span></span>
                                     <span class="lp-filters"><i></i><i></i><i></i><i></i></span>
                                     <span class="lp-table"></span>
-                                <?php elseif ($layout_key === 'compact'): ?>
+                                <?php else: ?>
                                     <span class="lp-top lp-top-compact"><span class="lp-time"></span><span class="lp-actions"></span></span>
                                     <span class="lp-filters lp-filters-inline"><i></i><i></i><i></i><i></i></span>
                                     <span class="lp-table"></span>
-                                <?php else: ?>
-                                    <span class="lp-table"></span>
-                                    <span class="lp-side"><span class="lp-time"></span><i></i><i></i><i></i></span>
                                 <?php endif; ?>
                             </span>
 
                             <span class="layout-choice-name"><?php echo esc_html($layout['name']); ?></span>
                             <span class="layout-choice-desc"><?php echo esc_html($layout['desc']); ?></span>
+                        </label>
+                    <?php endforeach; ?>
+                </div>
+
+                <h3>Кнопки в компактной компоновке</h3>
+                <p class="description">
+                    Варианты «справа», «слева» и «снизу» размещают кнопки
+                    фиксированно поверх страницы.
+                </p>
+                <div class="compact-buttons-grid">
+                    <?php foreach ($compact_button_options as $button_key => $button_name): ?>
+                        <label class="compact-buttons-choice">
+                            <input type="radio" name="schedule_compact_buttons" value="<?php echo esc_attr($button_key); ?>" <?php checked($current_compact_buttons, $button_key); ?>>
+                            <span><?php echo esc_html($button_name); ?></span>
                         </label>
                     <?php endforeach; ?>
                 </div>

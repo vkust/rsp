@@ -3282,122 +3282,9 @@ body.free-rooms-open {
 /* Варианты компоновки                                                 */
 /* ================================================================== */
 
-/* Боковые панели — только на широких экранах */
-@media (min-width: 1201px) {
-    .schedule-container:is(.layout-sidebar-right, .layout-sidebar-left) {
-        display: grid;
-        gap: 1rem;
-        align-items: start;
-        max-width: 1900px;
-        margin: 0 auto;
-    }
-
-    .schedule-container.layout-sidebar-right {
-        grid-template-columns: minmax(0, 1fr) 320px;
-    }
-
-    .schedule-container.layout-sidebar-left {
-        grid-template-columns: 320px minmax(0, 1fr);
-    }
-
-    .schedule-container:is(.layout-sidebar-right, .layout-sidebar-left) .schedule-controls {
-        grid-row: 1;
-        position: sticky;
-        top: 1rem;
-        max-height: calc(100vh - 2rem);
-        margin: 0;
-        overflow-x: hidden;
-        overflow-y: auto;
-    }
-
-    .layout-sidebar-right .schedule-controls {
-        grid-column: 2;
-    }
-
-    .layout-sidebar-left .schedule-controls {
-        grid-column: 1;
-    }
-
-    .layout-sidebar-right .schedule-table-wrapper {
-        grid-column: 1;
-        grid-row: 1;
-        min-width: 0;
-    }
-
-    .layout-sidebar-left .schedule-table-wrapper {
-        grid-column: 2;
-        grid-row: 1;
-        min-width: 0;
-    }
-
-    .schedule-container:is(.layout-sidebar-right, .layout-sidebar-left) .controls-header {
-        display: flex;
-        flex-direction: column;
-        align-items: stretch;
-        gap: 0.75rem;
-    }
-
-    .schedule-container:is(.layout-sidebar-right, .layout-sidebar-left) .header-content,
-    .schedule-container:is(.layout-sidebar-right, .layout-sidebar-left) .time-status-wrapper,
-    .schedule-container:is(.layout-sidebar-right, .layout-sidebar-left) .view-controls {
-        width: 100%;
-        max-width: none;
-        justify-self: stretch;
-    }
-
-    .schedule-container:is(.layout-sidebar-right, .layout-sidebar-left) .time-main-large {
-        font-size: 2rem;
-    }
-
-    .schedule-container:is(.layout-sidebar-right, .layout-sidebar-left) .time-status-large {
-        justify-content: flex-start;
-        font-size: 0.82rem;
-    }
-
-    .schedule-container:is(.layout-sidebar-right, .layout-sidebar-left) .filters-grid {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-        margin-bottom: 0;
-    }
-
-    .schedule-container:is(.layout-sidebar-right, .layout-sidebar-left) .filter-group,
-    .schedule-container:is(.layout-sidebar-right, .layout-sidebar-left) .filter-select,
-    .schedule-container:is(.layout-sidebar-right, .layout-sidebar-left) .ui-selectmenu-button.ui-button {
-        width: 100% !important;
-    }
-
-    .schedule-container:is(.layout-sidebar-right, .layout-sidebar-left) .view-controls {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 0.5rem;
-    }
-
-    .schedule-container:is(.layout-sidebar-right, .layout-sidebar-left) .view-controls .btn {
-        width: 100%;
-        min-width: 0;
-        justify-content: center;
-        white-space: normal;
-    }
-
-    .schedule-container:is(.layout-sidebar-right, .layout-sidebar-left) #todayFilter,
-    .schedule-container:is(.layout-sidebar-right, .layout-sidebar-left) #freeRoomsBtn,
-    .schedule-container:is(.layout-sidebar-right, .layout-sidebar-left) #exportExcel {
-        grid-column: 1 / -1;
-    }
-
-    .schedule-container:is(.layout-sidebar-right, .layout-sidebar-left) #resetFilters {
-        grid-column: 1;
-    }
-
-    .schedule-container:is(.layout-sidebar-right, .layout-sidebar-left) #toggleView {
-        grid-column: 2;
-    }
-}
-
 /* Компактная компоновка */
 .schedule-container.layout-compact .schedule-controls {
-    padding: 0.55rem 0.75rem;
+    padding: 0.6rem 0.8rem;
 }
 
 .layout-compact .controls-header {
@@ -3420,11 +3307,11 @@ body.free-rooms-open {
     display: inline-flex;
     flex-direction: row;
     align-items: center;
-    gap: 0.4rem;
+    gap: 0.5rem;
     width: auto;
     max-width: none;
     margin: 0;
-    padding: 0.25rem 0.5rem;
+    padding: 0.3rem 0.55rem;
     background: var(--gray-50);
     border: 1px solid var(--gray-200);
     border-radius: 0.5rem;
@@ -3439,7 +3326,7 @@ body.free-rooms-open {
 
 .layout-compact .time-main-large {
     color: var(--gray-800);
-    font-size: 1.1rem;
+    font-size: 1.6rem;
     font-weight: 700;
 }
 
@@ -3451,24 +3338,20 @@ body.free-rooms-open {
 .layout-compact .time-status-large {
     width: auto;
     min-height: 0;
-    padding: 0;
+    padding: 0.25rem 0.5rem;
     justify-content: flex-start;
-    background: transparent !important;
-    color: var(--gray-700);
-    font-size: 0.78rem;
+    font-size: 0.82rem;
 }
 
 .layout-compact .time-status-large .time-icon {
     width: 14px;
     height: 14px;
-    color: var(--primary);
 }
 
-.layout-compact .status-lesson,
-.layout-compact .status-break,
-.layout-compact .status-none {
-    background: transparent;
-    color: var(--gray-700);
+.layout-compact .time-status-large .status-text {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
 }
 
 .layout-compact .view-controls {
@@ -3479,23 +3362,102 @@ body.free-rooms-open {
 .layout-compact .filters-grid {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
-    margin: 0.55rem 0 0;
+    gap: 0.35rem;
+    margin: 0.45rem 0 0;
 }
 
 .layout-compact .filter-group {
-    flex: 1 1 160px;
-    min-width: 140px;
+    flex: 1 1 140px;
+    min-width: 120px;
+}
+
+.layout-compact .filter-select,
+.layout-compact .ui-selectmenu-button.ui-button {
+    min-height: 2rem;
+    padding: 0.35rem 0.5rem;
+    font-size: 0.78rem;
+}
+
+/* Фиксированные варианты кнопок в компактной компоновке */
+.schedule-container.layout-compact:is(.compact-buttons-right, .compact-buttons-left, .compact-buttons-bottom) .view-controls {
+    position: fixed;
+    z-index: 900;
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0.35rem;
+    min-width: 0;
+    max-width: none;
+    margin: 0;
+    padding: 0.35rem;
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: 0.65rem;
+    box-shadow: var(--shadow-md);
+}
+
+.schedule-container.layout-compact:is(.compact-buttons-right, .compact-buttons-left, .compact-buttons-bottom) .view-controls .btn {
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    max-width: none !important;
+    padding: 0 !important;
+    flex: 0 0 auto;
+    justify-content: center;
+}
+
+.schedule-container.layout-compact:is(.compact-buttons-right, .compact-buttons-left, .compact-buttons-bottom) .view-controls .btn span {
+    display: none;
+}
+
+.schedule-container.layout-compact:is(.compact-buttons-right, .compact-buttons-left, .compact-buttons-bottom) .view-controls .btn .icon {
+    width: 19px;
+    height: 19px;
+    margin: 0;
+}
+
+.schedule-container.layout-compact.compact-buttons-right .view-controls {
+    top: 50%;
+    right: 1rem;
+    flex-direction: column;
+    transform: translateY(-50%);
+}
+
+.schedule-container.layout-compact.compact-buttons-left .view-controls {
+    top: 50%;
+    left: 1rem;
+    flex-direction: column;
+    transform: translateY(-50%);
+}
+
+.schedule-container.layout-compact.compact-buttons-bottom .view-controls {
+    bottom: 1rem;
+    left: 50%;
+    flex-direction: row;
+    transform: translateX(-50%);
 }
 
 @media (max-width: 768px) {
     .layout-compact .filters-grid {
+        flex-direction: column;
         flex-wrap: nowrap;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
+        overflow: visible;
     }
 
     .layout-compact .filter-group {
-        flex: 0 0 160px;
+        flex: 0 0 auto;
+        width: 100%;
+        min-width: 0;
+    }
+
+    .schedule-container.layout-compact.compact-buttons-right .view-controls {
+        right: 0.75rem;
+    }
+
+    .schedule-container.layout-compact.compact-buttons-left .view-controls {
+        left: 0.75rem;
+    }
+
+    .schedule-container.layout-compact.compact-buttons-bottom .view-controls {
+        bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
     }
 }
