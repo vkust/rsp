@@ -501,23 +501,39 @@ body.theme-navigation .schedule-table {
 }
 
 body.theme-navigation .schedule-table thead {
-    background: var(--nav-surface);
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: var(--nav-paper);
+}
+
+body.theme-navigation .schedule-table tbody {
+    position: relative;
+    z-index: 0;
+}
+
+body.theme-navigation .schedule-table-body {
+    isolation: isolate;
 }
 
 body.theme-navigation .schedule-table th:first-child,
 body.theme-navigation .schedule-table td:first-child {
     position: sticky;
     left: 0;
-    z-index: 1;
+    z-index: 6;
     background: var(--nav-paper);
 }
 
 body.theme-navigation .schedule-table thead th:first-child {
-    z-index: 3;
+    z-index: 25;
 }
 
 body.theme-navigation .schedule-table th {
+    position: sticky;
+    top: 0;
+    z-index: 20;
     background: var(--nav-paper);
+    background-clip: padding-box;
     border-color: var(--nav-line);
     color: var(--nav-ink-soft);
     font-size: 0.78rem;
