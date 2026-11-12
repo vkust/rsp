@@ -3442,10 +3442,21 @@ body.free-rooms-open {
     overflow: hidden;
     background: var(--gray-50);
     border-right: 1px solid var(--gray-200);
-    border-bottom: 1px solid var(--gray-200);
     color: var(--gray-800);
     font-weight: 600;
     text-align: center;
+}
+
+.schedule-first-column-sticky-label.current-period-header,
+.schedule-first-column-sticky-label.current-period {
+    background: var(--primary-light);
+    color: #ffffff;
+}
+
+.schedule-first-column-sticky-label.current-break-header,
+.schedule-first-column-sticky-label.current-break {
+    background: var(--warning);
+    color: #ffffff;
 }
 
 .schedule-first-column-sticky-label .day-header,
