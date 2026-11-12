@@ -325,7 +325,7 @@ if (!empty($schedule['classrooms']) && !empty($schedule['periods']) && !empty($s
 
                 <!-- Кнопки управления справа -->
                 <div class="view-controls">
-                    <button id="todayFilter" class="btn btn-secondary animated-btn" title="Показать расписание на сегодня" aria-label="Показать расписание на сегодня">
+                    <button id="todayFilter" class="btn btn-secondary animated-btn" title="Показать расписание на сегодня">
                         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                             <rect x="3" y="5" width="18" height="16" rx="2"/>
                             <path d="M16 3v4M8 3v4M3 10h18" stroke-linecap="round"/>
@@ -333,7 +333,7 @@ if (!empty($schedule['classrooms']) && !empty($schedule['periods']) && !empty($s
                         <span>Сегодня</span>
                     </button>
                     <?php if ($free_rooms_data !== null): ?>
-                        <button id="freeRoomsBtn" class="btn btn-secondary animated-btn" title="Свободные кабинеты" aria-label="Свободные кабинеты">
+                        <button id="freeRoomsBtn" class="btn btn-secondary animated-btn" title="Свободные кабинеты">
                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                                 <path d="M4 21V5a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v16"/>
                                 <path d="M3 21h18" stroke-linecap="round"/>
@@ -342,7 +342,7 @@ if (!empty($schedule['classrooms']) && !empty($schedule['periods']) && !empty($s
                             <span>Свободные кабинеты</span>
                         </button>
                     <?php endif; ?>
-                    <button id="resetFilters" class="btn btn-secondary animated-btn" title="Сбросить фильтры" aria-label="Сбросить фильтры">
+                    <button id="resetFilters" class="btn btn-secondary animated-btn">
                         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                             <path class="filter-line-1" d="M3 6h18" stroke-linecap="round"/>
                             <path class="filter-line-2" d="M6 12h12" stroke-linecap="round"/>
@@ -350,12 +350,12 @@ if (!empty($schedule['classrooms']) && !empty($schedule['periods']) && !empty($s
                         </svg>
                         <span>Сбросить фильтры</span>
                     </button>
-                    <button id="toggleView" class="btn btn-primary" title="Переключить вид" aria-label="Переключить вид">
+                    <button id="toggleView" class="btn btn-primary">
                         <svg class="view-icon" viewBox="0 0 24 24">
                             <path class="icon" d="M4 6h16M4 12h16M4 18h16"/>
                         </svg>
                     </button>
-                    <button id="exportExcel" class="btn btn-secondary animated-btn" title="Экспорт в Excel" aria-label="Экспорт в Excel">
+                    <button id="exportExcel" class="btn btn-secondary animated-btn">
                         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                             <path class="arrow-stem" d="M12 4v10" stroke-linecap="round"/>
                             <path class="arrow-left" d="M7 10l5 5" stroke-linecap="round"/>

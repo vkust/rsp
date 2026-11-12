@@ -36,7 +36,7 @@ if (!function_exists('app_asset_url')) {
         return $base . '/' . ltrim((string) $rel, '/');
     }
 }
-define('SCHOOL_SCHEDULE_VERSION', '2.14.2');
+define('SCHOOL_SCHEDULE_VERSION', '2.12.1');
 
 class SchoolSchedule {
     private $default_categories = array(
@@ -130,7 +130,6 @@ class SchoolSchedule {
         add_action('admin_post_manage_webhook', [$this, 'handle_webhook_management']);
         add_action('admin_post_save_bot_code', [$this, 'handle_bot_code_save']);
         add_action('admin_post_save_banner_settings', [$this, 'handle_save_banner_settings']);
-        add_action('admin_post_save_theme_settings', [$this, 'handle_save_theme_settings']);
         
         // Подключаем стили и скрипты
         add_action('wp_enqueue_scripts', [$this, 'enqueue_frontend_assets']);
@@ -403,16 +402,6 @@ class SchoolSchedule {
             filemtime(SCHOOL_SCHEDULE_PATH . 'assets/dist/app.min.js'),
             true
         );
-
-        // Дополнительная тема оформления: подключается только когда выбрана.
-        if (get_option('schedule_theme', 'default') === 'navigation') {
-            wp_enqueue_style(
-                'school-schedule-navigation',
-                app_asset_url('assets/css/theme-navigation.css'),
-                array('school-schedule'),
-                filemtime(SCHOOL_SCHEDULE_PATH . 'assets/css/theme-navigation.css')
-            );
-        }
     }
 
     public function enqueue_admin_assets($hook) {
@@ -1828,26 +1817,6 @@ class SchoolSchedule {
         }
 
         wp_redirect(add_query_arg(['page' => 'school-schedule', 'settings-updated' => 'true'], admin_url('admin.php')));
-        exit;
-    }
-
-    public function handle_save_theme_settings() {
-        if (!current_user_can('manage_options')) {
-            wp_die('Недостаточно прав');
-        }
-
-        check_admin_referer('theme_settings', 'theme_nonce');
-
-        $theme = sanitize_text_field($_POST['schedule_theme'] ?? 'default');
-        if (!in_array($theme, ['default', 'navigation'], true)) {
-            $theme = 'default';
-        }
-
-        update_option('schedule_theme', $theme);
-
-        $back = wp_get_referer() ?: admin_url('admin.php?page=school-schedule');
-        $back = add_query_arg('settings-updated', 'true', $back);
-        wp_redirect($back);
         exit;
     }
 
