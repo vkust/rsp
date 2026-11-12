@@ -2635,6 +2635,10 @@ body.free-rooms-open {
     box-shadow: var(--shadow-sm);
 }
 
+.free-rooms-grid-btn span {
+    display: inline;
+}
+
 .free-rooms-grid-btn .icon {
     width: 18px;
     height: 18px;

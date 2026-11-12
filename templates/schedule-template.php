@@ -77,7 +77,10 @@ if (!empty($schedule['classrooms']) && !empty($schedule['periods']) && !empty($s
     foreach ($schedule['classrooms'] as $room_id => $room) {
         $free_rooms_rooms[(string) $room_id] = (string) $room['name'];
         $short = trim((string) ($room['short'] ?? ''));
-        $free_rooms_room_shorts[(string) $room_id] = $short !== '' ? $short : (string) $room['name'];
+        if ($short === '' || in_array($short, ['*', '-', '—', '?'], true)) {
+            $short = (string) $room['name'];
+        }
+        $free_rooms_room_shorts[(string) $room_id] = $short;
     }
 
     $free_rooms_days = [];
