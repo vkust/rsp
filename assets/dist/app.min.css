@@ -2738,6 +2738,15 @@ body.free-rooms-open {
     gap: 0.5rem;
 }
 
+.rooms-header-actions .btn {
+    white-space: nowrap;
+}
+
+/* На мобильных общий стиль скрывает подписи у .btn — здесь подпись нужна. */
+.rooms-header-actions .btn span {
+    display: inline;
+}
+
 .rooms-file {
     color: var(--gray-400);
     font-size: 0.75rem;
