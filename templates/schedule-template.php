@@ -266,16 +266,16 @@ if (!empty($schedule['classrooms']) && !empty($schedule['periods']) && !empty($s
                             <span>Свободные кабинеты</span>
                         </button>
                         <a id="freeRoomsGridBtn"
-                           class="btn btn-secondary animated-btn"
+                           class="btn btn-secondary animated-btn btn-icon-only"
                            href="<?php echo esc_url(App_Config::site_url('free-rooms')); ?>"
-                           title="Сетка свободных кабинетов">
+                           title="Сетка свободных кабинетов"
+                           aria-label="Сетка свободных кабинетов">
                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                                 <rect x="3" y="3" width="7" height="7" rx="1"/>
                                 <rect x="14" y="3" width="7" height="7" rx="1"/>
                                 <rect x="3" y="14" width="7" height="7" rx="1"/>
                                 <rect x="14" y="14" width="7" height="7" rx="1"/>
                             </svg>
-                            <span>Сетка кабинетов</span>
                         </a>
                     <?php endif; ?>
                     <button id="resetFilters" class="btn btn-secondary animated-btn">

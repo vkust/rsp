@@ -2450,6 +2450,14 @@ a.btn {
     text-decoration: none;
 }
 
+.btn-icon-only {
+    justify-content: center;
+}
+
+.btn-icon-only svg {
+    margin-right: 0;
+}
+
 body.free-rooms-open {
     overflow: hidden;
 }
