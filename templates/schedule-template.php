@@ -115,6 +115,7 @@ if (!empty($schedule['classrooms']) && !empty($schedule['periods']) && !empty($s
 
     // Занятость считаем по ВСЕМ урокам, включая скрытые категории.
     $free_rooms_occupied = [];
+    $free_rooms_used_periods = [];
     $all_lessons = $schedule['lessons_all'] ?? $schedule['lessons'];
     foreach ($all_lessons as $lesson) {
         $day_id = (string) ($lesson['dayId'] ?? '');
@@ -122,6 +123,8 @@ if (!empty($schedule['classrooms']) && !empty($schedule['periods']) && !empty($s
         if ($day_id === '' || $period_id === '') {
             continue;
         }
+
+        $free_rooms_used_periods[$period_id] = true;
 
         $class_labels = [];
         $class_names_full = [];
@@ -207,6 +210,7 @@ if (!empty($schedule['classrooms']) && !empty($schedule['periods']) && !empty($s
             'roomShorts' => $free_rooms_room_shorts,
             'days' => $free_rooms_days,
             'periods' => $free_rooms_periods,
+            'usedPeriods' => array_keys($free_rooms_used_periods),
             'occupied' => $free_rooms_occupied,
         ];
     }

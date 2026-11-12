@@ -759,14 +759,19 @@ document.addEventListener('DOMContentLoaded', function() {
     /* ------------------------------------------------------------------ */
 
     function freeRoomsGridUsedPeriods() {
-        const used = new Set();
-        Object.keys(freeRoomsData.occupied || {}).forEach(dayId => {
-            Object.keys(freeRoomsData.occupied[dayId] || {}).forEach(periodId => {
-                used.add(periodId);
-            });
-        });
-
         const all = freeRoomsSortedEntries(freeRoomsData.periods, 'order');
+        const used = new Set();
+
+        if (Array.isArray(freeRoomsData.usedPeriods) && freeRoomsData.usedPeriods.length) {
+            freeRoomsData.usedPeriods.forEach(periodId => used.add(String(periodId)));
+        } else {
+            Object.keys(freeRoomsData.occupied || {}).forEach(dayId => {
+                Object.keys(freeRoomsData.occupied[dayId] || {}).forEach(periodId => {
+                    used.add(periodId);
+                });
+            });
+        }
+
         const filtered = all.filter(([id]) => used.size === 0 || used.has(id));
         return filtered.length ? filtered : all;
     }
