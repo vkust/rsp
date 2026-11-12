@@ -36,7 +36,7 @@ if (!function_exists('app_asset_url')) {
         return $base . '/' . ltrim((string) $rel, '/');
     }
 }
-define('SCHOOL_SCHEDULE_VERSION', '2.16.0');
+define('SCHOOL_SCHEDULE_VERSION', '2.17.0');
 
 class SchoolSchedule {
     private $default_categories = array(
@@ -1850,14 +1850,7 @@ class SchoolSchedule {
 
         check_admin_referer('layout_settings', 'layout_nonce');
 
-        $layout = sanitize_text_field($_POST['schedule_layout'] ?? 'classic');
-        if (!in_array($layout, ['classic', 'compact'], true)) {
-            $layout = 'classic';
-        }
-
-        update_option('schedule_layout', $layout);
-
-        $placements = ['header', 'right', 'left', 'bottom'];
+        $placements = ['header', 'right', 'left', 'bottom', 'scroll-right', 'scroll-left', 'scroll-bottom'];
         $button_options = [
             'schedule_main_buttons_desktop',
             'schedule_main_buttons_mobile',

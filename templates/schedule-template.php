@@ -218,10 +218,7 @@ if (!empty($schedule['classrooms']) && !empty($schedule['periods']) && !empty($s
 ?>
 
 <?php
-$schedule_layout = get_option('schedule_layout', 'classic');
-if (!in_array($schedule_layout, ['classic', 'compact'], true)) {
-    $schedule_layout = 'classic';
-}
+$button_placements = ['header', 'right', 'left', 'bottom', 'scroll-right', 'scroll-left', 'scroll-bottom'];
 
 $is_panel_page = !empty($atts['is_panel']);
 $desktop_buttons_option = $is_panel_page
@@ -232,18 +229,18 @@ $mobile_buttons_option = $is_panel_page
     : 'schedule_main_buttons_mobile';
 
 $buttons_desktop = get_option($desktop_buttons_option, 'header');
-if (!in_array($buttons_desktop, ['header', 'right', 'left', 'bottom'], true)) {
+if (!in_array($buttons_desktop, $button_placements, true)) {
     $buttons_desktop = 'header';
 }
 
 $buttons_mobile = get_option($mobile_buttons_option, 'header');
-if (!in_array($buttons_mobile, ['header', 'right', 'left', 'bottom'], true)) {
+if (!in_array($buttons_mobile, $button_placements, true)) {
     $buttons_mobile = 'header';
 }
 
 $button_classes = ' buttons-desktop-' . $buttons_desktop . ' buttons-mobile-' . $buttons_mobile;
 ?>
-<div class="schedule-container layout-<?php echo esc_attr($schedule_layout . $button_classes); ?><?php echo $atts['is_panel'] ? ' schedule-panels' : ''; ?>">
+<div class="schedule-container<?php echo esc_attr($button_classes); ?><?php echo $atts['is_panel'] ? ' schedule-panels' : ''; ?>">
     <?php if ($free_rooms_data !== null): ?>
         <script type="application/json" id="freeRoomsData"><?php
             echo json_encode(

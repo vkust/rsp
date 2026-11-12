@@ -3282,105 +3282,10 @@ body.free-rooms-open {
 /* Варианты компоновки                                                 */
 /* ================================================================== */
 
-/* Компактная компоновка */
-.schedule-container.layout-compact .schedule-controls {
-    padding: 0.6rem 0.8rem;
-}
-
-.layout-compact .controls-header {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.5rem 0.75rem;
-}
-
-.layout-compact .header-content {
-    flex: 0 0 auto;
-    min-width: 0;
-}
-
-.layout-compact .schedule-title {
-    font-size: 1rem;
-}
-
-.layout-compact .time-status-wrapper {
-    display: inline-flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 0.5rem;
-    width: auto;
-    max-width: none;
-    margin: 0;
-    padding: 0.3rem 0.55rem;
-    background: var(--gray-50);
-    border: 1px solid var(--gray-200);
-    border-radius: 0.5rem;
-}
-
-.layout-compact .time-container {
-    width: auto;
-    margin: 0;
-    padding: 0;
-    justify-content: flex-start;
-}
-
-.layout-compact .time-main-large {
-    color: var(--gray-800);
-    font-size: 1.8rem;
-    font-weight: 700;
-}
-
-.layout-compact .period-container {
-    width: auto;
-    background: transparent;
-}
-
-.layout-compact .time-status-large {
-    width: auto;
-    min-height: 0;
-    padding: 0.25rem 0.5rem;
-    justify-content: flex-start;
-    font-size: 0.82rem;
-}
-
-.layout-compact .time-status-large .time-icon {
-    width: 14px;
-    height: 14px;
-}
-
-.layout-compact .time-status-large .status-text {
-    white-space: normal;
-    overflow: visible;
-    text-overflow: clip;
-}
-
-.layout-compact .view-controls {
-    margin-left: auto;
-    flex-wrap: wrap;
-}
-
-.layout-compact .filters-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.35rem;
-    margin: 0.45rem 0 0;
-}
-
-.layout-compact .filter-group {
-    flex: 1 1 140px;
-    min-width: 120px;
-}
-
-.layout-compact .filter-select,
-.layout-compact .ui-selectmenu-button.ui-button {
-    min-height: 2rem;
-    padding: 0.35rem 0.5rem;
-    font-size: 0.78rem;
-}
-
-/* Фиксированные варианты кнопок (классическая и компактная) */
+/* Кнопки: постоянное и появляющееся при прокрутке расположение */
 @media (min-width: 769px) {
-    .schedule-container:is(.buttons-desktop-right, .buttons-desktop-left, .buttons-desktop-bottom) .view-controls {
+    .schedule-container:is(.buttons-desktop-right, .buttons-desktop-left, .buttons-desktop-bottom) .view-controls,
+    .schedule-container:is(.buttons-desktop-scroll-right, .buttons-desktop-scroll-left, .buttons-desktop-scroll-bottom).buttons-floating .view-controls {
         position: fixed;
         z-index: 900;
         display: flex;
@@ -3398,7 +3303,8 @@ body.free-rooms-open {
         box-sizing: border-box;
     }
 
-    .schedule-container:is(.buttons-desktop-right, .buttons-desktop-left, .buttons-desktop-bottom) .view-controls .btn {
+    .schedule-container:is(.buttons-desktop-right, .buttons-desktop-left, .buttons-desktop-bottom) .view-controls .btn,
+    .schedule-container:is(.buttons-desktop-scroll-right, .buttons-desktop-scroll-left, .buttons-desktop-scroll-bottom).buttons-floating .view-controls .btn {
         width: 44px !important;
         max-width: 44px !important;
         height: 44px !important;
@@ -3408,31 +3314,36 @@ body.free-rooms-open {
         justify-content: center;
     }
 
-    .schedule-container:is(.buttons-desktop-right, .buttons-desktop-left, .buttons-desktop-bottom) .view-controls .btn span {
+    .schedule-container:is(.buttons-desktop-right, .buttons-desktop-left, .buttons-desktop-bottom) .view-controls .btn span,
+    .schedule-container:is(.buttons-desktop-scroll-right, .buttons-desktop-scroll-left, .buttons-desktop-scroll-bottom).buttons-floating .view-controls .btn span {
         display: none;
     }
 
-    .schedule-container:is(.buttons-desktop-right, .buttons-desktop-left, .buttons-desktop-bottom) .view-controls .btn .icon {
+    .schedule-container:is(.buttons-desktop-right, .buttons-desktop-left, .buttons-desktop-bottom) .view-controls .btn .icon,
+    .schedule-container:is(.buttons-desktop-scroll-right, .buttons-desktop-scroll-left, .buttons-desktop-scroll-bottom).buttons-floating .view-controls .btn .icon {
         width: 19px;
         height: 19px;
         margin: 0;
     }
 
-    .schedule-container.buttons-desktop-right .view-controls {
+    .schedule-container.buttons-desktop-right .view-controls,
+    .schedule-container.buttons-desktop-scroll-right.buttons-floating .view-controls {
         top: 50%;
         right: 1rem;
         flex-direction: column;
         transform: translateY(-50%);
     }
 
-    .schedule-container.buttons-desktop-left .view-controls {
+    .schedule-container.buttons-desktop-left .view-controls,
+    .schedule-container.buttons-desktop-scroll-left.buttons-floating .view-controls {
         top: 50%;
         left: 1rem;
         flex-direction: column;
         transform: translateY(-50%);
     }
 
-    .schedule-container.buttons-desktop-bottom .view-controls {
+    .schedule-container.buttons-desktop-bottom .view-controls,
+    .schedule-container.buttons-desktop-scroll-bottom.buttons-floating .view-controls {
         bottom: 1rem;
         left: 50%;
         flex-direction: row;
@@ -3441,19 +3352,8 @@ body.free-rooms-open {
 }
 
 @media (max-width: 768px) {
-    .layout-compact .filters-grid {
-        flex-direction: column;
-        flex-wrap: nowrap;
-        overflow: visible;
-    }
-
-    .layout-compact .filter-group {
-        flex: 0 0 auto;
-        width: 100%;
-        min-width: 0;
-    }
-
-    .schedule-container:is(.buttons-mobile-right, .buttons-mobile-left, .buttons-mobile-bottom) .view-controls {
+    .schedule-container:is(.buttons-mobile-right, .buttons-mobile-left, .buttons-mobile-bottom) .view-controls,
+    .schedule-container:is(.buttons-mobile-scroll-right, .buttons-mobile-scroll-left, .buttons-mobile-scroll-bottom).buttons-floating .view-controls {
         position: fixed;
         z-index: 900;
         display: flex;
@@ -3471,7 +3371,8 @@ body.free-rooms-open {
         box-sizing: border-box;
     }
 
-    .schedule-container:is(.buttons-mobile-right, .buttons-mobile-left, .buttons-mobile-bottom) .view-controls .btn {
+    .schedule-container:is(.buttons-mobile-right, .buttons-mobile-left, .buttons-mobile-bottom) .view-controls .btn,
+    .schedule-container:is(.buttons-mobile-scroll-right, .buttons-mobile-scroll-left, .buttons-mobile-scroll-bottom).buttons-floating .view-controls .btn {
         width: 44px !important;
         max-width: 44px !important;
         height: 44px !important;
@@ -3481,31 +3382,36 @@ body.free-rooms-open {
         justify-content: center;
     }
 
-    .schedule-container:is(.buttons-mobile-right, .buttons-mobile-left, .buttons-mobile-bottom) .view-controls .btn span {
+    .schedule-container:is(.buttons-mobile-right, .buttons-mobile-left, .buttons-mobile-bottom) .view-controls .btn span,
+    .schedule-container:is(.buttons-mobile-scroll-right, .buttons-mobile-scroll-left, .buttons-mobile-scroll-bottom).buttons-floating .view-controls .btn span {
         display: none;
     }
 
-    .schedule-container:is(.buttons-mobile-right, .buttons-mobile-left, .buttons-mobile-bottom) .view-controls .btn .icon {
+    .schedule-container:is(.buttons-mobile-right, .buttons-mobile-left, .buttons-mobile-bottom) .view-controls .btn .icon,
+    .schedule-container:is(.buttons-mobile-scroll-right, .buttons-mobile-scroll-left, .buttons-mobile-scroll-bottom).buttons-floating .view-controls .btn .icon {
         width: 19px;
         height: 19px;
         margin: 0;
     }
 
-    .schedule-container.buttons-mobile-right .view-controls {
+    .schedule-container.buttons-mobile-right .view-controls,
+    .schedule-container.buttons-mobile-scroll-right.buttons-floating .view-controls {
         top: 50%;
         right: 0.75rem;
         flex-direction: column;
         transform: translateY(-50%);
     }
 
-    .schedule-container.buttons-mobile-left .view-controls {
+    .schedule-container.buttons-mobile-left .view-controls,
+    .schedule-container.buttons-mobile-scroll-left.buttons-floating .view-controls {
         top: 50%;
         left: 0.75rem;
         flex-direction: column;
         transform: translateY(-50%);
     }
 
-    .schedule-container.buttons-mobile-bottom .view-controls {
+    .schedule-container.buttons-mobile-bottom .view-controls,
+    .schedule-container.buttons-mobile-scroll-bottom.buttons-floating .view-controls {
         bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
         left: 50%;
         flex-direction: row;

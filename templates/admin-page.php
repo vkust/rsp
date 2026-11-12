@@ -666,16 +666,14 @@
     </div>
 
     <?php
-    $current_layout = get_option('schedule_layout', 'classic');
-    if (!in_array($current_layout, ['classic', 'compact'], true)) {
-        $current_layout = 'classic';
-    }
-
     $button_placement_options = [
         'header' => 'В шапке',
-        'right' => 'Справа, фиксировано',
-        'left' => 'Слева, фиксировано',
-        'bottom' => 'Снизу, фиксировано',
+        'right' => 'Справа, постоянно',
+        'left' => 'Слева, постоянно',
+        'bottom' => 'Снизу, постоянно',
+        'scroll-right' => 'Справа при прокрутке',
+        'scroll-left' => 'Слева при прокрутке',
+        'scroll-bottom' => 'Снизу при прокрутке',
     ];
     $button_settings = [
         'schedule_main_buttons_desktop' => [
@@ -703,23 +701,12 @@
         }
         $current_buttons[$option_name] = $value;
     }
-
-    $layout_options = [
-        'classic' => [
-            'name' => 'Классическая',
-            'desc' => 'Часы по центру, кнопки справа, фильтры под шапкой.',
-        ],
-        'compact' => [
-            'name' => 'Компактная',
-            'desc' => 'Часы и период в одной строке, фильтры в ряд, меньше высоты.',
-        ],
-    ];
     ?>
     <div class="card">
         <div class="card-header">
             <h2 class="card-title">
                 <button type="button" class="toggle-card" aria-expanded="false">
-                    Компоновка страницы
+                    Расположение кнопок
                     <span class="toggle-icon">▼</span>
                 </button>
             </h2>
@@ -730,40 +717,13 @@
                 <input type="hidden" name="action" value="save_layout_settings">
 
                 <p class="description">
-                    Расположение часов, фильтров и кнопок. Компактная компоновка
-                    уменьшает высоту шапки и фильтров, на мобильных фильтры
-                    располагаются друг под другом.
+                    Можно задать отдельно для основной страницы и панелей, для
+                    компьютеров и мобильных. Варианты «постоянно» закрепляют кнопки
+                    сразу, варианты «при прокрутке» показывают их в шапке, а после
+                    прокрутки переносят в выбранное место.
                 </p>
-
-                <div class="layout-choice-grid">
-                    <?php foreach ($layout_options as $layout_key => $layout): ?>
-                        <label class="layout-choice">
-                            <input type="radio" name="schedule_layout" value="<?php echo esc_attr($layout_key); ?>" <?php checked($current_layout, $layout_key); ?>>
-
-                            <span class="layout-preview lp-<?php echo esc_attr($layout_key); ?>" aria-hidden="true">
-                                <?php if ($layout_key === 'classic'): ?>
-                                    <span class="lp-top"><span class="lp-time"></span><span class="lp-actions"></span></span>
-                                    <span class="lp-filters"><i></i><i></i><i></i><i></i></span>
-                                    <span class="lp-table"></span>
-                                <?php else: ?>
-                                    <span class="lp-top lp-top-compact"><span class="lp-time"></span><span class="lp-actions"></span></span>
-                                    <span class="lp-filters lp-filters-inline"><i></i><i></i><i></i><i></i></span>
-                                    <span class="lp-table"></span>
-                                <?php endif; ?>
-                            </span>
-
-                            <span class="layout-choice-name"><?php echo esc_html($layout['name']); ?></span>
-                            <span class="layout-choice-desc"><?php echo esc_html($layout['desc']); ?></span>
-                        </label>
-                    <?php endforeach; ?>
-                </div>
 
                 <h3>Расположение кнопок</h3>
-                <p class="description">
-                    Можно задать отдельно для основной страницы и панелей, для
-                    компьютеров и мобильных. Варианты «справа», «слева» и «снизу»
-                    размещают кнопки фиксированно поверх страницы.
-                </p>
                 <table class="form-table">
                     <tbody>
                         <?php foreach ($button_settings as $option_name => $setting): ?>
@@ -788,7 +748,7 @@
                 </table>
 
                 <div class="submit-wrapper">
-                    <button type="submit" class="button button-primary">Сохранить компоновку</button>
+                    <button type="submit" class="button button-primary">Сохранить настройки</button>
                 </div>
             </form>
         </div>

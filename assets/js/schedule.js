@@ -194,6 +194,35 @@ document.addEventListener('DOMContentLoaded', function() {
         // Добавляем вызов hideEmptyDays после загрузки
         hideEmptyDays();
         initStickyScheduleHeader();
+        initFloatingButtons();
+    }
+
+    /**
+     * Смешанный режим: кнопки остаются в шапке, а после прокрутки
+     * переносятся в выбранное фиксированное место.
+     */
+    function initFloatingButtons() {
+        const container = document.querySelector('.schedule-container');
+        if (!container) {
+            return;
+        }
+
+        let floating = false;
+
+        function update() {
+            const scrollTop = window.scrollY || window.pageYOffset || 0;
+
+            if (!floating && scrollTop > 120) {
+                floating = true;
+                container.classList.add('buttons-floating');
+            } else if (floating && scrollTop < 80) {
+                floating = false;
+                container.classList.remove('buttons-floating');
+            }
+        }
+
+        window.addEventListener('scroll', update, { passive: true });
+        update();
     }
 
     /**
