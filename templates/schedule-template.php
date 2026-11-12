@@ -113,6 +113,7 @@ if (!empty($schedule['classrooms']) && !empty($schedule['periods']) && !empty($s
         }
 
         $class_labels = [];
+        $class_names_full = [];
         foreach ((array) ($lesson['classIds'] ?? []) as $class_id) {
             $class = $schedule['classes'][(string) $class_id] ?? null;
             if (!$class) {
@@ -123,6 +124,18 @@ if (!empty($schedule['classrooms']) && !empty($schedule['periods']) && !empty($s
             $label = $short !== '' ? $short : $name;
             if ($label !== '') {
                 $class_labels[$label] = true;
+            }
+            if ($name !== '') {
+                $class_names_full[$name] = true;
+            }
+        }
+
+        $teacher_names = [];
+        foreach ((array) ($lesson['teacherIds'] ?? []) as $teacher_id) {
+            $teacher = $schedule['teachers'][(string) $teacher_id] ?? null;
+            $teacher_name = trim((string) ($teacher['name'] ?? ''));
+            if ($teacher_name !== '') {
+                $teacher_names[$teacher_name] = true;
             }
         }
 
@@ -139,15 +152,23 @@ if (!empty($schedule['classrooms']) && !empty($schedule['periods']) && !empty($s
             if (!isset($free_rooms_occupied[$day_id][$period_id][$room_id])) {
                 $free_rooms_occupied[$day_id][$period_id][$room_id] = [
                     'classes' => [],
+                    'classesFull' => [],
                     'subjects' => [],
+                    'teachers' => [],
                 ];
             }
 
             foreach (array_keys($class_labels) as $label) {
                 $free_rooms_occupied[$day_id][$period_id][$room_id]['classes'][$label] = true;
             }
+            foreach (array_keys($class_names_full) as $full_name) {
+                $free_rooms_occupied[$day_id][$period_id][$room_id]['classesFull'][$full_name] = true;
+            }
             if ($subject_name !== '') {
                 $free_rooms_occupied[$day_id][$period_id][$room_id]['subjects'][$subject_name] = true;
+            }
+            foreach (array_keys($teacher_names) as $teacher_name) {
+                $free_rooms_occupied[$day_id][$period_id][$room_id]['teachers'][$teacher_name] = true;
             }
         }
     }
@@ -156,7 +177,9 @@ if (!empty($schedule['classrooms']) && !empty($schedule['periods']) && !empty($s
         foreach ($free_rooms_day as &$free_rooms_period) {
             foreach ($free_rooms_period as &$free_rooms_cell) {
                 $free_rooms_cell['classes'] = array_keys($free_rooms_cell['classes']);
+                $free_rooms_cell['classesFull'] = array_keys($free_rooms_cell['classesFull']);
                 $free_rooms_cell['subjects'] = array_keys($free_rooms_cell['subjects']);
+                $free_rooms_cell['teachers'] = array_keys($free_rooms_cell['teachers']);
             }
         }
     }
@@ -632,7 +655,21 @@ if (!empty($schedule['classrooms']) && !empty($schedule['periods']) && !empty($s
                 </div>
 
                 <div class="rooms-modal-footer">
-                    <span class="rooms-grid-hint">Прокрутите таблицу, чтобы увидеть остальные уроки.</span>
+                    <span class="rooms-grid-hint">Нажмите на занятую ячейку, чтобы увидеть класс, предмет и учителя.</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="roomLessonModal" class="room-detail-modal" aria-hidden="true">
+            <div class="room-detail-backdrop" data-room-detail-close></div>
+            <div class="room-detail-dialog" role="dialog" aria-modal="true" aria-labelledby="roomDetailTitle">
+                <div class="room-detail-header">
+                    <h4 id="roomDetailTitle">Кабинет</h4>
+                    <button type="button" class="free-rooms-close" data-room-detail-close aria-label="Закрыть">×</button>
+                </div>
+                <dl class="room-detail-list" id="roomDetailList"></dl>
+                <div class="room-detail-footer">
+                    <button type="button" class="btn btn-secondary" data-room-detail-close>Закрыть</button>
                 </div>
             </div>
         </div>

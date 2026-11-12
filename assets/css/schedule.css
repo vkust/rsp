@@ -2932,18 +2932,75 @@ body.free-rooms-open {
     white-space: nowrap;
 }
 
-.rooms-cell.is-current {
+.rooms-cell.is-busy.is-clickable {
+    cursor: pointer;
+}
+
+.rooms-cell.is-busy.is-clickable:hover {
+    background: #fee2e2;
+    box-shadow: inset 0 0 0 1px #fca5a5;
+}
+
+.rooms-cell.is-busy.is-clickable:focus-visible {
     outline: 2px solid var(--primary);
     outline-offset: -2px;
 }
 
-.rooms-grid thead th.is-current {
-    background: #dbeafe;
-    color: var(--primary-dark);
+.rooms-cell.is-current {
+    background-image: linear-gradient(rgba(59, 130, 246, 0.1), rgba(59, 130, 246, 0.1));
+    box-shadow:
+        inset 2px 0 0 rgba(59, 130, 246, 0.45),
+        inset -2px 0 0 rgba(59, 130, 246, 0.45);
 }
 
+.rooms-grid thead th.is-current {
+    background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
+    color: #fff;
+    box-shadow: inset 0 -3px 0 #1d4ed8;
+}
+
+.rooms-grid thead th.is-current .rooms-grid-time,
 .rooms-grid thead th.is-current .rooms-grid-free {
-    color: var(--primary-dark);
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.rooms-grid thead th.is-current .rooms-grid-period::before {
+    content: "";
+    display: inline-block;
+    width: 0.45rem;
+    height: 0.45rem;
+    margin-right: 0.3rem;
+    border-radius: 50%;
+    background: #fff;
+    vertical-align: 0.05rem;
+    animation: roomsCurrentPulse 1.8s infinite;
+}
+
+.rooms-grid thead th.is-current .rooms-grid-period::after {
+    content: "сейчас";
+    display: inline-block;
+    margin-left: 0.35rem;
+    padding: 0.05rem 0.35rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.22);
+    font-size: 0.6rem;
+    font-weight: 600;
+    line-height: 1.4;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    vertical-align: 0.1rem;
+}
+
+@keyframes roomsCurrentPulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.6);
+    }
+    70% {
+        box-shadow: 0 0 0 0.35rem rgba(255, 255, 255, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+    }
 }
 
 .room-name-full {
@@ -3070,7 +3127,122 @@ body.free-rooms-open {
         font-size: 0.64rem;
     }
 
-    .rooms-modal-footer {
+    .rooms-grid thead th.is-current .rooms-grid-period::after {
         display: none;
+    }
+
+    .rooms-modal-footer {
+        display: flex;
+        padding: 0.4rem 0.9rem;
+        font-size: 0.66rem;
+    }
+}
+
+/* ================================================================== */
+/* Подробности занятого кабинета                                       */
+/* ================================================================== */
+
+.room-detail-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 10060;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.room-detail-modal.is-open {
+    display: flex;
+}
+
+.room-detail-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.35);
+}
+
+.room-detail-dialog {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    width: min(430px, 100%);
+    max-height: min(80vh, 640px);
+    background: #fff;
+    border-radius: 0.9rem;
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+    animation: roomDetailIn 0.16s ease-out;
+}
+
+.room-detail-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.9rem 1.1rem;
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.room-detail-header h4 {
+    margin: 0;
+    color: var(--gray-800);
+    font-size: 1.05rem;
+    font-weight: 600;
+}
+
+.room-detail-list {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 0.5rem 0.9rem;
+    margin: 0;
+    padding: 0.9rem 1.1rem;
+    overflow-y: auto;
+}
+
+.room-detail-list dt {
+    color: var(--gray-500);
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.room-detail-list dd {
+    margin: 0;
+    color: var(--gray-800);
+    font-size: 0.85rem;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
+.room-detail-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding: 0.75rem 1.1rem;
+    border-top: 1px solid var(--gray-200);
+    background: var(--gray-50);
+}
+
+@keyframes roomDetailIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@media (max-width: 640px) {
+    .room-detail-modal {
+        padding: 0;
+        align-items: flex-end;
+    }
+
+    .room-detail-dialog {
+        width: 100%;
+        max-height: 82vh;
+        border-radius: 1rem 1rem 0 0;
     }
 }
