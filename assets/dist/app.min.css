@@ -3237,11 +3237,25 @@ body.free-rooms-open {
     }
 }
 
-/* Закреплённая шапка таблицы при вертикальной прокрутке */
-.schedule-table-body {
-    max-height: 70vh;
-    overflow-y: auto;
-    overscroll-behavior: contain;
+/* Закреплённая шапка таблицы при прокрутке страницы */
+.schedule-sticky-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 900;
+    display: none;
+    overflow: hidden;
+    background: #fff;
+    pointer-events: none;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);
+}
+
+.schedule-sticky-header-table {
+    width: auto;
+    min-width: 0;
+    table-layout: fixed;
+    border-collapse: collapse;
+    background: #fff;
 }
 
 .schedule-table thead th {

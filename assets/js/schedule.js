@@ -189,39 +189,156 @@ document.addEventListener('DOMContentLoaded', function() {
         window.addEventListener('resize', debounce(() => {
             initializeFilters();
             hideEmptyDays(); // Обновляем видимость дней при изменении размера окна
-            updateScheduleTableHeight();
         }, 250));
 
         // Добавляем вызов hideEmptyDays после загрузки
         hideEmptyDays();
-        updateScheduleTableHeight();
-        window.addEventListener('load', function() {
-            setTimeout(updateScheduleTableHeight, 100);
-        });
+        initStickyScheduleHeader();
     }
 
     /**
-     * Подгоняет высоту прокручиваемой области таблицы под экран,
-     * чтобы шапка таблицы оставалась закреплённой.
+     * Закреплённая шапка таблицы при прокрутке страницы.
+     * Копия thead показывается fixed-слоем, когда оригинал уходит за верх экрана.
      */
-    function updateScheduleTableHeight() {
-        const wrapper = document.querySelector('.schedule-table-wrapper');
+    function initStickyScheduleHeader() {
+        const source = document.querySelector('.schedule-table');
         const body = document.querySelector('.schedule-table-body');
-        if (!wrapper || !body) {
+        if (!source || !body) {
             return;
         }
 
-        const rect = wrapper.getBoundingClientRect();
-        const wrapperTop = rect.top + window.scrollY;
-        const available = window.innerHeight - wrapperTop - 24;
+        const container = document.createElement('div');
+        container.className = 'schedule-sticky-header';
+        container.setAttribute('aria-hidden', 'true');
 
-        if (available >= 240) {
-            body.style.maxHeight = available + 'px';
-            body.style.overflowY = 'auto';
-        } else {
-            body.style.maxHeight = '';
-            body.style.overflowY = '';
+        const table = document.createElement('table');
+        table.className = 'schedule-table schedule-sticky-header-table';
+        container.appendChild(table);
+        document.body.appendChild(container);
+
+        stickyScheduleHeaderSource = source;
+        stickyScheduleHeaderBody = body;
+        stickyScheduleHeader = container;
+        stickyScheduleHeaderTable = table;
+
+        refreshStickyScheduleHeader();
+
+        window.addEventListener('scroll', requestStickyScheduleHeaderUpdate, { passive: true });
+        window.addEventListener('resize', debounce(function() {
+            refreshStickyScheduleHeader();
+            requestStickyScheduleHeaderUpdate();
+        }, 150));
+        window.addEventListener('load', function() {
+            refreshStickyScheduleHeader();
+            requestStickyScheduleHeaderUpdate();
+        }, { once: true });
+        body.addEventListener('scroll', requestStickyScheduleHeaderUpdate, { passive: true });
+
+        updateStickyScheduleHeader();
+    }
+
+    let stickyScheduleHeader = null;
+    let stickyScheduleHeaderTable = null;
+    let stickyScheduleHeaderSource = null;
+    let stickyScheduleHeaderBody = null;
+    let stickyHeaderTicking = false;
+
+    function requestStickyScheduleHeaderUpdate() {
+        if (stickyHeaderTicking) {
+            return;
         }
+        stickyHeaderTicking = true;
+        window.requestAnimationFrame(function() {
+            stickyHeaderTicking = false;
+            updateStickyScheduleHeader();
+        });
+    }
+
+    function refreshStickyScheduleHeader() {
+        if (!stickyScheduleHeaderSource || !stickyScheduleHeaderTable) {
+            return;
+        }
+
+        const thead = stickyScheduleHeaderSource.querySelector('thead');
+        if (!thead) {
+            return;
+        }
+
+        stickyScheduleHeaderTable.className = stickyScheduleHeaderSource.className + ' schedule-sticky-header-table';
+        stickyScheduleHeaderTable.innerHTML = '';
+        stickyScheduleHeaderTable.appendChild(thead.cloneNode(true));
+        syncStickyScheduleHeaderWidths();
+    }
+
+    function syncStickyScheduleHeaderWidths() {
+        if (!stickyScheduleHeaderSource || !stickyScheduleHeaderTable) {
+            return;
+        }
+
+        const sourceThs = stickyScheduleHeaderSource.querySelectorAll('thead th');
+        const cloneThs = stickyScheduleHeaderTable.querySelectorAll('thead th');
+        const tableWidth = stickyScheduleHeaderSource.offsetWidth;
+
+        stickyScheduleHeaderTable.style.width = tableWidth + 'px';
+
+        sourceThs.forEach(function(th, index) {
+            const cloneTh = cloneThs[index];
+            if (!cloneTh) {
+                return;
+            }
+            const rect = th.getBoundingClientRect();
+            cloneTh.style.width = rect.width + 'px';
+            cloneTh.style.minWidth = rect.width + 'px';
+            cloneTh.style.maxWidth = rect.width + 'px';
+            cloneTh.className = th.className;
+        });
+    }
+
+    function syncStickyScheduleHeaderClasses() {
+        if (!stickyScheduleHeaderSource || !stickyScheduleHeaderTable) {
+            return;
+        }
+
+        const sourceThs = stickyScheduleHeaderSource.querySelectorAll('thead th');
+        const cloneThs = stickyScheduleHeaderTable.querySelectorAll('thead th');
+
+        sourceThs.forEach(function(th, index) {
+            if (cloneThs[index]) {
+                cloneThs[index].className = th.className;
+            }
+        });
+    }
+
+    function updateStickyScheduleHeader() {
+        if (!stickyScheduleHeader || !stickyScheduleHeaderSource || !stickyScheduleHeaderBody) {
+            return;
+        }
+
+        const thead = stickyScheduleHeaderSource.querySelector('thead');
+        if (!thead) {
+            stickyScheduleHeader.style.display = 'none';
+            return;
+        }
+
+        const bodyRect = stickyScheduleHeaderBody.getBoundingClientRect();
+        const headRect = thead.getBoundingClientRect();
+        const headerHeight = headRect.height;
+        const shouldShow = headRect.top < 0 && bodyRect.bottom > headerHeight + 4;
+
+        if (!shouldShow) {
+            stickyScheduleHeader.style.display = 'none';
+            return;
+        }
+
+        stickyScheduleHeader.style.display = 'block';
+        stickyScheduleHeader.style.left = bodyRect.left + 'px';
+        stickyScheduleHeader.style.width = bodyRect.width + 'px';
+
+        const cloneHeight = stickyScheduleHeaderTable.getBoundingClientRect().height || headerHeight;
+        stickyScheduleHeader.style.height = cloneHeight + 'px';
+        stickyScheduleHeaderTable.style.transform = 'translateX(' + (-stickyScheduleHeaderBody.scrollLeft) + 'px)';
+
+        syncStickyScheduleHeaderClasses();
     }
 
     // Вспомогательная функция debounce
@@ -325,7 +442,8 @@ document.addEventListener('DOMContentLoaded', function() {
         updateFilterOptions();
         saveFilters();
         hideEmptyDays(); // Вызываем после фильтрации
-        updateScheduleTableHeight();
+        refreshStickyScheduleHeader();
+        updateStickyScheduleHeader();
     }
 
     // Быстрый фильтр «Сегодня»
@@ -1258,6 +1376,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="status-text">${currentStatus.text}</div>
             `;
         }
+
+        syncStickyScheduleHeaderClasses();
     }
 
     // Функция для склонения числительных
