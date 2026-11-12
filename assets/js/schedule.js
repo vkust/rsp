@@ -1513,8 +1513,10 @@ document.addEventListener('DOMContentLoaded', function() {
             currentSeconds >= firstStartSeconds - 3600 &&
             currentSeconds < firstStartSeconds
         ) {
+            // Округляем вверх: 45 минут в 07:45 при первом уроке в 08:30.
+            // Верхнюю границу ограничиваем 59, чтобы в 07:30 не показывать 60.
             const remainingSeconds = firstStartSeconds - currentSeconds;
-            const remainingMinutes = Math.max(1, Math.ceil(remainingSeconds / 60) - 1);
+            const remainingMinutes = Math.min(59, Math.ceil(remainingSeconds / 60));
             currentStatus = {
                 type: 'before',
                 text: `До начала занятий ${remainingMinutes} ${declOfNum(remainingMinutes, ['минута', 'минуты', 'минут'])}<br>первый урок в ${firstPeriodEntry.period.start}`
