@@ -1,0 +1,684 @@
+/*
+ * Тема «Навигация».
+ * Подключается только при schedule_theme = navigation.
+ */
+
+@font-face {
+    font-family: "Golos Text";
+    font-style: normal;
+    font-weight: 400 700;
+    font-display: swap;
+    src: url("../fonts/golos-text/cyrillic.woff2") format("woff2");
+    unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+
+@font-face {
+    font-family: "Golos Text";
+    font-style: normal;
+    font-weight: 400 700;
+    font-display: swap;
+    src: url("../fonts/golos-text/cyrillic-ext.woff2") format("woff2");
+    unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+
+@font-face {
+    font-family: "Golos Text";
+    font-style: normal;
+    font-weight: 400 700;
+    font-display: swap;
+    src: url("../fonts/golos-text/latin.woff2") format("woff2");
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+    font-family: "Golos Text";
+    font-style: normal;
+    font-weight: 400 700;
+    font-display: swap;
+    src: url("../fonts/golos-text/latin-ext.woff2") format("woff2");
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+    font-family: "IBM Plex Mono";
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url("../fonts/ibm-plex-mono/400-cyrillic.woff2") format("woff2");
+    unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+
+@font-face {
+    font-family: "IBM Plex Mono";
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url("../fonts/ibm-plex-mono/400-latin.woff2") format("woff2");
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+    font-family: "IBM Plex Mono";
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url("../fonts/ibm-plex-mono/500-cyrillic.woff2") format("woff2");
+    unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+
+@font-face {
+    font-family: "IBM Plex Mono";
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url("../fonts/ibm-plex-mono/500-latin.woff2") format("woff2");
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+body.theme-navigation {
+    --nav-paper: #f6f8f7;
+    --nav-surface: #ffffff;
+    --nav-ink: #14212b;
+    --nav-ink-soft: #42525c;
+    --nav-line: #d9e2de;
+    --nav-line-strong: #b9c7c1;
+    --nav-cobalt: #1d4ed8;
+    --nav-cobalt-dark: #173fb0;
+    --nav-signal: #f2b705;
+    --nav-signal-soft: #fff4cc;
+    --nav-mint: #1f9d6b;
+    --nav-mint-soft: #e3f5ed;
+    --nav-coral: #d64545;
+    --nav-coral-soft: #fbe9e9;
+
+    --primary: var(--nav-cobalt);
+    --primary-dark: var(--nav-cobalt-dark);
+    --primary-light: var(--nav-cobalt);
+    --secondary: var(--nav-ink-soft);
+    --success: var(--nav-mint);
+    --warning: var(--nav-signal);
+    --danger: var(--nav-coral);
+
+    --gray-50: #f9fbfa;
+    --gray-100: #f1f5f2;
+    --gray-200: var(--nav-line);
+    --gray-300: var(--nav-line-strong);
+    --gray-400: #8a9a94;
+    --gray-500: #5e6f69;
+    --gray-600: #42525c;
+    --gray-700: #2e3d45;
+    --gray-800: var(--nav-ink);
+    --gray-900: #0b141a;
+
+    --shadow-sm: none;
+    --shadow: none;
+    --shadow-md: none;
+    --shadow-lg: 0 24px 60px rgba(20, 33, 43, 0.18);
+
+    background-color: var(--nav-paper);
+    color: var(--nav-ink);
+    font-family: "Golos Text", "Segoe UI", system-ui, -apple-system, sans-serif;
+    font-feature-settings: "kern" 1, "liga" 1;
+}
+
+body.theme-navigation button,
+body.theme-navigation input,
+body.theme-navigation select,
+body.theme-navigation textarea {
+    font-family: inherit;
+}
+
+body.theme-navigation .schedule-container {
+    padding: 1.25rem;
+}
+
+/* ------------------------------------------------------------------ */
+/* Верхняя панель                                                      */
+/* ------------------------------------------------------------------ */
+
+body.theme-navigation .schedule-controls {
+    background: var(--nav-surface);
+    border: 1px solid var(--nav-line);
+    border-radius: 6px;
+    box-shadow: none;
+    padding: 0.85rem 1rem;
+}
+
+body.theme-navigation .schedule-title {
+    color: var(--nav-ink);
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+}
+
+body.theme-navigation .header-content {
+    border-left: 4px solid var(--nav-cobalt);
+    padding-left: 0.85rem;
+}
+
+body.theme-navigation .time-status-wrapper {
+    background: var(--nav-ink);
+    border: 1px solid #263a47;
+    border-radius: 6px;
+    padding: 0.7rem 1rem 0.8rem;
+    box-shadow: 0 12px 28px rgba(20, 33, 43, 0.14);
+}
+
+body.theme-navigation .current-time-large {
+    color: #ffffff;
+}
+
+body.theme-navigation .time-main-large {
+    color: #ffffff;
+    font-family: "IBM Plex Mono", "Cascadia Mono", "DejaVu Sans Mono", monospace;
+    font-size: 3.6rem;
+    font-weight: 500;
+    letter-spacing: -0.06em;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+body.theme-navigation .period-container {
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    padding-top: 0.45rem;
+}
+
+body.theme-navigation .time-status-large {
+    background: transparent !important;
+    border: none;
+    color: #e9f1ee;
+    padding: 0.2rem 0 0;
+    font-size: 0.95rem;
+    justify-content: center;
+}
+
+body.theme-navigation .time-status-large .time-icon {
+    color: var(--nav-signal);
+}
+
+body.theme-navigation .status-lesson,
+body.theme-navigation .status-none {
+    background: transparent;
+    color: #e9f1ee;
+}
+
+body.theme-navigation .status-break {
+    background: transparent;
+    color: #ffd66b;
+}
+
+/* ------------------------------------------------------------------ */
+/* Кнопки                                                              */
+/* ------------------------------------------------------------------ */
+
+body.theme-navigation .btn {
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+body.theme-navigation .btn-secondary {
+    background: var(--nav-surface);
+    border: 1px solid var(--nav-line);
+    color: var(--nav-ink);
+}
+
+body.theme-navigation .btn-secondary:hover {
+    background: var(--nav-paper);
+    border-color: var(--nav-line-strong);
+}
+
+body.theme-navigation .btn-primary {
+    background: var(--nav-cobalt);
+    border: 1px solid var(--nav-cobalt);
+    color: #ffffff;
+}
+
+body.theme-navigation .btn-primary:hover {
+    background: var(--nav-cobalt-dark);
+    border-color: var(--nav-cobalt-dark);
+}
+
+body.theme-navigation #resetFilters {
+    background: var(--nav-surface);
+    border: 1px solid var(--nav-line);
+    color: var(--nav-ink);
+}
+
+body.theme-navigation #resetFilters:hover {
+    background: var(--nav-paper);
+    border-color: var(--nav-line-strong);
+}
+
+body.theme-navigation .btn .icon {
+    stroke-width: 1.8;
+}
+
+/* ------------------------------------------------------------------ */
+/* Фильтры                                                             */
+/* ------------------------------------------------------------------ */
+
+body.theme-navigation .filters-grid {
+    gap: 0.75rem;
+}
+
+body.theme-navigation .filter-select,
+body.theme-navigation .ui-selectmenu-button.ui-button {
+    min-height: 2.5rem;
+    padding: 0.5rem 0.7rem;
+    background: var(--nav-surface);
+    border: 1px solid var(--nav-line);
+    border-radius: 4px;
+    color: var(--nav-ink);
+    font-size: 0.9rem;
+    box-shadow: none;
+}
+
+body.theme-navigation .filter-select:focus,
+body.theme-navigation .ui-selectmenu-button.ui-button:focus {
+    border-color: var(--nav-cobalt);
+    box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.12);
+    outline: none;
+}
+
+body.theme-navigation .ui-selectmenu-button.ui-button:hover {
+    border-color: var(--nav-line-strong);
+}
+
+body.theme-navigation .ui-selectmenu-button.ui-button .ui-selectmenu-icon.ui-icon::after {
+    border-color: var(--nav-ink-soft);
+}
+
+body.theme-navigation .ui-selectmenu-menu .ui-menu {
+    background: var(--nav-surface);
+    border: 1px solid var(--nav-line);
+    border-radius: 4px;
+    box-shadow: 0 14px 34px rgba(20, 33, 43, 0.14);
+}
+
+body.theme-navigation .ui-selectmenu-menu .ui-menu .ui-menu-item-wrapper:hover,
+body.theme-navigation .ui-selectmenu-menu .ui-menu .ui-menu-item-wrapper.ui-state-active {
+    background: var(--nav-signal-soft);
+    color: var(--nav-ink);
+}
+
+/* ------------------------------------------------------------------ */
+/* Таблица расписания                                                  */
+/* ------------------------------------------------------------------ */
+
+body.theme-navigation .schedule-table-wrapper {
+    background: var(--nav-surface);
+    border: 1px solid var(--nav-line);
+    border-radius: 6px;
+    box-shadow: none;
+}
+
+body.theme-navigation .schedule-table-wrapper::before,
+body.theme-navigation .schedule-table-wrapper::after {
+    display: none;
+}
+
+body.theme-navigation .schedule-table-header-scroll,
+body.theme-navigation .schedule-table-body,
+body.theme-navigation .schedule-table,
+body.theme-navigation .schedule-table thead {
+    background: var(--nav-surface);
+}
+
+body.theme-navigation .schedule-table th {
+    background: var(--nav-paper);
+    border-color: var(--nav-line);
+    color: var(--nav-ink-soft);
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+body.theme-navigation .schedule-table td {
+    border-color: var(--nav-line);
+}
+
+body.theme-navigation .schedule-table th:first-child,
+body.theme-navigation .schedule-table td:first-child {
+    background: var(--nav-paper);
+}
+
+body.theme-navigation .schedule-table th:first-child {
+    border-right-color: var(--nav-line-strong);
+}
+
+body.theme-navigation .day-name,
+body.theme-navigation .period-number {
+    color: var(--nav-ink);
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+body.theme-navigation .period-time {
+    color: var(--nav-ink-soft);
+    font-family: "IBM Plex Mono", "Cascadia Mono", "DejaVu Sans Mono", monospace;
+    font-size: 0.7rem;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+}
+
+body.theme-navigation .lesson-cell {
+    background: var(--nav-surface);
+    border: 1px solid var(--nav-line);
+    border-left: 3px solid var(--nav-cobalt);
+    border-radius: 4px;
+    box-shadow: none;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+body.theme-navigation .lesson-cell:hover {
+    background: var(--nav-paper);
+    border-color: var(--nav-line-strong);
+    border-left-color: var(--nav-signal);
+    box-shadow: none;
+    transform: none;
+}
+
+body.theme-navigation .lesson-cell.category-main {
+    border-left-color: var(--nav-cobalt);
+}
+
+body.theme-navigation .lesson-cell.category-extracurricular {
+    border-left-color: #0f766e;
+}
+
+body.theme-navigation .lesson-cell.category-elective {
+    border-left-color: #6d28d9;
+}
+
+body.theme-navigation .lesson-cell.category-additional {
+    border-left-color: #b45309;
+}
+
+body.theme-navigation .lesson-cell.category-consultation {
+    border-left-color: #b91c1c;
+}
+
+body.theme-navigation .lesson-subject,
+body.theme-navigation .subject-name {
+    color: var(--nav-cobalt);
+    font-weight: 600;
+}
+
+body.theme-navigation .lesson-info {
+    border-top-color: var(--nav-line);
+}
+
+body.theme-navigation .teacher-info {
+    border-bottom-color: var(--nav-line);
+    color: var(--nav-ink-soft);
+}
+
+body.theme-navigation .class-badge,
+body.theme-navigation .group-badge {
+    color: var(--nav-ink-soft);
+}
+
+body.theme-navigation .room-info {
+    border-top-color: var(--nav-line);
+    color: var(--nav-ink-soft);
+    font-family: "IBM Plex Mono", "Cascadia Mono", "DejaVu Sans Mono", monospace;
+    font-size: 0.78rem;
+    font-weight: 500;
+}
+
+body.theme-navigation .current-period::after {
+    background-color: var(--nav-signal);
+    opacity: 0.16;
+}
+
+body.theme-navigation .current-break::after {
+    background-color: var(--nav-signal);
+    opacity: 0.1;
+}
+
+body.theme-navigation .schedule-table:not(.vertical) .current-period-header,
+body.theme-navigation .schedule-table.vertical .current-period-header {
+    background-color: var(--nav-ink);
+    color: #ffffff !important;
+    box-shadow: inset 0 -3px 0 var(--nav-signal);
+}
+
+body.theme-navigation .schedule-table:not(.vertical) .current-break-header,
+body.theme-navigation .schedule-table.vertical .current-break-header {
+    background-color: var(--nav-signal);
+    color: var(--nav-ink) !important;
+}
+
+body.theme-navigation .current-period-header .period-header,
+body.theme-navigation .current-period-header .period-number,
+body.theme-navigation .current-period-header .period-time,
+body.theme-navigation .current-period-header .day-header {
+    color: #ffffff !important;
+}
+
+body.theme-navigation .current-break-header .period-header,
+body.theme-navigation .current-break-header .period-number,
+body.theme-navigation .current-break-header .period-time,
+body.theme-navigation .current-break-header .day-header {
+    color: var(--nav-ink) !important;
+}
+
+/* ------------------------------------------------------------------ */
+/* Модальные окна свободных кабинетов                                  */
+/* ------------------------------------------------------------------ */
+
+body.theme-navigation .free-rooms-dialog,
+body.theme-navigation .rooms-modal-dialog,
+body.theme-navigation .room-detail-dialog {
+    background: var(--nav-surface);
+    border: 1px solid var(--nav-line);
+    border-radius: 6px;
+    box-shadow: var(--shadow-lg);
+}
+
+body.theme-navigation .free-rooms-header,
+body.theme-navigation .rooms-modal-header,
+body.theme-navigation .room-detail-header {
+    border-bottom-color: var(--nav-line);
+}
+
+body.theme-navigation .free-rooms-header h3,
+body.theme-navigation .rooms-modal-header h3,
+body.theme-navigation .room-detail-header h4 {
+    color: var(--nav-ink);
+}
+
+body.theme-navigation .free-rooms-controls select {
+    background: var(--nav-surface);
+    border-color: var(--nav-line);
+    border-radius: 4px;
+    color: var(--nav-ink);
+}
+
+body.theme-navigation .free-rooms-controls select:focus {
+    border-color: var(--nav-cobalt);
+    box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.12);
+}
+
+body.theme-navigation .free-rooms-summary {
+    color: var(--nav-ink);
+}
+
+body.theme-navigation .free-room-badge {
+    background: var(--nav-mint-soft);
+    border-color: #a7e3c9;
+    border-radius: 4px;
+    color: #116b49;
+    font-family: "IBM Plex Mono", "Cascadia Mono", "DejaVu Sans Mono", monospace;
+    font-weight: 500;
+}
+
+body.theme-navigation .free-rooms-footer {
+    background: var(--nav-paper);
+    border-top-color: var(--nav-line);
+}
+
+body.theme-navigation .free-rooms-hint,
+body.theme-navigation .rooms-modal-subtitle,
+body.theme-navigation .rooms-modal-footer,
+body.theme-navigation .rooms-grid-hint {
+    color: var(--nav-ink-soft);
+}
+
+body.theme-navigation .rooms-modal-toolbar {
+    background: var(--nav-paper);
+    border-bottom-color: var(--nav-line);
+}
+
+body.theme-navigation .rooms-day-tab {
+    background: var(--nav-surface);
+    border-color: var(--nav-line);
+    border-radius: 4px;
+    color: var(--nav-ink-soft);
+}
+
+body.theme-navigation .rooms-day-tab:hover {
+    background: var(--nav-paper);
+    border-color: var(--nav-line-strong);
+}
+
+body.theme-navigation .rooms-day-tab.is-active {
+    background: var(--nav-cobalt);
+    border-color: var(--nav-cobalt);
+    color: #ffffff;
+}
+
+body.theme-navigation .rooms-grid th,
+body.theme-navigation .rooms-grid td {
+    border-color: var(--nav-line);
+}
+
+body.theme-navigation .rooms-grid thead th {
+    background: var(--nav-paper);
+    color: var(--nav-ink-soft);
+}
+
+body.theme-navigation .rooms-grid-room {
+    background: var(--nav-surface);
+    color: var(--nav-ink);
+}
+
+body.theme-navigation .rooms-grid tbody tr:hover .rooms-grid-room {
+    background: var(--nav-paper);
+}
+
+body.theme-navigation .rooms-grid-time,
+body.theme-navigation .rooms-grid-free {
+    color: var(--nav-ink-soft);
+    font-family: "IBM Plex Mono", "Cascadia Mono", "DejaVu Sans Mono", monospace;
+    font-weight: 400;
+}
+
+body.theme-navigation .rooms-cell.is-free {
+    background: var(--nav-mint-soft);
+    color: var(--nav-mint);
+}
+
+body.theme-navigation .rooms-cell.is-busy {
+    background: var(--nav-coral-soft);
+    color: #a92f2f;
+}
+
+body.theme-navigation .rooms-cell.is-current {
+    background-image: linear-gradient(rgba(242, 183, 5, 0.14), rgba(242, 183, 5, 0.14));
+    box-shadow:
+        inset 2px 0 0 rgba(242, 183, 5, 0.7),
+        inset -2px 0 0 rgba(242, 183, 5, 0.7);
+}
+
+body.theme-navigation .rooms-grid thead th.is-current {
+    background: var(--nav-signal);
+    color: var(--nav-ink);
+    box-shadow: inset 0 -3px 0 #b88600;
+}
+
+body.theme-navigation .rooms-grid thead th.is-current .rooms-grid-time,
+body.theme-navigation .rooms-grid thead th.is-current .rooms-grid-free {
+    color: rgba(20, 33, 43, 0.72);
+}
+
+body.theme-navigation .rooms-grid thead th.is-current .rooms-grid-period::before {
+    background: var(--nav-ink);
+}
+
+body.theme-navigation .room-detail-list dt {
+    color: var(--nav-ink-soft);
+}
+
+body.theme-navigation .room-detail-list dd {
+    color: var(--nav-ink);
+}
+
+body.theme-navigation .room-detail-footer {
+    background: var(--nav-paper);
+    border-top-color: var(--nav-line);
+}
+
+/* ------------------------------------------------------------------ */
+/* Мобильная версия                                                    */
+/* ------------------------------------------------------------------ */
+
+@media (max-width: 1200px) {
+    body.theme-navigation .header-content {
+        border-left: none;
+        padding-left: 0;
+        border-bottom: 1px solid var(--nav-line);
+        padding-bottom: 0.6rem;
+    }
+}
+
+@media (max-width: 768px) {
+    body.theme-navigation .schedule-container {
+        padding: 0.75rem;
+    }
+
+    body.theme-navigation .schedule-controls {
+        padding: 0.7rem;
+    }
+
+    body.theme-navigation .time-main-large {
+        font-size: 2.6rem;
+    }
+
+    body.theme-navigation .time-status-wrapper {
+        padding: 0.55rem 0.75rem 0.65rem;
+    }
+
+    body.theme-navigation .time-status-large {
+        font-size: 0.85rem;
+    }
+
+    body.theme-navigation .schedule-title {
+        font-size: 1.15rem;
+    }
+
+    body.theme-navigation .lesson-cell {
+        padding: 0.55rem;
+    }
+}
+
+@media (max-width: 480px) {
+    body.theme-navigation .time-main-large {
+        font-size: 2.2rem;
+    }
+
+    body.theme-navigation .schedule-container {
+        padding: 0.5rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body.theme-navigation *,
+    body.theme-navigation *::before,
+    body.theme-navigation *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+    }
+}

@@ -390,6 +390,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;b
         return $inst;
     }
 
+    private static function theme_class()
+    {
+        $theme = get_option('schedule_theme', 'default');
+        if ($theme !== 'navigation') {
+            $theme = 'default';
+        }
+        return 'theme-' . $theme;
+    }
+
     private static function render_frontend()
     {
         do_action('wp_enqueue_scripts');
@@ -408,7 +417,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;b
         .schedule-page { max-width:100%; margin:0; padding:0; }
     </style>
 </head>
-<body <?php body_class('schedule-page'); ?>>
+<body <?php body_class('schedule-page ' . self::theme_class()); ?>>
     <div class="schedule-content"><?php echo $content; ?></div>
     <?php wp_footer(); ?>
 </body>
@@ -431,7 +440,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;b
     <?php wp_head(); ?>
     <style>body{margin:0;background:#fff;font-family:-apple-system,"Segoe UI",Roboto,sans-serif}</style>
 </head>
-<body <?php body_class('schedule-page'); ?>>
+<body <?php body_class('schedule-page ' . self::theme_class()); ?>>
     <div class="schedule-content"><?php echo $content; ?></div>
     <?php wp_footer(); ?>
 </body>
