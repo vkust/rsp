@@ -495,6 +495,11 @@ body.theme-navigation .schedule-table-wrapper::after {
 body.theme-navigation .schedule-table-header-scroll,
 body.theme-navigation .schedule-table-body,
 body.theme-navigation .schedule-table,
+body.theme-navigation .schedule-table {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
 body.theme-navigation .schedule-table thead {
     background: var(--nav-surface);
 }
