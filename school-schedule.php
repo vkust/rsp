@@ -577,6 +577,19 @@ class SchoolSchedule {
 
         $free_rooms = $this->build_free_rooms_grid($schedule);
 
+        // Прямая ссылка на конкретный день: /free-rooms?day=3
+        $requested_day = isset($_GET['day']) && is_string($_GET['day'])
+            ? preg_replace('/[^0-9]/', '', (string) wp_unslash($_GET['day']))
+            : '';
+        if ($requested_day !== '') {
+            foreach ($free_rooms['days'] as $day) {
+                if ($day['id'] === $requested_day) {
+                    $free_rooms['default_day'] = $requested_day;
+                    break;
+                }
+            }
+        }
+
         ob_start();
         include SCHOOL_SCHEDULE_PATH . 'templates/free-rooms-template.php';
         return ob_get_clean();

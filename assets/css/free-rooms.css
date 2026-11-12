@@ -223,11 +223,19 @@
 }
 
 .rooms-grid-total {
+    position: sticky;
+    right: 0;
+    z-index: 2;
     min-width: 4.75rem;
     background: var(--gray-50) !important;
+    box-shadow: -1px 0 0 var(--gray-200);
     color: var(--gray-600);
     font-weight: 600;
     white-space: nowrap;
+}
+
+.rooms-grid thead th.rooms-grid-total {
+    z-index: 3;
 }
 
 .rooms-cell {
