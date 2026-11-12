@@ -670,10 +670,40 @@
     if (!in_array($current_layout, ['classic', 'compact'], true)) {
         $current_layout = 'classic';
     }
-    $current_compact_buttons = get_option('schedule_compact_buttons', 'header');
-    if (!in_array($current_compact_buttons, ['header', 'right', 'left', 'bottom'], true)) {
-        $current_compact_buttons = 'header';
+
+    $button_placement_options = [
+        'header' => 'В шапке',
+        'right' => 'Справа, фиксировано',
+        'left' => 'Слева, фиксировано',
+        'bottom' => 'Снизу, фиксировано',
+    ];
+    $button_settings = [
+        'schedule_main_buttons_desktop' => [
+            'label' => 'Основное расписание — компьютер',
+            'default' => 'header',
+        ],
+        'schedule_main_buttons_mobile' => [
+            'label' => 'Основное расписание — мобильные',
+            'default' => 'header',
+        ],
+        'schedule_panels_buttons_desktop' => [
+            'label' => 'Панели — компьютер',
+            'default' => 'header',
+        ],
+        'schedule_panels_buttons_mobile' => [
+            'label' => 'Панели — мобильные',
+            'default' => 'header',
+        ],
+    ];
+    $current_buttons = [];
+    foreach ($button_settings as $option_name => $setting) {
+        $value = get_option($option_name, $setting['default']);
+        if (!isset($button_placement_options[$value])) {
+            $value = $setting['default'];
+        }
+        $current_buttons[$option_name] = $value;
     }
+
     $layout_options = [
         'classic' => [
             'name' => 'Классическая',
@@ -683,12 +713,6 @@
             'name' => 'Компактная',
             'desc' => 'Часы и период в одной строке, фильтры в ряд, меньше высоты.',
         ],
-    ];
-    $compact_button_options = [
-        'header' => 'В верхнем блоке',
-        'right' => 'Справа',
-        'left' => 'Слева',
-        'bottom' => 'Снизу',
     ];
     ?>
     <div class="card">
@@ -734,19 +758,34 @@
                     <?php endforeach; ?>
                 </div>
 
-                <h3>Кнопки в компактной компоновке</h3>
+                <h3>Расположение кнопок</h3>
                 <p class="description">
-                    Варианты «справа», «слева» и «снизу» размещают кнопки
-                    фиксированно поверх страницы.
+                    Можно задать отдельно для основной страницы и панелей, для
+                    компьютеров и мобильных. Варианты «справа», «слева» и «снизу»
+                    размещают кнопки фиксированно поверх страницы.
                 </p>
-                <div class="compact-buttons-grid">
-                    <?php foreach ($compact_button_options as $button_key => $button_name): ?>
-                        <label class="compact-buttons-choice">
-                            <input type="radio" name="schedule_compact_buttons" value="<?php echo esc_attr($button_key); ?>" <?php checked($current_compact_buttons, $button_key); ?>>
-                            <span><?php echo esc_html($button_name); ?></span>
-                        </label>
-                    <?php endforeach; ?>
-                </div>
+                <table class="form-table">
+                    <tbody>
+                        <?php foreach ($button_settings as $option_name => $setting): ?>
+                            <tr>
+                                <th scope="row">
+                                    <label for="<?php echo esc_attr($option_name); ?>">
+                                        <?php echo esc_html($setting['label']); ?>
+                                    </label>
+                                </th>
+                                <td>
+                                    <select id="<?php echo esc_attr($option_name); ?>" name="<?php echo esc_attr($option_name); ?>">
+                                        <?php foreach ($button_placement_options as $value => $label): ?>
+                                            <option value="<?php echo esc_attr($value); ?>" <?php selected($current_buttons[$option_name], $value); ?>>
+                                                <?php echo esc_html($label); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
 
                 <div class="submit-wrapper">
                     <button type="submit" class="button button-primary">Сохранить компоновку</button>

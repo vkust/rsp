@@ -3335,7 +3335,7 @@ body.free-rooms-open {
 
 .layout-compact .time-main-large {
     color: var(--gray-800);
-    font-size: 1.6rem;
+    font-size: 1.8rem;
     font-weight: 700;
 }
 
@@ -3387,62 +3387,66 @@ body.free-rooms-open {
     font-size: 0.78rem;
 }
 
-/* Фиксированные варианты кнопок в компактной компоновке */
-.schedule-container.layout-compact:is(.compact-buttons-right, .compact-buttons-left, .compact-buttons-bottom) .view-controls {
-    position: fixed;
-    z-index: 900;
-    display: flex;
-    flex-wrap: nowrap;
-    gap: 0.35rem;
-    min-width: 0;
-    max-width: none;
-    margin: 0;
-    padding: 0.35rem;
-    background: var(--gray-50);
-    border: 1px solid var(--gray-200);
-    border-radius: 0.65rem;
-    box-shadow: var(--shadow-md);
-}
+/* Фиксированные варианты кнопок (классическая и компактная) */
+@media (min-width: 769px) {
+    .schedule-container:is(.buttons-desktop-right, .buttons-desktop-left, .buttons-desktop-bottom) .view-controls {
+        position: fixed;
+        z-index: 900;
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 0.35rem;
+        width: max-content;
+        max-width: calc(100vw - 2rem);
+        min-width: 0;
+        margin: 0;
+        padding: 0.35rem;
+        background: var(--gray-50);
+        border: 1px solid var(--gray-200);
+        border-radius: 0.65rem;
+        box-shadow: var(--shadow-md);
+        box-sizing: border-box;
+    }
 
-.schedule-container.layout-compact:is(.compact-buttons-right, .compact-buttons-left, .compact-buttons-bottom) .view-controls .btn {
-    width: 44px !important;
-    height: 44px !important;
-    min-width: 44px !important;
-    max-width: none !important;
-    padding: 0 !important;
-    flex: 0 0 auto;
-    justify-content: center;
-}
+    .schedule-container:is(.buttons-desktop-right, .buttons-desktop-left, .buttons-desktop-bottom) .view-controls .btn {
+        width: 44px !important;
+        max-width: 44px !important;
+        height: 44px !important;
+        min-width: 44px !important;
+        padding: 0 !important;
+        flex: 0 0 44px !important;
+        justify-content: center;
+    }
 
-.schedule-container.layout-compact:is(.compact-buttons-right, .compact-buttons-left, .compact-buttons-bottom) .view-controls .btn span {
-    display: none;
-}
+    .schedule-container:is(.buttons-desktop-right, .buttons-desktop-left, .buttons-desktop-bottom) .view-controls .btn span {
+        display: none;
+    }
 
-.schedule-container.layout-compact:is(.compact-buttons-right, .compact-buttons-left, .compact-buttons-bottom) .view-controls .btn .icon {
-    width: 19px;
-    height: 19px;
-    margin: 0;
-}
+    .schedule-container:is(.buttons-desktop-right, .buttons-desktop-left, .buttons-desktop-bottom) .view-controls .btn .icon {
+        width: 19px;
+        height: 19px;
+        margin: 0;
+    }
 
-.schedule-container.layout-compact.compact-buttons-right .view-controls {
-    top: 50%;
-    right: 1rem;
-    flex-direction: column;
-    transform: translateY(-50%);
-}
+    .schedule-container.buttons-desktop-right .view-controls {
+        top: 50%;
+        right: 1rem;
+        flex-direction: column;
+        transform: translateY(-50%);
+    }
 
-.schedule-container.layout-compact.compact-buttons-left .view-controls {
-    top: 50%;
-    left: 1rem;
-    flex-direction: column;
-    transform: translateY(-50%);
-}
+    .schedule-container.buttons-desktop-left .view-controls {
+        top: 50%;
+        left: 1rem;
+        flex-direction: column;
+        transform: translateY(-50%);
+    }
 
-.schedule-container.layout-compact.compact-buttons-bottom .view-controls {
-    bottom: 1rem;
-    left: 50%;
-    flex-direction: row;
-    transform: translateX(-50%);
+    .schedule-container.buttons-desktop-bottom .view-controls {
+        bottom: 1rem;
+        left: 50%;
+        flex-direction: row;
+        transform: translateX(-50%);
+    }
 }
 
 @media (max-width: 768px) {
@@ -3458,16 +3462,63 @@ body.free-rooms-open {
         min-width: 0;
     }
 
-    .schedule-container.layout-compact.compact-buttons-right .view-controls {
+    .schedule-container:is(.buttons-mobile-right, .buttons-mobile-left, .buttons-mobile-bottom) .view-controls {
+        position: fixed;
+        z-index: 900;
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 0.3rem;
+        width: max-content;
+        max-width: calc(100vw - 1.5rem);
+        min-width: 0;
+        margin: 0;
+        padding: 0.35rem;
+        background: var(--gray-50);
+        border: 1px solid var(--gray-200);
+        border-radius: 0.65rem;
+        box-shadow: var(--shadow-md);
+        box-sizing: border-box;
+    }
+
+    .schedule-container:is(.buttons-mobile-right, .buttons-mobile-left, .buttons-mobile-bottom) .view-controls .btn {
+        width: 44px !important;
+        max-width: 44px !important;
+        height: 44px !important;
+        min-width: 44px !important;
+        padding: 0 !important;
+        flex: 0 0 44px !important;
+        justify-content: center;
+    }
+
+    .schedule-container:is(.buttons-mobile-right, .buttons-mobile-left, .buttons-mobile-bottom) .view-controls .btn span {
+        display: none;
+    }
+
+    .schedule-container:is(.buttons-mobile-right, .buttons-mobile-left, .buttons-mobile-bottom) .view-controls .btn .icon {
+        width: 19px;
+        height: 19px;
+        margin: 0;
+    }
+
+    .schedule-container.buttons-mobile-right .view-controls {
+        top: 50%;
         right: 0.75rem;
+        flex-direction: column;
+        transform: translateY(-50%);
     }
 
-    .schedule-container.layout-compact.compact-buttons-left .view-controls {
+    .schedule-container.buttons-mobile-left .view-controls {
+        top: 50%;
         left: 0.75rem;
+        flex-direction: column;
+        transform: translateY(-50%);
     }
 
-    .schedule-container.layout-compact.compact-buttons-bottom .view-controls {
+    .schedule-container.buttons-mobile-bottom .view-controls {
         bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+        left: 50%;
+        flex-direction: row;
+        transform: translateX(-50%);
     }
 }
 
