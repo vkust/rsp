@@ -189,10 +189,39 @@ document.addEventListener('DOMContentLoaded', function() {
         window.addEventListener('resize', debounce(() => {
             initializeFilters();
             hideEmptyDays(); // Обновляем видимость дней при изменении размера окна
+            updateScheduleTableHeight();
         }, 250));
 
         // Добавляем вызов hideEmptyDays после загрузки
         hideEmptyDays();
+        updateScheduleTableHeight();
+        window.addEventListener('load', function() {
+            setTimeout(updateScheduleTableHeight, 100);
+        });
+    }
+
+    /**
+     * Подгоняет высоту прокручиваемой области таблицы под экран,
+     * чтобы шапка таблицы оставалась закреплённой.
+     */
+    function updateScheduleTableHeight() {
+        const wrapper = document.querySelector('.schedule-table-wrapper');
+        const body = document.querySelector('.schedule-table-body');
+        if (!wrapper || !body) {
+            return;
+        }
+
+        const rect = wrapper.getBoundingClientRect();
+        const wrapperTop = rect.top + window.scrollY;
+        const available = window.innerHeight - wrapperTop - 24;
+
+        if (available >= 240) {
+            body.style.maxHeight = available + 'px';
+            body.style.overflowY = 'auto';
+        } else {
+            body.style.maxHeight = '';
+            body.style.overflowY = '';
+        }
     }
 
     // Вспомогательная функция debounce
@@ -296,6 +325,7 @@ document.addEventListener('DOMContentLoaded', function() {
         updateFilterOptions();
         saveFilters();
         hideEmptyDays(); // Вызываем после фильтрации
+        updateScheduleTableHeight();
     }
 
     // Быстрый фильтр «Сегодня»
