@@ -3463,3 +3463,9 @@ body.free-rooms-open {
 .schedule-first-column-sticky-label .period-header {
     padding: 0.4rem 0.5rem;
 }
+
+/* Статус до начала занятий */
+.status-before {
+    background: var(--success);
+    color: white;
+}

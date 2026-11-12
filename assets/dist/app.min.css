@@ -3473,6 +3473,12 @@ body.free-rooms-open {
     padding: 0.4rem 0.5rem;
 }
 
+/* Статус до начала занятий */
+.status-before {
+    background: var(--success);
+    color: white;
+}
+
 /* ==== assets/css/schedule-template.css ==== */
 /* Стили для чистого шаблона расписания */
 .schedule-page {
