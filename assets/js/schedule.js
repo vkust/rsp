@@ -265,8 +265,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         stickyScheduleHeaderTable.className = stickyScheduleHeaderSource.className + ' schedule-sticky-header-table';
-        stickyScheduleHeaderTable.innerHTML = '';
-        stickyScheduleHeaderTable.appendChild(thead.cloneNode(true));
+        stickyScheduleHeaderTable.innerHTML = stickyScheduleHeaderSource.innerHTML;
+
+        // В копии не должно быть дублей id.
+        stickyScheduleHeaderTable.querySelectorAll('[id]').forEach(function(element) {
+            element.removeAttribute('id');
+        });
+
         syncStickyScheduleHeaderWidths();
     }
 
@@ -275,23 +280,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        const sourceThs = stickyScheduleHeaderSource.querySelectorAll('thead th');
-        const cloneThs = stickyScheduleHeaderTable.querySelectorAll('thead th');
-        const tableWidth = stickyScheduleHeaderSource.offsetWidth;
-
-        stickyScheduleHeaderTable.style.width = tableWidth + 'px';
-
-        sourceThs.forEach(function(th, index) {
-            const cloneTh = cloneThs[index];
-            if (!cloneTh) {
-                return;
-            }
-            const rect = th.getBoundingClientRect();
-            cloneTh.style.width = rect.width + 'px';
-            cloneTh.style.minWidth = rect.width + 'px';
-            cloneTh.style.maxWidth = rect.width + 'px';
-            cloneTh.className = th.className;
-        });
+        stickyScheduleHeaderTable.style.width = stickyScheduleHeaderSource.offsetWidth + 'px';
     }
 
     function syncStickyScheduleHeaderClasses() {
@@ -334,7 +323,10 @@ document.addEventListener('DOMContentLoaded', function() {
         stickyScheduleHeader.style.left = bodyRect.left + 'px';
         stickyScheduleHeader.style.width = bodyRect.width + 'px';
 
-        const cloneHeight = stickyScheduleHeaderTable.getBoundingClientRect().height || headerHeight;
+        const cloneThead = stickyScheduleHeaderTable.querySelector('thead');
+        const cloneHeight = cloneThead
+            ? cloneThead.getBoundingClientRect().height
+            : headerHeight;
         stickyScheduleHeader.style.height = cloneHeight + 'px';
         stickyScheduleHeaderTable.style.transform = 'translateX(' + (-stickyScheduleHeaderBody.scrollLeft) + 'px)';
 
