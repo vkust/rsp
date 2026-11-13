@@ -184,6 +184,21 @@ class App_Router
     {
         $menu = $GLOBALS['wp_app']['menu'];
         $sub  = $GLOBALS['wp_app']['submenu']['school-schedule'] ?? [];
+
+        // Минималистичные монохромные иконки: контур наследует цвет пункта меню.
+        $nav_icon = static function (string $paths): string {
+            return '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' . $paths . '</svg>';
+        };
+        $nav_icons = [
+            'school-schedule' => $nav_icon('<path d="M4 7h16M4 12h16M4 17h16"/><circle cx="9" cy="7" r="2.2"/><circle cx="15" cy="12" r="2.2"/><circle cx="8" cy="17" r="2.2"/>'),
+            'schedule-site-settings' => $nav_icon('<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.4 2.5 3.7 5.6 3.7 9S14.4 18.5 12 21c-2.4-2.5-3.7-5.6-3.7-9S9.6 5.5 12 3z"/>'),
+            'schedule-updates' => $nav_icon('<path d="M21 12a9 9 0 1 1-3.2-6.9"/><path d="M21 4v5h-5"/>'),
+            'schedule-telegram-settings' => $nav_icon('<rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 8V4"/><circle cx="12" cy="3" r="1"/><circle cx="9" cy="14" r="1"/><circle cx="15" cy="14" r="1"/>'),
+            'schedule-telegram-stats' => $nav_icon('<path d="M4 20V6M10 20V10M16 20v-7M22 20H2"/>'),
+        ];
+        $nav_icon_brand = $nav_icon('<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>');
+        $nav_icon_external = $nav_icon('<path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>');
+        $nav_icon_logout = $nav_icon('<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/>');
         ?><!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -196,10 +211,11 @@ class App_Router
 body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; background:#f0f0f1; color:#3c434a; }
 .wrap-admin { display:flex; min-height:100vh; }
 .admin-nav { width:220px; background:var(--dark); color:#fff; flex-shrink:0; }
-.admin-nav .brand { padding:16px; font-size:16px; font-weight:700; border-bottom:1px solid #3c434a; }
+.admin-nav .brand { display:flex; align-items:center; gap:10px; padding:16px; font-size:16px; font-weight:700; border-bottom:1px solid #3c434a; }
 .admin-nav a { display:flex; align-items:center; gap:10px; color:#c3c4c7; text-decoration:none; padding:10px 16px; }
 .admin-nav a:hover, .admin-nav a.active { background:#2c3338; color:#72aee6; }
-.admin-nav-icon { width:20px; flex-shrink:0; text-align:center; font-size:15px; line-height:1; }
+.admin-nav-icon { width:20px; height:20px; flex-shrink:0; display:inline-flex; align-items:center; justify-content:center; }
+.admin-nav-icon svg { width:18px; height:18px; display:block; fill:none; stroke:currentColor; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; }
 .admin-body { flex:1; padding:20px 30px; overflow-x:auto; }
 .button { display:inline-block; padding:6px 14px; border-radius:3px; border:1px solid #2271b1; background:#f6f7f7; color:var(--blue); cursor:pointer; text-decoration:none; font-size:13px; }
 .button-primary { background:var(--blue); color:#fff; }
@@ -221,26 +237,18 @@ code { background:#f0f0f1; padding:2px 5px; border-radius:3px; }
 <body>
 <div class="wrap-admin">
     <nav class="admin-nav">
-        <div class="brand">📅 Расписание</div>
+        <div class="brand"><span class="admin-nav-icon"><?= $nav_icon_brand ?></span>Расписание</div>
         <?php
-        // Иконки разделов админки: слаг страницы => символ.
-        $nav_icons = [
-            'school-schedule' => '⚙️',
-            'schedule-site-settings' => '🌐',
-            'schedule-updates' => '🔄',
-            'schedule-telegram-settings' => '🤖',
-            'schedule-telegram-stats' => '📊',
-        ];
         foreach ($sub as $slug => $item) {
             $active = ($page === $slug) ? ' class="active"' : '';
-            $icon = $nav_icons[$slug] ?? '•';
+            $icon = $nav_icons[$slug] ?? $nav_icon('<circle cx="12" cy="12" r="3"/>');
             echo '<a' . $active . ' href="' . esc_attr(App_Config::site_url('admin?page=' . $slug)) . '">'
-                . '<span class="admin-nav-icon" aria-hidden="true">' . $icon . '</span>'
+                . '<span class="admin-nav-icon">' . $icon . '</span>'
                 . esc_html($item['menu_title']) . '</a>';
         }
         ?>
-        <a href="<?= esc_url(App_Config::site_url('/')) ?>"><span class="admin-nav-icon" aria-hidden="true">🔗</span>Открыть расписание</a>
-        <a href="<?= esc_url(App_Config::site_url('logout')) ?>"><span class="admin-nav-icon" aria-hidden="true">🚪</span>Выйти</a>
+        <a href="<?= esc_url(App_Config::site_url('/')) ?>"><span class="admin-nav-icon"><?= $nav_icon_external ?></span>Открыть расписание</a>
+        <a href="<?= esc_url(App_Config::site_url('logout')) ?>"><span class="admin-nav-icon"><?= $nav_icon_logout ?></span>Выйти</a>
     </nav>
     <main class="admin-body">
         <?php settings_errors(); ?>
