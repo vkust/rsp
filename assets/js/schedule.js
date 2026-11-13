@@ -1519,7 +1519,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const remainingMinutes = Math.min(59, Math.ceil(remainingSeconds / 60));
             currentStatus = {
                 type: 'before',
-                text: `До начала занятий ${remainingMinutes} ${declOfNum(remainingMinutes, ['минута', 'минуты', 'минут'])}<br>первый урок в ${firstPeriodEntry.period.start}`
+                text: `До начала занятий ${remainingMinutes} ${declOfNum(remainingMinutes, ['минута', 'минуты', 'минут'])}`
             };
             prestartActive = true;
         }
