@@ -197,8 +197,9 @@ body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,
 .wrap-admin { display:flex; min-height:100vh; }
 .admin-nav { width:220px; background:var(--dark); color:#fff; flex-shrink:0; }
 .admin-nav .brand { padding:16px; font-size:16px; font-weight:700; border-bottom:1px solid #3c434a; }
-.admin-nav a { display:block; color:#c3c4c7; text-decoration:none; padding:10px 16px; }
+.admin-nav a { display:flex; align-items:center; gap:10px; color:#c3c4c7; text-decoration:none; padding:10px 16px; }
 .admin-nav a:hover, .admin-nav a.active { background:#2c3338; color:#72aee6; }
+.admin-nav-icon { width:20px; flex-shrink:0; text-align:center; font-size:15px; line-height:1; }
 .admin-body { flex:1; padding:20px 30px; overflow-x:auto; }
 .button { display:inline-block; padding:6px 14px; border-radius:3px; border:1px solid #2271b1; background:#f6f7f7; color:var(--blue); cursor:pointer; text-decoration:none; font-size:13px; }
 .button-primary { background:var(--blue); color:#fff; }
@@ -222,13 +223,24 @@ code { background:#f0f0f1; padding:2px 5px; border-radius:3px; }
     <nav class="admin-nav">
         <div class="brand">📅 Расписание</div>
         <?php
+        // Иконки разделов админки: слаг страницы => символ.
+        $nav_icons = [
+            'school-schedule' => '⚙️',
+            'schedule-site-settings' => '🌐',
+            'schedule-updates' => '🔄',
+            'schedule-telegram-settings' => '🤖',
+            'schedule-telegram-stats' => '📊',
+        ];
         foreach ($sub as $slug => $item) {
             $active = ($page === $slug) ? ' class="active"' : '';
-            echo '<a' . $active . ' href="' . esc_attr(App_Config::site_url('admin?page=' . $slug)) . '">' . esc_html($item['menu_title']) . '</a>';
+            $icon = $nav_icons[$slug] ?? '•';
+            echo '<a' . $active . ' href="' . esc_attr(App_Config::site_url('admin?page=' . $slug)) . '">'
+                . '<span class="admin-nav-icon" aria-hidden="true">' . $icon . '</span>'
+                . esc_html($item['menu_title']) . '</a>';
         }
         ?>
-        <a href="<?= esc_url(App_Config::site_url('/')) ?>">🔗 Открыть расписание</a>
-        <a href="<?= esc_url(App_Config::site_url('logout')) ?>">Выйти</a>
+        <a href="<?= esc_url(App_Config::site_url('/')) ?>"><span class="admin-nav-icon" aria-hidden="true">🔗</span>Открыть расписание</a>
+        <a href="<?= esc_url(App_Config::site_url('logout')) ?>"><span class="admin-nav-icon" aria-hidden="true">🚪</span>Выйти</a>
     </nav>
     <main class="admin-body">
         <?php settings_errors(); ?>
