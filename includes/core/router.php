@@ -652,7 +652,7 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,B
 .dm-list dd{margin:0}
 .dm-actions{padding:0 18px 16px;text-align:right}
 @media(max-width:480px){.chip{font-size:14px;padding:4px 10px}.page{padding:16px 12px 32px}.title{font-size:19px}}
-@media(max-width:560px){.gm{padding:0}.gm-dialog{max-height:100vh;border-radius:0}.gm-row-head{min-width:120px;max-width:150px}.gm-table{font-size:11px}.gm-head h2{font-size:16px}}
+@media(max-width:560px){.gm{padding:0}.gm-dialog{width:100vw;max-height:100vh;border-radius:0}.gm-row-head{min-width:120px;max-width:150px}.gm-table{font-size:11px}.gm-head h2{font-size:16px}}
 </style>
 </head>
 <body>
