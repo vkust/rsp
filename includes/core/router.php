@@ -608,7 +608,7 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,B
 .gm{position:fixed;inset:0;z-index:1000;display:none;align-items:center;justify-content:center;padding:16px}
 .gm.is-open{display:flex}
 .gm-backdrop{position:absolute;inset:0;background:rgba(15,23,42,.55)}
-.gm-dialog{position:relative;display:flex;flex-direction:column;width:min(1200px,100%);max-height:calc(100vh - 32px);background:#fff;border-radius:8px;box-shadow:0 24px 60px rgba(15,23,42,.3);overflow:hidden}
+.gm-dialog{position:relative;display:flex;flex-direction:column;width:min(1600px,calc(100vw - 32px));max-height:calc(100vh - 32px);background:#fff;border-radius:8px;box-shadow:0 24px 60px rgba(15,23,42,.3);overflow:hidden}
 .gm-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:16px 18px;border-bottom:1px solid var(--border)}
 .gm-head h2{margin:0;font-size:18px}
 .gm-sub{margin:4px 0 0;min-height:1em;color:var(--muted);font-size:13px}
@@ -623,11 +623,14 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,B
 .gm-legend span::before{content:"";display:inline-block;width:10px;height:10px;margin-right:6px;border-radius:3px;vertical-align:-1px}
 .lg-free::before{background:#dcfce7}
 .lg-busy::before{background:#fee2e2}
+.lg-next::before{background:#fde68a}
+.lg-next[hidden]{display:none}
 .gm-scroll{overflow:auto;padding:0 18px 8px}
 .gm-table{width:100%;border-collapse:separate;border-spacing:0;font-size:12px}
 .gm-table th,.gm-table td{border-right:1px solid #eef0f2;border-bottom:1px solid #e5e7eb;padding:6px 4px;text-align:center;vertical-align:middle}
 .gm-table thead th{position:sticky;top:0;z-index:2;background:#f8fafc;color:#334155;font-weight:600}
 .gm-corner,.gm-row-head{position:sticky;left:0;z-index:1;background:#f8fafc;text-align:left;padding-left:10px}
+.gm-table th.gm-corner,.gm-table th.gm-row-head{text-align:left}
 .gm-table thead .gm-corner{z-index:3}
 .gm-row-head{min-width:150px;max-width:190px;overflow:hidden;color:#334155;font-weight:600;text-overflow:ellipsis;white-space:nowrap}
 .gm-table.is-teachers .gm-row-head{max-width:none;overflow:visible;text-overflow:clip}
@@ -638,6 +641,9 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,B
 .gm-cell.is-busy{background:#fef2f2;color:#b91c1c;font-weight:500;cursor:pointer}
 .gm-cell.is-busy:hover{background:#fee2e2}
 .gm-cell.is-current{box-shadow:inset 2px 0 0 rgba(59,130,246,.45),inset -2px 0 0 rgba(59,130,246,.45)}
+.gm-cell.is-next,.gm-period-head.is-next{background-image:linear-gradient(rgba(245,158,11,.16),rgba(245,158,11,.16))}
+.gm-cell.is-next{box-shadow:inset 2px 0 0 #f59e0b,inset -2px 0 0 #f59e0b}
+.gm-table th.gm-period-head.is-next{background:#fff7e6;color:#b45309}
 .gm-cell-text{display:block;max-width:96px;margin:0 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .gm-foot{border-top:1px solid var(--border);padding:10px 18px 14px;color:var(--muted);font-size:12px}
 .dm-dialog{width:min(440px,100%)}
@@ -761,6 +767,7 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,B
                     <div class="gm-legend">
                         <span class="lg-free">Свободен</span>
                         <span class="lg-busy">Занят</span>
+                        <span class="lg-next" id="gmLegendNext" hidden>Следующий урок</span>
                     </div>
                 </div>
                 <div class="gm-scroll">
@@ -841,20 +848,40 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,B
             function todayId() {
                 return String(new Date().getDay());
             }
-            function currentPeriod() {
+            function periodHighlight() {
                 if (activeDay !== todayId()) {
-                    return '';
+                    return { current: '', next: '' };
                 }
                 var now = new Date();
                 var minutes = now.getHours() * 60 + now.getMinutes();
-                for (var i = 0; i < periods.length; i++) {
-                    var start = toMinutes(periods[i][1].start);
-                    var end = toMinutes(periods[i][1].end);
-                    if (start !== null && end !== null && minutes >= start && minutes <= end) {
-                        return periods[i][0];
+                var slots = periods.map(function (item) {
+                    return {
+                        id: item[0],
+                        start: toMinutes(item[1].start),
+                        end: toMinutes(item[1].end)
+                    };
+                });
+
+                for (var i = 0; i < slots.length; i++) {
+                    if (slots[i].start !== null && slots[i].end !== null
+                        && minutes >= slots[i].start && minutes <= slots[i].end) {
+                        return { current: slots[i].id, next: '' };
                     }
                 }
-                return '';
+
+                // Перемена: следующий урок выделяется, если предыдущий уже закончился.
+                for (var j = 0; j < slots.length; j++) {
+                    if (slots[j].start === null || minutes >= slots[j].start) {
+                        continue;
+                    }
+                    var previous = slots[j - 1];
+                    if (previous && previous.end !== null && minutes > previous.end) {
+                        return { current: '', next: slots[j].id };
+                    }
+                    break;
+                }
+
+                return { current: '', next: '' };
             }
             function lessonsForDay(dayId) {
                 var source = mode === 'rooms' ? DATA.roomLessons : DATA.teacherLessons;
@@ -885,11 +912,26 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,B
 
             function renderGrid() {
                 var day = DATA.days[activeDay] || { name: '' };
+                var highlight = periodHighlight();
+                var isToday = activeDay === todayId();
+                var note = '';
+                if (isToday) {
+                    if (highlight.current) {
+                        note = ' · текущий урок подсвечен';
+                    } else if (highlight.next) {
+                        note = ' · перемена: следующий урок выделен';
+                    }
+                }
+
                 titleEl.textContent = titles[mode];
-                subEl.textContent = day.name + (activeDay === todayId() ? ' · текущий урок подсвечен' : '');
+                subEl.textContent = day.name + note;
                 hintEl.textContent = hints[mode];
 
-                var current = currentPeriod();
+                var legendNext = document.getElementById('gmLegendNext');
+                if (legendNext) {
+                    legendNext.hidden = !highlight.next;
+                }
+
                 var list = rows();
                 var byPeriod = lessonsForDay(activeDay);
 
@@ -907,7 +949,7 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,B
                     var periodId = item[0];
                     var period = item[1];
                     var busyCount = Object.keys(byPeriod[periodId] || {}).length;
-                    var th = el('th', 'gm-period-head' + (periodId === current ? ' is-current' : ''));
+                    var th = el('th', 'gm-period-head' + (periodId === highlight.current ? ' is-current' : '') + (periodId === highlight.next ? ' is-next' : ''));
                     th.scope = 'col';
                     th.appendChild(el('span', 'gm-period', period.label || period.name));
                     if (period.start || period.end) {
@@ -933,8 +975,11 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,B
                         var periodId = periodItem[0];
                         var lesson = (byPeriod[periodId] || {})[rowId];
                         var cell = el('td', 'gm-cell ' + (lesson ? 'is-busy' : 'is-free'));
-                        if (periodId === current) {
+                        if (periodId === highlight.current) {
                             cell.classList.add('is-current');
+                        }
+                        if (periodId === highlight.next) {
+                            cell.classList.add('is-next');
                         }
 
                         if (lesson) {
