@@ -33,7 +33,7 @@
 - публичный XML-endpoint для внешних приложений;
 - управление фавиконом.
 
-Текущая версия — `2.18.5` (см. `VERSION`).
+Текущая версия — `2.19.0` (см. `VERSION`).
 
 ## 2. Быстрый старт
 
@@ -106,6 +106,8 @@ includes/core/updater.php     — App_Updater (обновления, снимк�
 includes/compat/wp-shim.php   — get_option/update_option, хуки, nonce, esc_*,
                                 wp_upload_dir, favicon-хелперы и т.д.
 includes/parser.php           — парсер XML aSc
+includes/accounts.php         — учётные записи, сессия, права доступа
+includes/free-staff.php       — свободные учителя и кабинеты
 includes/scheduler.php        — уведомления
 includes/telegram-bot.php     — Telegram-бот
 includes/rest-api.php         — webhook/REST
@@ -135,6 +137,7 @@ logs/                         — логи (не в git)
 | Раздел | URL |
 |---|---|
 | Основные настройки | `/admin?page=school-schedule` |
+| Пользователи | `/admin?page=schedule-users` |
 | Настройки сайта | `/admin?page=schedule-site-settings` |
 | Обновления | `/admin?page=schedule-updates` |
 | Telegram-бот | `/admin?page=schedule-telegram-settings` |
@@ -176,6 +179,22 @@ logs/                         — логи (не в git)
 - список снимков;
 - откат кода и/или БД;
 - журнал.
+
+### Пользователи
+
+`templates/users-page.php`, логика — `includes/accounts.php`.
+
+- учётные записи хранятся в `schedule_accounts`;
+- роли:
+  - `admin` — полный доступ к админке и к свободным учителям/кабинетам;
+  - `viewer` — вход только на закрытую страницу `/free`;
+- у каждой записи есть флаг «Доступ к свободным»;
+- можно создать пользователя, изменить логин, имя, пароль, роль, доступ
+  и активность, удалить запись;
+- встроенный администратор из `config.php` в списке не показывается
+  и работает всегда;
+- пароли хранятся через `password_hash()` (bcrypt);
+- запрещено удалить учётную запись, под которой выполнен вход.
 
 ## 6. Расписание: парсинг и рендеринг
 
@@ -280,6 +299,8 @@ XML), на мобильных сетка открывается на весь э
 /raspisanie           — алиас
 /panels               — расписание для панелей
 /telegram             — страница подписки Telegram
+/free                 — свободные учителя и кабинеты (нужен вход)
+/svobodnye            — алиас
 /login, /logout       — вход/выход
 /admin...             — админка
 /ajax                 — AJAX
@@ -288,6 +309,17 @@ XML), на мобильных сетка открывается на весь э
 /raspisanie.xml       — алиас
 /assets/*, /uploads/* — статика и файлы
 ```
+
+`/free` — закрытая страница:
+
+- требует входа; доступ есть у встроенного администратора, аккаунтов с ролью
+  `admin` и пользователей с флагом «Доступ к свободным»;
+- показывает свободных учителей и кабинеты на выбранный день и урок;
+- день и урок по умолчанию — текущие, иначе первый доступный;
+- занятость считается по всем урокам, кабинеты берутся с учётом списка
+  исключённых из настроек;
+- данные строит `includes/free-staff.php`; администратор без входа получает
+  форму входа, пользователь без доступа — 403.
 
 `/schedule.xml`:
 
@@ -451,6 +483,7 @@ data/schedule.sqlite
 - `schedule_options`;
 - `schedule_cron`;
 - `schedule_users`;
+- `schedule_accounts`;
 - `schedule_subscriptions`;
 - `schedule_notifications`.
 

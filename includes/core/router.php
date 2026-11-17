@@ -68,6 +68,13 @@ class App_Router
             return;
         }
 
+        // Свободные учителя и кабинеты — только для авторизованных пользователей
+        if ($uri === '/free' || $uri === '/svobodnye') {
+            $GLOBALS['wp_app']['is_admin'] = false;
+            self::render_free_staff_page();
+            return;
+        }
+
         // AJAX (аналог admin-ajax.php)
         if ($uri === '/ajax') {
             define('DOING_AJAX', true);
@@ -87,7 +94,7 @@ class App_Router
         // Выход
         if ($uri === '/logout') {
             app_session_start();
-            unset($_SESSION['schedule_admin']);
+            app_account_logout();
             wp_redirect(App_Config::site_url('admin'));
             exit;
         }
@@ -124,12 +131,18 @@ class App_Router
             return;
         }
         if ($uri === '/logout') {
-            unset($_SESSION['schedule_admin']);
+            app_account_logout();
             wp_redirect(App_Config::site_url('admin'));
             exit;
         }
 
-        if (!current_user_can('manage_options')) {
+        if (!app_account_can_manage()) {
+            $account = app_account_current();
+            if ($account) {
+                // Пользователь без прав администратора — на его страницу.
+                wp_redirect(App_Config::site_url('free'));
+                exit;
+            }
             self::render_login_form();
             return;
         }
@@ -191,6 +204,7 @@ class App_Router
         };
         $nav_icons = [
             'school-schedule' => $nav_icon('<path d="M4 7h16M4 12h16M4 17h16"/><circle cx="9" cy="7" r="2.2"/><circle cx="15" cy="12" r="2.2"/><circle cx="8" cy="17" r="2.2"/>'),
+            'schedule-users' => $nav_icon('<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20v-1.5A4.5 4.5 0 0 1 7 14h4a4.5 4.5 0 0 1 4.5 4.5V20"/><path d="M16.5 5.2a3.5 3.5 0 0 1 0 6.6"/><path d="M18 14h1a3.5 3.5 0 0 1 3.5 3.5V20"/>'),
             'schedule-site-settings' => $nav_icon('<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.4 2.5 3.7 5.6 3.7 9S14.4 18.5 12 21c-2.4-2.5-3.7-5.6-3.7-9S9.6 5.5 12 3z"/>'),
             'schedule-updates' => $nav_icon('<path d="M21 12a9 9 0 1 1-3.2-6.9"/><path d="M21 4v5h-5"/>'),
             'schedule-telegram-settings' => $nav_icon('<rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 8V4"/><circle cx="12" cy="3" r="1"/><circle cx="9" cy="14" r="1"/><circle cx="15" cy="14" r="1"/>'),
@@ -265,6 +279,7 @@ code { background:#f0f0f1; padding:2px 5px; border-radius:3px; }
     private static function handle_login()
     {
         $error = '';
+        $redirect_to = (string) ($_POST['redirect_to'] ?? '');
         if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             $user = sanitize_text_field($_POST['app_user'] ?? '');
             $pass = (string) ($_POST['app_password'] ?? '');
@@ -277,16 +292,27 @@ code { background:#f0f0f1; padding:2px 5px; border-radius:3px; }
             }
             if ($hash !== '' && $user === $cfg_user && password_verify($pass, $hash)) {
                 session_regenerate_id(true);
+                unset($_SESSION['schedule_account']);
                 $_SESSION['schedule_admin'] = $user;
-                wp_redirect(App_Config::site_url('admin'));
+                $target = ($redirect_to === 'free') ? 'free' : 'admin';
+                wp_redirect(App_Config::site_url($target));
                 exit;
             }
-            $error = 'Неверный логин или пароль.';
+
+            // Дополнительные пользователи из раздела «Пользователи».
+            $result = app_accounts_login($user, $pass);
+            if (!empty($result['ok'])) {
+                $is_admin = ($result['role'] ?? 'viewer') === 'admin';
+                $target = ($is_admin && $redirect_to !== 'free') ? 'admin' : 'free';
+                wp_redirect(App_Config::site_url($target));
+                exit;
+            }
+            $error = $result['error'] ?? 'Неверный логин или пароль.';
         }
-        self::render_login_form($error);
+        self::render_login_form($error, $redirect_to);
     }
 
-    private static function render_login_form($error = '')
+    private static function render_login_form($error = '', $redirect_to = '')
     {
         ?><!DOCTYPE html>
 <html lang="ru"><head><meta charset="UTF-8">
@@ -308,6 +334,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;b
     <label>Имя пользователя<input type="text" name="app_user" autocomplete="username" required></label>
     <label>Пароль<input type="password" name="app_password" autocomplete="current-password" required></label>
     <input type="hidden" name="app_action" value="login">
+    <?php if ($redirect_to !== ''): ?>
+        <input type="hidden" name="redirect_to" value="<?= esc_attr($redirect_to) ?>">
+    <?php endif; ?>
     <button type="submit">Войти</button>
 </form>
 </body></html><?php
@@ -479,6 +508,219 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;b
     <?php wp_footer(); ?>
 </body>
 </html><?php
+    }
+
+    /* ------------------------------------------------------------------ */
+
+    /**
+     * Страница свободных учителей и кабинетов.
+     * Доступна встроенному администратору, администраторам-аккаунтам
+     * и пользователям с флагом can_view_free.
+     */
+    private static function render_free_staff_page()
+    {
+        app_session_start();
+
+        if (!app_account_can_view_free()) {
+            if (app_account_current()) {
+                self::render_forbidden_page();
+            } else {
+                self::render_login_form('Войдите, чтобы открыть свободные учителя и кабинеты.', 'free');
+            }
+            return;
+        }
+
+        require_once APP_ROOT . '/includes/free-staff.php';
+
+        $schedule = self::load_schedule();
+        $excluded = get_option('schedule_free_rooms_excluded', []);
+        if (!is_array($excluded)) {
+            $excluded = [];
+        }
+        $data = app_free_staff_build($schedule, $excluded);
+
+        $day_id = isset($_GET['day']) ? (string) $_GET['day'] : app_free_staff_default_day($data);
+        if ($day_id === '' || !isset($data['days'][$day_id])) {
+            $day_id = app_free_staff_default_day($data);
+        }
+
+        $day_periods = $data['periodsByDay'][$day_id] ?? [];
+        $period_id = isset($_GET['period']) ? (string) $_GET['period'] : app_free_staff_default_period($data, $day_id);
+        if (!in_array($period_id, $day_periods, true)) {
+            $period_id = app_free_staff_default_period($data, $day_id);
+        }
+
+        $free = app_free_staff_for($data, $day_id, $period_id);
+        $current = app_account_current();
+
+        $day = $data['days'][$day_id] ?? null;
+        $period = $data['periods'][$period_id] ?? null;
+        ?><!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Свободные учителя и кабинеты</title>
+<?php app_print_favicon(); ?>
+<style>
+:root{--blue:#2271b1;--blue-dark:#135e96;--bg:#f0f0f1;--card:#fff;--border:#dcdcde;--text:#1d2327;--muted:#646970;--chip:#eef4fb;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:15px}
+.page{max-width:1100px;margin:0 auto;padding:20px 16px 40px}
+.topbar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:18px}
+.title{font-size:22px;font-weight:700;margin:0}
+.user{display:flex;flex-wrap:wrap;gap:10px;align-items:center;color:var(--muted);font-size:13px}
+.user a{color:var(--blue);text-decoration:none}
+.user a:hover{text-decoration:underline}
+.card{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:16px 18px;margin-bottom:16px}
+.filters{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end}
+.filters label{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--muted)}
+.filters select{padding:7px 9px;border:1px solid #8c8f94;border-radius:4px;font-size:14px;background:#fff;min-width:220px;max-width:100%}
+.summary{color:var(--muted);font-size:14px;margin:2px 0 0}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:760px){.grid{grid-template-columns:1fr}}
+.panel h2{font-size:16px;margin:0 0 4px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.count{font-size:13px;font-weight:600;color:var(--blue);background:var(--chip);border-radius:999px;padding:3px 10px;white-space:nowrap}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.chip{background:var(--chip);border:1px solid #cfe0f2;border-radius:999px;padding:5px 11px;font-size:14px}
+.chip small{color:var(--muted);font-size:12px}
+.empty{color:var(--muted);font-size:14px;margin-top:12px}
+.notice{background:#fff;border-left:4px solid #d63638;padding:10px 14px;border-radius:4px;margin-bottom:16px}
+.mono{font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+<div class="page">
+    <div class="topbar">
+        <h1 class="title">Свободные учителя и кабинеты</h1>
+        <div class="user">
+            <?php if ($current): ?>
+                <span><?= esc_html($current['display_name']) ?></span>
+            <?php endif; ?>
+            <a href="<?= esc_url(App_Config::site_url('free')) ?>">Сбросить</a>
+            <a href="<?= esc_url(App_Config::site_url('/')) ?>">Расписание</a>
+            <a href="<?= esc_url(App_Config::site_url('logout')) ?>">Выйти</a>
+        </div>
+    </div>
+
+    <?php if (!$data['days']): ?>
+        <div class="notice">Расписание не загружено. Загрузите XML-файл в админке.</div>
+    <?php else: ?>
+        <div class="card">
+            <form class="filters" method="get" action="<?= esc_url(App_Config::site_url('free')) ?>">
+                <label>
+                    <span>День</span>
+                    <select name="day" onchange="this.form.submit()">
+                        <?php foreach ($data['days'] as $id => $item): ?>
+                            <option value="<?= esc_attr($id) ?>" <?= ((string) $id === $day_id) ? 'selected' : '' ?>>
+                                <?= esc_html($item['name']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </label>
+                <label>
+                    <span>Урок</span>
+                    <select name="period" onchange="this.form.submit()">
+                        <?php foreach ($day_periods as $id): ?>
+                            <?php $item = $data['periods'][$id] ?? null; if (!$item) { continue; } ?>
+                            <option value="<?= esc_attr($id) ?>" <?= ((string) $id === $period_id) ? 'selected' : '' ?>>
+                                <?= esc_html(app_free_staff_period_label($item)) ?><?php if ($item['start'] !== '' || $item['end'] !== ''): ?> · <?= esc_html($item['start']) ?>—<?= esc_html($item['end']) ?><?php endif; ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </label>
+            </form>
+            <?php if ($day && $period): ?>
+                <p class="summary mono">
+                    <?= esc_html($day['name']) ?>,
+                    <?= esc_html(app_free_staff_period_label($period)) ?>
+                    <?php if ($period['start'] !== '' || $period['end'] !== ''): ?>
+                        · <?= esc_html($period['start']) ?>—<?= esc_html($period['end']) ?>
+                    <?php endif; ?>
+                </p>
+            <?php endif; ?>
+        </div>
+
+        <div class="grid">
+            <div class="card panel">
+                <h2>
+                    <span>Учителя</span>
+                    <span class="count">Свободно <?= (int) count($free['teachers']) ?> из <?= (int) $free['totalTeachers'] ?></span>
+                </h2>
+                <?php if ($free['teachers']): ?>
+                    <div class="chips">
+                        <?php foreach ($free['teachers'] as $teacher): ?>
+                            <span class="chip"><?= esc_html($teacher['name']) ?></span>
+                        <?php endforeach; ?>
+                    </div>
+                <?php else: ?>
+                    <div class="empty">Все учителя заняты на этом уроке.</div>
+                <?php endif; ?>
+            </div>
+
+            <div class="card panel">
+                <h2>
+                    <span>Кабинеты</span>
+                    <span class="count">Свободно <?= (int) count($free['rooms']) ?> из <?= (int) $free['totalRooms'] ?></span>
+                </h2>
+                <?php if ($free['rooms']): ?>
+                    <div class="chips">
+                        <?php foreach ($free['rooms'] as $room): ?>
+                            <span class="chip"><?= esc_html($room['name']) ?><?php if ($room['short'] !== '' && $room['short'] !== $room['name']): ?> <small><?= esc_html($room['short']) ?></small><?php endif; ?></span>
+                        <?php endforeach; ?>
+                    </div>
+                <?php else: ?>
+                    <div class="empty">Все кабинеты заняты на этом уроке.</div>
+                <?php endif; ?>
+            </div>
+        </div>
+    <?php endif; ?>
+</div>
+</body>
+</html><?php
+    }
+
+    private static function render_forbidden_page()
+    {
+        http_response_code(403);
+        ?><!DOCTYPE html>
+<html lang="ru"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Доступ закрыт</title>
+<?php app_print_favicon(); ?>
+<style>
+body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#f0f0f1;font-family:-apple-system,"Segoe UI",Roboto,sans-serif;color:#1d2327}
+.box{background:#fff;border:1px solid #c3c4c7;border-radius:6px;padding:28px 32px;max-width:420px;text-align:center}
+h1{font-size:20px;margin:0 0 10px}
+p{color:#646970;margin:0 0 18px}
+a{display:inline-block;background:#2271b1;color:#fff;text-decoration:none;padding:9px 16px;border-radius:4px}
+</style></head>
+<body>
+<div class="box">
+    <h1>Доступ закрыт</h1>
+    <p>У вашей учётной записи нет доступа к свободным учителям и кабинетам.</p>
+    <a href="<?= esc_url(App_Config::site_url('logout')) ?>">Выйти</a>
+</div>
+</body></html><?php
+    }
+
+    /**
+     * Разобрать активный XML расписания для закрытых страниц.
+     */
+    private static function load_schedule()
+    {
+        $file = self::active_schedule_file();
+        if (!$file) {
+            return [];
+        }
+        require_once APP_ROOT . '/includes/parser.php';
+        try {
+            $parser = new ScheduleParser();
+            $result = $parser->parse($file);
+            return $result['schedule'] ?? [];
+        } catch (Exception $e) {
+            return [];
+        }
     }
 
     /* ------------------------------------------------------------------ */

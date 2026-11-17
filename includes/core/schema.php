@@ -83,9 +83,25 @@ function app_install_schema()
         $created[] = "{$p}schedule_subscriptions";
     }
 
+    // Учётные записи приложения (вход в админку и на закрытые страницы)
+    if (!$db->table_exists("{$p}schedule_accounts")) {
+        $db->query("CREATE TABLE `{$p}schedule_accounts` (
+            id INTEGER PRIMARY KEY " . ($db->is_mysql() ? 'BIGINT(20) NOT NULL AUTO_INCREMENT' : 'AUTOINCREMENT') . ",
+            username VARCHAR(191) NOT NULL,
+            password_hash VARCHAR(255) NOT NULL,
+            display_name VARCHAR(191) DEFAULT '',
+            role VARCHAR(32) NOT NULL DEFAULT 'viewer',
+            can_view_free TINYINT(1) NOT NULL DEFAULT 0,
+            is_active TINYINT(1) NOT NULL DEFAULT 1,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            last_login_at DATETIME DEFAULT NULL,
+            UNIQUE KEY username (username)
+        )" . $db->get_charset_collate());
+        $created[] = "{$p}schedule_accounts";
+    }
+
     // Журнал уведомлений
-    if (!$db->table_exists("{$p}schedule_notifications")) {
-        $db->query("CREATE TABLE `{$p}schedule_notifications` (
+    if (!$db->table_exists("{$p}schedule_notifications")) {        $db->query("CREATE TABLE `{$p}schedule_notifications` (
             id INTEGER PRIMARY KEY " . ($db->is_mysql() ? 'BIGINT(20) NOT NULL AUTO_INCREMENT' : 'AUTOINCREMENT') . ",
             chat_id BIGINT(20) NOT NULL,
             notification_type VARCHAR(50) NOT NULL,
@@ -108,7 +124,7 @@ function app_install_schema()
 function app_uninstall_schema()
 {
     $db = App_Database::instance();
-    foreach (['schedule_subscriptions', 'schedule_users', 'schedule_notifications', 'schedule_cron', 'schedule_options'] as $t) {
+    foreach (['schedule_subscriptions', 'schedule_users', 'schedule_accounts', 'schedule_notifications', 'schedule_cron', 'schedule_options'] as $t) {
         $db->query("DROP TABLE IF EXISTS `" . App_Database::instance()->prefix . "{$t}`");
     }
 }

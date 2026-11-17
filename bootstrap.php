@@ -57,5 +57,8 @@ App_Database::instance();
 require_once APP_ROOT . '/includes/core/schema.php';
 app_install_schema();
 
+// Учётные записи приложения (пользователи админки и закрытых страниц)
+require_once APP_ROOT . '/includes/accounts.php';
+
 // Основной код приложения (бывший файл плагина)
 require_once APP_ROOT . '/school-schedule.php';

@@ -36,7 +36,7 @@ if (!function_exists('app_asset_url')) {
         return $base . '/' . ltrim((string) $rel, '/');
     }
 }
-define('SCHOOL_SCHEDULE_VERSION', '2.18.5');
+define('SCHOOL_SCHEDULE_VERSION', '2.19.0');
 
 class SchoolSchedule {
     private $default_categories = array(
@@ -132,6 +132,9 @@ class SchoolSchedule {
         add_action('admin_post_save_banner_settings', [$this, 'handle_save_banner_settings']);
         add_action('admin_post_save_free_rooms_settings', [$this, 'handle_save_free_rooms_settings']);
         add_action('admin_post_save_layout_settings', [$this, 'handle_save_layout_settings']);
+        add_action('admin_post_create_app_user', [$this, 'handle_create_app_user']);
+        add_action('admin_post_update_app_user', [$this, 'handle_update_app_user']);
+        add_action('admin_post_delete_app_user', [$this, 'handle_delete_app_user']);
         
         // Подключаем стили и скрипты
         add_action('wp_enqueue_scripts', [$this, 'enqueue_frontend_assets']);
@@ -253,9 +256,18 @@ class SchoolSchedule {
             [$this, 'render_admin_page']
         );
 
-        // Добавляем подменю для настроек сайта (URL, HTTPS, сертификаты)
+        // Пользователи приложения (доступ в админку и на закрытые страницы)
         add_submenu_page(
             'school-schedule',
+            'Пользователи',
+            'Пользователи',
+            'manage_options',
+            'schedule-users',
+            [$this, 'render_users_page']
+        );
+
+        // Добавляем подменю для настроек сайта (URL, HTTPS, сертификаты)
+        add_submenu_page(            'school-schedule',
             'Настройки сайта',
             'Настройки сайта',
             'manage_options',
@@ -386,6 +398,98 @@ class SchoolSchedule {
         include SCHOOL_SCHEDULE_PATH . 'templates/admin-page.php';
     }
 
+    /**
+     * Раздел «Пользователи»: учётные записи для входа в приложение.
+     */
+    public function render_users_page() {
+        if (!current_user_can('manage_options')) {
+            wp_die('Недостаточно прав');
+        }
+
+        // Список обновляется из БД при каждой загрузке страницы.
+        $accounts = app_accounts_all();
+        $edit_id = isset($_GET['edit']) ? (int) $_GET['edit'] : 0;
+        $edit_account = $edit_id > 0 ? app_accounts_get($edit_id) : null;
+        $self = app_account_current();
+
+        include SCHOOL_SCHEDULE_PATH . 'templates/users-page.php';
+    }
+
+    public function handle_create_app_user() {
+        if (!current_user_can('manage_options')) {
+            wp_die('Недостаточно прав');
+        }
+        check_admin_referer('app_users', 'app_users_nonce');
+
+        $result = app_accounts_create([
+            'username' => $_POST['username'] ?? '',
+            'password' => $_POST['password'] ?? '',
+            'display_name' => $_POST['display_name'] ?? '',
+            'role' => $_POST['role'] ?? 'viewer',
+            'can_view_free' => isset($_POST['can_view_free']),
+        ]);
+
+        if (empty($result['ok'])) {
+            $this->redirect_users_page([
+                'error' => $result['error'] ?? 'Не удалось создать пользователя.',
+                'new_username' => sanitize_text_field($_POST['username'] ?? ''),
+                'new_display_name' => sanitize_text_field($_POST['display_name'] ?? ''),
+            ]);
+        }
+
+        $this->redirect_users_page(['user-created' => '1']);
+    }
+
+    public function handle_update_app_user() {
+        if (!current_user_can('manage_options')) {
+            wp_die('Недостаточно прав');
+        }
+        check_admin_referer('app_users', 'app_users_nonce');
+
+        $id = (int) ($_POST['user_id'] ?? 0);
+        $result = app_accounts_update($id, [
+            'username' => $_POST['username'] ?? '',
+            'password' => $_POST['password'] ?? '',
+            'display_name' => $_POST['display_name'] ?? '',
+            'role' => $_POST['role'] ?? 'viewer',
+            'can_view_free' => isset($_POST['can_view_free']),
+            'is_active' => isset($_POST['is_active']),
+        ]);
+
+        if (empty($result['ok'])) {
+            $this->redirect_users_page([
+                'error' => $result['error'] ?? 'Не удалось сохранить пользователя.',
+                'edit' => $id,
+            ]);
+        }
+
+        $this->redirect_users_page(['user-updated' => '1']);
+    }
+
+    public function handle_delete_app_user() {
+        if (!current_user_can('manage_options')) {
+            wp_die('Недостаточно прав');
+        }
+        check_admin_referer('app_users', 'app_users_nonce');
+
+        $id = (int) ($_POST['user_id'] ?? 0);
+        $self = app_account_current();
+
+        if ($self && (int) $self['id'] === $id) {
+            $this->redirect_users_page(['error' => 'Нельзя удалить учётную запись, под которой вы вошли.']);
+        }
+
+        app_accounts_delete($id);
+        $this->redirect_users_page(['user-deleted' => '1']);
+    }
+
+    private function redirect_users_page(array $args = []) {
+        $args = array_merge(['page' => 'schedule-users'], $args);
+        wp_redirect(add_query_arg($args, App_Config::site_url('admin')));
+        exit;
+    }
+
+
     public function enqueue_frontend_assets() {
         // Единые локальные бандлы: jQuery + jQuery UI + schedule.js и
         // jQuery UI CSS + schedule.css + schedule-template.css.
@@ -409,6 +513,7 @@ class SchoolSchedule {
     public function enqueue_admin_assets($hook) {
         if (!in_array($hook, [
             'toplevel_page_school-schedule',
+            'расписание_page_schedule-users',
             'расписание_page_schedule-telegram-settings',
             'расписание_page_schedule-site-settings',
             'расписание_page_schedule-updates',
