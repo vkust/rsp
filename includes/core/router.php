@@ -552,9 +552,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;b
 
         $free = app_free_staff_for($data, $day_id, $period_id);
         $current = app_account_current();
-
-        $day = $data['days'][$day_id] ?? null;
-        $period = $data['periods'][$period_id] ?? null;
         ?><!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -586,7 +583,7 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,B
 .chip small{color:var(--muted);font-size:12px}
 .empty{color:var(--muted);font-size:14px;margin-top:12px}
 .notice{background:#fff;border-left:4px solid #d63638;padding:10px 14px;border-radius:4px;margin-bottom:16px}
-.mono{font-variant-numeric:tabular-nums}
+@media(max-width:480px){.chip{font-size:14px;padding:4px 10px}.page{padding:16px 12px 32px}.title{font-size:19px}}
 </style>
 </head>
 <body>
@@ -630,15 +627,6 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,B
                     </select>
                 </label>
             </form>
-            <?php if ($day && $period): ?>
-                <p class="summary mono">
-                    <?= esc_html($day['name']) ?>,
-                    <?= esc_html(app_free_staff_period_label($period)) ?>
-                    <?php if ($period['start'] !== '' || $period['end'] !== ''): ?>
-                        · <?= esc_html($period['start']) ?>—<?= esc_html($period['end']) ?>
-                    <?php endif; ?>
-                </p>
-            <?php endif; ?>
         </div>
 
         <div class="grid">
@@ -666,7 +654,7 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,B
                 <?php if ($free['rooms']): ?>
                     <div class="chips">
                         <?php foreach ($free['rooms'] as $room): ?>
-                            <span class="chip"><?= esc_html($room['name']) ?><?php if ($room['short'] !== '' && $room['short'] !== $room['name']): ?> <small><?= esc_html($room['short']) ?></small><?php endif; ?></span>
+                            <span class="chip"><?= esc_html($room['name']) ?></span>
                         <?php endforeach; ?>
                     </div>
                 <?php else: ?>
