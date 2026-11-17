@@ -640,7 +640,11 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,B
 .gm-cell.is-free{background:#f0fdf4;color:#16a34a}
 .gm-cell.is-busy{background:#fef2f2;color:#b91c1c;font-weight:500;cursor:pointer}
 .gm-cell.is-busy:hover{background:#fee2e2}
-.gm-cell.is-current{box-shadow:inset 2px 0 0 rgba(59,130,246,.45),inset -2px 0 0 rgba(59,130,246,.45)}
+.gm-cell.is-current{background-image:linear-gradient(rgba(59,130,246,.1),rgba(59,130,246,.1));box-shadow:inset 2px 0 0 rgba(59,130,246,.45),inset -2px 0 0 rgba(59,130,246,.45)}
+.gm-table thead th.is-current{background:linear-gradient(180deg,#3b82f6 0%,#2563eb 100%);color:#fff;box-shadow:inset 0 -3px 0 #1d4ed8}
+.gm-table thead th.is-current .gm-time,.gm-table thead th.is-current .gm-free-count{color:rgba(255,255,255,.85)}
+.gm-table thead th.is-current .gm-period::before{content:"";display:inline-block;width:.45rem;height:.45rem;margin-right:.3rem;border-radius:50%;background:#fff;vertical-align:.05rem;animation:gmCurrentPulse 1.8s infinite}
+@keyframes gmCurrentPulse{0%{box-shadow:0 0 0 0 rgba(255,255,255,.6)}70%{box-shadow:0 0 0 .35rem rgba(255,255,255,0)}100%{box-shadow:0 0 0 0 rgba(255,255,255,0)}}
 .gm-cell.is-next,.gm-period-head.is-next{background-image:linear-gradient(rgba(245,158,11,.16),rgba(245,158,11,.16))}
 .gm-cell.is-next{box-shadow:inset 2px 0 0 #f59e0b,inset -2px 0 0 #f59e0b}
 .gm-table th.gm-period-head.is-next{background:#fff7e6;color:#b45309}
