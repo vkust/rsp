@@ -630,6 +630,7 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,B
 .gm-corner,.gm-row-head{position:sticky;left:0;z-index:1;background:#f8fafc;text-align:left;padding-left:10px}
 .gm-table thead .gm-corner{z-index:3}
 .gm-row-head{min-width:150px;max-width:190px;overflow:hidden;color:#334155;font-weight:600;text-overflow:ellipsis;white-space:nowrap}
+.gm-table.is-teachers .gm-row-head{max-width:none;overflow:visible;text-overflow:clip}
 .gm-period{display:block;font-size:12px}
 .gm-time{display:block;color:var(--muted);font-size:11px;font-variant-numeric:tabular-nums}
 .gm-free-count{display:block;color:var(--blue);font-size:11px;font-weight:600}
@@ -690,15 +691,6 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,B
                 </label>
             </form>
             <div class="grid-actions">
-                <button type="button" class="btn" data-grid-open="rooms">
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <rect x="3" y="3" width="7" height="7" rx="1"/>
-                        <rect x="14" y="3" width="7" height="7" rx="1"/>
-                        <rect x="3" y="14" width="7" height="7" rx="1"/>
-                        <rect x="14" y="14" width="7" height="7" rx="1"/>
-                    </svg>
-                    Сетка кабинетов
-                </button>
                 <button type="button" class="btn" data-grid-open="teachers">
                     <svg viewBox="0 0 24 24" aria-hidden="true">
                         <circle cx="9" cy="8" r="3.5"/>
@@ -707,6 +699,15 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,B
                         <path d="M18 14h1a3.5 3.5 0 0 1 3.5 3.5V20"/>
                     </svg>
                     Сетка учителей
+                </button>
+                <button type="button" class="btn" data-grid-open="rooms">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <rect x="3" y="3" width="7" height="7" rx="1"/>
+                        <rect x="14" y="3" width="7" height="7" rx="1"/>
+                        <rect x="3" y="14" width="7" height="7" rx="1"/>
+                        <rect x="14" y="14" width="7" height="7" rx="1"/>
+                    </svg>
+                    Сетка кабинетов
                 </button>
             </div>
         </div>
@@ -893,6 +894,7 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,B
                 var byPeriod = lessonsForDay(activeDay);
 
                 tableEl.textContent = '';
+                tableEl.className = 'gm-table' + (mode === 'teachers' ? ' is-teachers' : '');
                 tableEl.setAttribute('aria-label', titles[mode] + ': ' + day.name);
 
                 var thead = el('thead');
