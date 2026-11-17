@@ -70,7 +70,10 @@ function app_free_staff_build(array $schedule, array $excluded_rooms = [])
 
     $occupied_teachers = [];
     $occupied_rooms = [];
+    $teacher_lessons = [];
+    $room_lessons = [];
     $used_days = [];
+    $used_periods = [];
 
     $lessons = $schedule['lessons_all'] ?? $schedule['lessons'] ?? [];
     foreach ((array) $lessons as $lesson) {
@@ -81,19 +84,94 @@ function app_free_staff_build(array $schedule, array $excluded_rooms = [])
         }
 
         $used_days[$day_id] = true;
+        $used_periods[$period_id] = true;
 
+        // Подписи классов: короткие для ячеек, полные для подробностей.
+        $class_labels = [];
+        $class_names = [];
+        foreach ((array) ($lesson['classIds'] ?? []) as $class_id) {
+            $class = $schedule['classes'][(string) $class_id] ?? null;
+            if (!$class) {
+                continue;
+            }
+            $short = trim((string) ($class['short'] ?? ''));
+            $name = trim((string) ($class['name'] ?? ''));
+            $label = $short !== '' ? $short : $name;
+            if ($label !== '') {
+                $class_labels[$label] = true;
+            }
+            if ($name !== '') {
+                $class_names[$name] = true;
+            }
+        }
+
+        $subject_name = trim((string) ($schedule['subjects'][(string) ($lesson['subjectId'] ?? '')]['name'] ?? ''));
+
+        $teacher_ids = [];
+        $teacher_names = [];
         foreach ((array) ($lesson['teacherIds'] ?? []) as $teacher_id) {
             $teacher_id = (string) $teacher_id;
+            $teacher_ids[] = $teacher_id;
             if (!isset($teachers[$teacher_id])) {
                 $teachers[$teacher_id] = [
                     'name' => $teacher_id,
                     'short' => '',
                 ];
             }
-            $occupied_teachers[$day_id][$period_id][$teacher_id] = true;
+            $teacher_name = trim((string) ($teachers[$teacher_id]['name'] ?? ''));
+            if ($teacher_name !== '') {
+                $teacher_names[$teacher_name] = true;
+            }
         }
 
-        $room_ids = array_filter(array_map('trim', explode(',', (string) ($lesson['classroomId'] ?? ''))));
+        $room_ids = array_values(array_filter(
+            array_map('trim', explode(',', (string) ($lesson['classroomId'] ?? ''))),
+            'strlen'
+        ));
+
+        // Названия кабинетов для подробностей по учителю (исключённые тоже).
+        $room_names = [];
+        foreach ($room_ids as $room_id) {
+            $room_id = (string) $room_id;
+            $label = trim((string) ($rooms[$room_id]['name'] ?? ''));
+            if ($label === '') {
+                $label = trim((string) ($schedule['classrooms'][$room_id]['name'] ?? ''));
+            }
+            if ($label === '') {
+                $label = $room_id;
+            }
+            $room_names[$label] = true;
+        }
+
+        // Учителя: занятость и подробности урока.
+        foreach ($teacher_ids as $teacher_id) {
+            $occupied_teachers[$day_id][$period_id][$teacher_id] = true;
+
+            if (!isset($teacher_lessons[$day_id][$period_id][$teacher_id])) {
+                $teacher_lessons[$day_id][$period_id][$teacher_id] = [
+                    'classes' => [],
+                    'classesFull' => [],
+                    'subjects' => [],
+                    'rooms' => [],
+                ];
+            }
+            $cell = &$teacher_lessons[$day_id][$period_id][$teacher_id];
+            foreach (array_keys($class_labels) as $label) {
+                $cell['classes'][$label] = true;
+            }
+            foreach (array_keys($class_names) as $name) {
+                $cell['classesFull'][$name] = true;
+            }
+            if ($subject_name !== '') {
+                $cell['subjects'][$subject_name] = true;
+            }
+            foreach (array_keys($room_names) as $name) {
+                $cell['rooms'][$name] = true;
+            }
+            unset($cell);
+        }
+
+        // Кабинеты: занятость и подробности урока.
         foreach ($room_ids as $room_id) {
             $room_id = (string) $room_id;
             if (isset($excluded[$room_id])) {
@@ -103,8 +181,55 @@ function app_free_staff_build(array $schedule, array $excluded_rooms = [])
                 $rooms[$room_id] = ['name' => $room_id, 'short' => $room_id];
             }
             $occupied_rooms[$day_id][$period_id][$room_id] = true;
+
+            if (!isset($room_lessons[$day_id][$period_id][$room_id])) {
+                $room_lessons[$day_id][$period_id][$room_id] = [
+                    'classes' => [],
+                    'classesFull' => [],
+                    'subjects' => [],
+                    'teachers' => [],
+                ];
+            }
+            $cell = &$room_lessons[$day_id][$period_id][$room_id];
+            foreach (array_keys($class_labels) as $label) {
+                $cell['classes'][$label] = true;
+            }
+            foreach (array_keys($class_names) as $name) {
+                $cell['classesFull'][$name] = true;
+            }
+            if ($subject_name !== '') {
+                $cell['subjects'][$subject_name] = true;
+            }
+            foreach (array_keys($teacher_names) as $name) {
+                $cell['teachers'][$name] = true;
+            }
+            unset($cell);
         }
     }
+
+    // Наборы → массивы (для JSON на странице).
+    foreach ($teacher_lessons as &$by_day) {
+        foreach ($by_day as &$by_period) {
+            foreach ($by_period as &$cell) {
+                $cell['classes'] = array_keys($cell['classes']);
+                $cell['classesFull'] = array_keys($cell['classesFull']);
+                $cell['subjects'] = array_keys($cell['subjects']);
+                $cell['rooms'] = array_keys($cell['rooms']);
+            }
+        }
+    }
+    unset($by_day, $by_period, $cell);
+    foreach ($room_lessons as &$by_day) {
+        foreach ($by_day as &$by_period) {
+            foreach ($by_period as &$cell) {
+                $cell['classes'] = array_keys($cell['classes']);
+                $cell['classesFull'] = array_keys($cell['classesFull']);
+                $cell['subjects'] = array_keys($cell['subjects']);
+                $cell['teachers'] = array_keys($cell['teachers']);
+            }
+        }
+    }
+    unset($by_day, $by_period, $cell);
 
     // Дни без уроков не показываем.
     $days = array_filter($days, function ($day_id) use ($used_days) {
@@ -138,10 +263,13 @@ function app_free_staff_build(array $schedule, array $excluded_rooms = [])
         'days' => $days,
         'periods' => $periods,
         'periodsByDay' => $periods_by_day,
+        'usedPeriods' => array_map('strval', array_keys($used_periods)),
         'teachers' => $teachers,
         'rooms' => $rooms,
         'occupiedTeachers' => $occupied_teachers,
         'occupiedRooms' => $occupied_rooms,
+        'teacherLessons' => $teacher_lessons,
+        'roomLessons' => $room_lessons,
     ];
 }
 
